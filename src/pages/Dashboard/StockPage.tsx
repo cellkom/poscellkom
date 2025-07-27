@@ -22,12 +22,12 @@ type Supplier = typeof initialSuppliers[0];
 
 // Mock data for stock items with barcodes
 const initialStockData = [
-  { id: 'BRG001', name: 'LCD iPhone X', category: 'Sparepart HP', stock: 15, buyPrice: 650000, retailPrice: 850000, resellerPrice: 800000, barcode: '8991234567890' },
-  { id: 'BRG002', name: 'Baterai Samsung A50', category: 'Sparepart HP', stock: 25, buyPrice: 200000, retailPrice: 350000, resellerPrice: 320000, barcode: '8991234567891' },
-  { id: 'BRG003', name: 'Charger Type-C 25W', category: 'Aksesoris', stock: 50, buyPrice: 80000, retailPrice: 150000, resellerPrice: 125000, barcode: '8991234567892' },
-  { id: 'BRG004', name: 'Tempered Glass Universal', category: 'Aksesoris', stock: 120, buyPrice: 15000, retailPrice: 50000, resellerPrice: 35000, barcode: '8991234567893' },
-  { id: 'BRG005', name: 'SSD 256GB NVMe', category: 'Sparepart Komputer', stock: 10, buyPrice: 450000, retailPrice: 600000, resellerPrice: 550000, barcode: '8991234567894' },
-  { id: 'BRG006', name: 'RAM DDR4 8GB', category: 'Sparepart Komputer', stock: 18, buyPrice: 350000, retailPrice: 500000, resellerPrice: 450000, barcode: '8991234567895' },
+  { id: 'BRG001', name: 'LCD iPhone X', category: 'Sparepart HP', stock: 15, buyPrice: 650000, retailPrice: 850000, resellerPrice: 800000, barcode: '8991234567890', supplierId: 'SUP001', entryDate: new Date('2023-10-01') },
+  { id: 'BRG002', name: 'Baterai Samsung A50', category: 'Sparepart HP', stock: 25, buyPrice: 200000, retailPrice: 350000, resellerPrice: 320000, barcode: '8991234567891', supplierId: 'SUP001', entryDate: new Date('2023-10-02') },
+  { id: 'BRG003', name: 'Charger Type-C 25W', category: 'Aksesoris', stock: 50, buyPrice: 80000, retailPrice: 150000, resellerPrice: 125000, barcode: '8991234567892', supplierId: 'SUP002', entryDate: new Date('2023-10-03') },
+  { id: 'BRG004', name: 'Tempered Glass Universal', category: 'Aksesoris', stock: 120, buyPrice: 15000, retailPrice: 50000, resellerPrice: 35000, barcode: '8991234567893', supplierId: 'SUP002', entryDate: new Date('2023-10-04') },
+  { id: 'BRG005', name: 'SSD 256GB NVMe', category: 'Sparepart Komputer', stock: 10, buyPrice: 450000, retailPrice: 600000, resellerPrice: 550000, barcode: '8991234567894', supplierId: 'SUP001', entryDate: new Date('2023-10-05') },
+  { id: 'BRG006', name: 'RAM DDR4 8GB', category: 'Sparepart Komputer', stock: 18, buyPrice: 350000, retailPrice: 500000, resellerPrice: 450000, barcode: '8991234567895', supplierId: 'SUP002', entryDate: new Date('2023-10-06') },
 ];
 
 const initialSuppliers = [
@@ -35,7 +35,7 @@ const initialSuppliers = [
   { id: 'SUP002', name: 'CV Mitra Perkasa', phone: '081209876543', address: 'Jl. Gadget No. 2' },
 ];
 
-const newItemInitialState = { name: '', category: '', stock: 0, buyPrice: 0, retailPrice: 0, resellerPrice: 0, barcode: '' };
+const newItemInitialState = { name: '', category: '', stock: 0, buyPrice: 0, retailPrice: 0, resellerPrice: 0, barcode: '', entryDate: new Date(), supplierId: '' };
 const newSupplierInitialState = { name: '', phone: '', address: '' };
 const addStockInitialState = { itemId: '', quantity: 0, entryDate: new Date(), supplierId: '' };
 
@@ -137,7 +137,9 @@ const StockPage = () => {
     const newId = `SUP${(suppliers.length + 1).toString().padStart(3, '0')}`;
     const newSupplierData = { ...newSupplier, id: newId };
     setSuppliers(prev => [...prev, newSupplierData]);
+    // Update supplier in both forms
     setStockToAdd(prev => ({ ...prev, supplierId: newId }));
+    setNewItem(prev => ({ ...prev, supplierId: newId }));
     showSuccess("Supplier baru berhasil ditambahkan!");
     setIsAddSupplierDialogOpen(false);
     setNewSupplier(newSupplierInitialState);
@@ -290,10 +292,44 @@ const StockPage = () => {
                       <div className="grid grid-cols-4 items-center gap-4 -mt-2"><div className="col-start-2 col-span-3"><Barcode value={newItem.barcode} /></div></div>
                       <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="name" className="text-right">Nama</Label><Input id="name" name="name" placeholder="Nama Barang" className="col-span-3" value={newItem.name} onChange={handleNewItemChange} /></div>
                       <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="category" className="text-right">Kategori</Label><Select name="category" onValueChange={(value) => setNewItem(prev => ({ ...prev, category: value }))} value={newItem.category}><SelectTrigger className="col-span-3"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger><SelectContent><SelectItem value="Sparepart HP">Sparepart HP</SelectItem><SelectItem value="Sparepart Komputer">Sparepart Komputer</SelectItem><SelectItem value="Aksesoris">Aksesoris</SelectItem></SelectContent></Select></div>
-                      <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="stock" className="text-right">Stok</Label><Input id="stock" name="stock" type="number" placeholder="0" className="col-span-3" value={newItem.stock} onChange={handleNewItemChange} /></div>
+                      <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="stock" className="text-right">Stok Awal</Label><Input id="stock" name="stock" type="number" placeholder="0" className="col-span-3" value={newItem.stock} onChange={handleNewItemChange} /></div>
                       <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="buyPrice" className="text-right">Harga Beli</Label><Input id="buyPrice" name="buyPrice" type="number" placeholder="Rp 0" className="col-span-3" value={newItem.buyPrice} onChange={handleNewItemChange} /></div>
                       <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="retailPrice" className="text-right">Harga Ecer</Label><Input id="retailPrice" name="retailPrice" type="number" placeholder="Rp 0" className="col-span-3" value={newItem.retailPrice} onChange={handleNewItemChange} /></div>
                       <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="resellerPrice" className="text-right">Harga Reseller</Label><Input id="resellerPrice" name="resellerPrice" type="number" placeholder="Rp 0" className="col-span-3" value={newItem.resellerPrice} onChange={handleNewItemChange} /></div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="entryDate-new" className="text-right">Tgl. Masuk</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant={"outline"} className={cn("col-span-3 justify-start text-left font-normal", !newItem.entryDate && "text-muted-foreground")}>
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {newItem.entryDate ? format(newItem.entryDate, "PPP") : <span>Pilih tanggal</span>}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar mode="single" selected={newItem.entryDate} onSelect={(date) => setNewItem(prev => ({ ...prev, entryDate: date || new Date() }))} initialFocus />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="supplier-new" className="text-right">Supplier</Label>
+                        <Select value={newItem.supplierId} onValueChange={(value) => setNewItem(prev => ({ ...prev, supplierId: value }))}>
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Pilih Supplier (Opsional)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {suppliers.map(supplier => (<SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <div />
+                        <div className="col-span-3">
+                          <Button type="button" variant="link" className="p-0 h-auto text-sm text-blue-600 hover:text-blue-800" onClick={() => setIsAddSupplierDialogOpen(true)}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Tambah Supplier Baru
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                     <DialogFooter>
                       <Button type="button" variant="secondary" onClick={() => setIsAddItemDialogOpen(false)}>Batal</Button>
@@ -311,13 +347,12 @@ const StockPage = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Kode</TableHead>
-                  <TableHead>Barcode</TableHead>
                   <TableHead>Nama Barang</TableHead>
                   <TableHead>Kategori</TableHead>
+                  <TableHead>Supplier</TableHead>
+                  <TableHead>Tgl. Masuk</TableHead>
                   <TableHead className="text-center">Stok</TableHead>
-                  <TableHead className="text-right">Harga Beli</TableHead>
                   <TableHead className="text-right">Harga Ecer</TableHead>
-                  <TableHead className="text-right">Harga Reseller</TableHead>
                   <TableHead className="text-center">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
@@ -325,13 +360,12 @@ const StockPage = () => {
                 {filteredStock.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.id}</TableCell>
-                    <TableCell className="font-mono text-xs">{item.barcode}</TableCell>
                     <TableCell>{item.name}</TableCell>
                     <TableCell>{item.category}</TableCell>
+                    <TableCell>{suppliers.find(s => s.id === item.supplierId)?.name || '-'}</TableCell>
+                    <TableCell>{format(item.entryDate, "dd/MM/yyyy")}</TableCell>
                     <TableCell className="text-center">{item.stock}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.buyPrice)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(item.retailPrice)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.resellerPrice)}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center gap-2">
                         <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => { setEditingItem(item); setIsEditItemDialogOpen(true); }}>
