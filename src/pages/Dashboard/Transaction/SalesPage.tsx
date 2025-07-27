@@ -1,22 +1,22 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { PlusCircle, ShoppingCart, Trash2, Minus, Plus, User, Tag, Banknote, Landmark } from "lucide-react";
+import { PlusCircle, ShoppingCart, Trash2, Minus, Plus, User, Tag, Banknote, Landmark, Printer, Download, FilePlus2 } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { toPng } from 'html-to-image';
+import Receipt from "@/components/Receipt";
 
-// --- Mock Data (In a real app, this would come from a central state/API) ---
-
-// Stock Item Data
+// --- Mock Data ---
 const initialStockData = [
   { id: 'BRG001', name: 'LCD iPhone X', category: 'Sparepart HP', stock: 15, buyPrice: 650000, retailPrice: 850000, resellerPrice: 800000, barcode: '8991234567890' },
   { id: 'BRG002', name: 'Baterai Samsung A50', category: 'Sparepart HP', stock: 25, buyPrice: 200000, retailPrice: 350000, resellerPrice: 320000, barcode: '8991234567891' },
@@ -24,8 +24,6 @@ const initialStockData = [
   { id: 'BRG004', name: 'Tempered Glass Universal', category: 'Aksesoris', stock: 120, buyPrice: 15000, retailPrice: 50000, resellerPrice: 35000, barcode: '8991234567893' },
   { id: 'BRG005', name: 'SSD 256GB NVMe', category: 'Sparepart Komputer', stock: 10, buyPrice: 450000, retailPrice: 600000, resellerPrice: 550000, barcode: '8991234567894' },
 ];
-
-// Customer Data
 const customers = [
   { id: 'CUS001', name: 'Pelanggan Umum', phone: '-' },
   { id: 'CUS002', name: 'Budi Santoso', phone: '081234567890' },
@@ -34,11 +32,16 @@ const customers = [
 
 // --- Type Definitions ---
 type StockItem = typeof initialStockData[0];
-type CartItem = StockItem & {
-  quantity: number;
-  priceType: 'retail' | 'reseller';
-};
+type CartItem = StockItem & { quantity: number; priceType: 'retail' | 'reseller'; };
 type PaymentMethod = 'tunai' | 'cicilan';
+type CompletedTransaction = {
+  id: string;
+  items: CartItem[];
+  summary: { totalSale: number; totalCost: number; profit: number; };
+  customerName: string;
+  paymentMethod: PaymentMethod;
+  date: Date;
+};
 
 const SalesPage = () => {
   const [stockData, setStockData] = useState(initialStockData);
@@ -46,6 +49,9 @@ const SalesPage = () => {
   const [selectedCustomer, setSelectedCustomer] = useState('CUS001');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('tunai');
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
+  const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false);
+  const [lastTransaction, setLastTransaction] = useState<CompletedTransaction | null>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
@@ -55,7 +61,6 @@ const SalesPage = () => {
       showError(`Stok ${item.name} tidak mencukupi.`);
       return;
     }
-
     if (existingItem) {
       setCart(cart.map(cartItem => cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem));
     } else {
@@ -82,15 +87,9 @@ const SalesPage = () => {
   };
 
   const transactionSummary = useMemo(() => {
-    const totalSale = cart.reduce((sum, item) => {
-      const price = item.priceType === 'retail' ? item.retailPrice : item.resellerPrice;
-      return sum + price * item.quantity;
-    }, 0);
-
-    const totalCost = cart.reduce((sum, item) => sum + item.buyPrice * item.quantity, 0);
-    const profit = totalSale - totalCost;
-
-    return { totalSale, totalCost, profit };
+    const totalSale = cart.reduce((sum, item) => (item.priceType === 'retail' ? item.retailPrice : item.resellerPrice) * item.quantity + sum, 0);
+    const totalCost = cart.reduce((sum, item) => item.buyPrice * item.quantity + sum, 0);
+    return { totalSale, totalCost, profit: totalSale - totalCost };
   }, [cart]);
 
   const handleProcessTransaction = () => {
@@ -98,24 +97,47 @@ const SalesPage = () => {
       showError("Keranjang belanja masih kosong.");
       return;
     }
-
-    // Update stock
     const newStockData = [...stockData];
     cart.forEach(cartItem => {
       const itemIndex = newStockData.findIndex(stockItem => stockItem.id === cartItem.id);
-      if (itemIndex !== -1) {
-        newStockData[itemIndex].stock -= cartItem.quantity;
-      }
+      if (itemIndex !== -1) newStockData[itemIndex].stock -= cartItem.quantity;
     });
     setStockData(newStockData);
 
-    // TODO: Save transaction record, handle installments if selected
-
+    const transaction: CompletedTransaction = {
+      id: `TRX-${Date.now()}`,
+      items: cart,
+      summary: transactionSummary,
+      customerName: customers.find(c => c.id === selectedCustomer)?.name || 'Umum',
+      paymentMethod,
+      date: new Date(),
+    };
+    setLastTransaction(transaction);
+    setIsReceiptDialogOpen(true);
     showSuccess("Transaksi berhasil diproses!");
+  };
+
+  const handleNewTransaction = () => {
     setCart([]);
     setSelectedCustomer('CUS001');
     setPaymentMethod('tunai');
+    setLastTransaction(null);
+    setIsReceiptDialogOpen(false);
   };
+
+  const handlePrint = () => window.print();
+
+  const handleDownload = useCallback(() => {
+    if (receiptRef.current === null) return;
+    toPng(receiptRef.current, { cacheBust: true })
+      .then((dataUrl) => {
+        const link = document.createElement('a');
+        link.download = `struk-${lastTransaction?.id}.png`;
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((err) => console.error('Gagal membuat gambar struk:', err));
+  }, [receiptRef, lastTransaction]);
 
   return (
     <DashboardLayout>
@@ -123,36 +145,21 @@ const SalesPage = () => {
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><User className="h-5 w-5" /> Pelanggan</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><User className="h-5 w-5" /> Pelanggan</CardTitle></CardHeader>
             <CardContent>
               <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih Pelanggan" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map(customer => (
-                    <SelectItem key={customer.id} value={customer.id}>{customer.name} - {customer.phone}</SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectTrigger><SelectValue placeholder="Pilih Pelanggan" /></SelectTrigger>
+                <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name} - {c.phone}</SelectItem>)}</SelectContent>
               </Select>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row justify-between items-center">
               <CardTitle className="flex items-center gap-2"><ShoppingCart className="h-5 w-5" /> Keranjang Belanja</CardTitle>
               <Dialog open={isItemDialogOpen} onOpenChange={setIsItemDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <PlusCircle className="h-4 w-4 mr-2" /> Pilih Barang
-                  </Button>
-                </DialogTrigger>
+                <DialogTrigger asChild><Button><PlusCircle className="h-4 w-4 mr-2" /> Pilih Barang</Button></DialogTrigger>
                 <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Pilih Barang</DialogTitle>
-                  </DialogHeader>
+                  <DialogHeader><DialogTitle>Pilih Barang</DialogTitle></DialogHeader>
                   <Command>
                     <CommandInput placeholder="Cari nama atau kode barang..." />
                     <CommandList>
@@ -176,22 +183,12 @@ const SalesPage = () => {
             <CardContent>
               {cart.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
-                  <ShoppingCart className="h-12 w-12 mx-auto mb-4" />
-                  <p className="font-medium">Keranjang Masih Kosong</p>
-                  <p className="text-sm">Klik "Pilih Barang" untuk menambahkan produk.</p>
+                  <ShoppingCart className="h-12 w-12 mx-auto mb-4" /><p className="font-medium">Keranjang Masih Kosong</p><p className="text-sm">Klik "Pilih Barang" untuk menambahkan produk.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Barang</TableHead>
-                        <TableHead className="w-[120px]">Jumlah</TableHead>
-                        <TableHead className="w-[180px]">Harga</TableHead>
-                        <TableHead className="text-right">Subtotal</TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
+                    <TableHeader><TableRow><TableHead>Barang</TableHead><TableHead className="w-[120px]">Jumlah</TableHead><TableHead className="w-[180px]">Harga</TableHead><TableHead className="text-right">Subtotal</TableHead><TableHead className="w-[50px]"></TableHead></TableRow></TableHeader>
                     <TableBody>
                       {cart.map(item => (
                         <TableRow key={item.id}>
@@ -205,9 +202,7 @@ const SalesPage = () => {
                           </TableCell>
                           <TableCell>
                             <Select value={item.priceType} onValueChange={(value: 'retail' | 'reseller') => handlePriceTypeChange(item.id, value)}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="retail">Ecer: {formatCurrency(item.retailPrice)}</SelectItem>
                                 <SelectItem value="reseller">Reseller: {formatCurrency(item.resellerPrice)}</SelectItem>
@@ -215,9 +210,7 @@ const SalesPage = () => {
                             </Select>
                           </TableCell>
                           <TableCell className="text-right font-semibold">{formatCurrency((item.priceType === 'retail' ? item.retailPrice : item.resellerPrice) * item.quantity)}</TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="icon" onClick={() => handleUpdateQuantity(item.id, 0)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
-                          </TableCell>
+                          <TableCell><Button variant="ghost" size="icon" onClick={() => handleUpdateQuantity(item.id, 0)}><Trash2 className="h-4 w-4 text-red-500" /></Button></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -227,31 +220,19 @@ const SalesPage = () => {
             </CardContent>
           </Card>
         </div>
-
         {/* Right Column */}
         <div className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Landmark className="h-5 w-5" /> Pembayaran</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Landmark className="h-5 w-5" /> Pembayaran</CardTitle></CardHeader>
             <CardContent>
               <RadioGroup value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)}>
-                <div className="flex items-center space-x-2 p-3 border rounded-md">
-                  <RadioGroupItem value="tunai" id="tunai" />
-                  <Label htmlFor="tunai" className="flex-grow">Tunai</Label>
-                </div>
-                <div className="flex items-center space-x-2 p-3 border rounded-md">
-                  <RadioGroupItem value="cicilan" id="cicilan" />
-                  <Label htmlFor="cicilan" className="flex-grow">Cicilan</Label>
-                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md"><RadioGroupItem value="tunai" id="tunai" /><Label htmlFor="tunai" className="flex-grow">Tunai</Label></div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md"><RadioGroupItem value="cicilan" id="cicilan" /><Label htmlFor="cicilan" className="flex-grow">Cicilan</Label></div>
               </RadioGroup>
             </CardContent>
           </Card>
-
           <Card className="bg-gray-800 text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Tag className="h-5 w-5" /> Info Transaksi</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Tag className="h-5 w-5" /> Info Transaksi</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between"><span>Item:</span> <span className="font-medium">{cart.length} produk</span></div>
               <div className="flex justify-between"><span>Kasir:</span> <span className="font-medium">admin</span></div>
@@ -263,13 +244,25 @@ const SalesPage = () => {
                 <div className="flex justify-between"><span>Total Belanja:</span> <span className="font-bold text-2xl">{formatCurrency(transactionSummary.totalSale)}</span></div>
                 <div className="flex justify-between text-green-400"><span>Estimasi Laba:</span> <span className="font-bold text-xl">{formatCurrency(transactionSummary.profit)}</span></div>
               </div>
-              <Button size="lg" className="w-full bg-red-600 hover:bg-red-700 text-lg" onClick={handleProcessTransaction} disabled={cart.length === 0}>
-                <Banknote className="h-5 w-5 mr-2" /> Proses Transaksi
-              </Button>
+              <Button size="lg" className="w-full bg-red-600 hover:bg-red-700 text-lg" onClick={handleProcessTransaction} disabled={cart.length === 0}><Banknote className="h-5 w-5 mr-2" /> Proses Transaksi</Button>
             </CardFooter>
           </Card>
         </div>
       </div>
+      {/* Receipt Dialog */}
+      <Dialog open={isReceiptDialogOpen} onOpenChange={setIsReceiptDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Struk Transaksi</DialogTitle></DialogHeader>
+          {lastTransaction && <Receipt ref={receiptRef} transaction={lastTransaction} />}
+          <DialogFooter className="sm:justify-between gap-2">
+            <Button type="button" variant="secondary" onClick={handleNewTransaction}><FilePlus2 className="mr-2 h-4 w-4" /> Transaksi Baru</Button>
+            <div className="flex gap-2">
+              <Button type="button" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Unduh</Button>
+              <Button type="button" onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Cetak</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
