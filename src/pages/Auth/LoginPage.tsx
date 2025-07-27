@@ -8,13 +8,13 @@ import { Link } from "react-router-dom";
 
 const LoginPage = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700 p-4">
-      <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm shadow-lg rounded-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <Card className="w-full max-w-md bg-white backdrop-blur-sm shadow-lg rounded-lg">
         <CardHeader className="text-center space-y-4 pt-8">
-          <div className="flex justify-center mb-2">
-            <Smartphone className="h-16 w-16 text-blue-600" />
+          <div className="flex justify-center mb-4">
+            <img src="/logo-cellkom.png" alt="CELLKOM Logo" className="h-16" />
           </div>
-          <CardTitle className="text-3xl font-bold text-gray-800">MB.PONSEL</CardTitle>
+          <CardTitle className="text-3xl font-bold text-black">CELLKOM</CardTitle>
           <p className="text-sm text-gray-600">Service & Toko Handphone Terpercaya</p>
           <div className="flex justify-center space-x-4 text-gray-500 text-sm">
             <div className="flex items-center gap-1">
@@ -34,14 +34,14 @@ const LoginPage = () => {
               <Label htmlFor="username" className="sr-only">Username</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input id="username" type="text" placeholder="Username" className="pl-10 pr-4 py-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500" />
+                <Input id="username" type="text" placeholder="Username" className="pl-10 pr-4 py-2 rounded-md border border-gray-300 focus:ring-red-500 focus:border-red-500" />
               </div>
             </div>
             <div>
               <Label htmlFor="password" className="sr-only">Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input id="password" type="password" placeholder="Password" className="pl-10 pr-4 py-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500" />
+                <Input id="password" type="password" placeholder="Password" className="pl-10 pr-4 py-2 rounded-md border border-gray-300 focus:ring-red-500 focus:border-red-500" />
               </div>
             </div>
           </div>
@@ -49,8 +49,8 @@ const LoginPage = () => {
             <Checkbox id="remember-me" />
             <Label htmlFor="remember-me" className="text-sm text-gray-700">Ingat Saya</Label>
           </div>
-          <Link to="/dashboard"> {/* Temporarily link to dashboard */}
-            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md text-lg font-semibold transition-colors duration-200">
+          <Link to="/dashboard">
+            <Button className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-md text-lg font-semibold transition-colors duration-200">
               Masuk ke Sistem
             </Button>
           </Link>
@@ -63,7 +63,7 @@ const LoginPage = () => {
             </div>
           </div>
           <p className="text-center text-xs text-gray-400 mt-2">
-            © 2024 MB.PONSEL - management system
+            © 2024 CELLKOM - management system
           </p>
         </CardContent>
       </Card>

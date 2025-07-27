@@ -24,7 +24,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const renderNavLinks = () => (
     <nav className="flex items-center space-x-4">
       {navItems.map((item) => (
-        <Button key={item.name} variant="ghost" asChild className="text-white hover:bg-blue-700 hover:text-white">
+        <Button key={item.name} variant="ghost" asChild className="text-white hover:bg-red-600 hover:text-white">
           <Link to={item.path} className="flex items-center gap-2">
             <item.icon className="h-4 w-4" />
             {item.name}
@@ -41,11 +41,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-64 bg-blue-800 text-white p-4">
-        <div className="text-2xl font-bold mb-6">MB.PONSEL</div>
+      <SheetContent side="left" className="w-64 bg-gray-900 text-white p-4">
+        <div className="text-2xl font-bold mb-6">CELLKOM</div>
         <nav className="flex flex-col space-y-2">
           {navItems.map((item) => (
-            <Button key={item.name} variant="ghost" asChild className="justify-start text-white hover:bg-blue-700 hover:text-white">
+            <Button key={item.name} variant="ghost" asChild className="justify-start text-white hover:bg-red-600 hover:text-white">
               <Link to={item.path} className="flex items-center gap-2">
                 <item.icon className="h-4 w-4" />
                 {item.name}
@@ -59,15 +59,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-blue-600 text-white p-4 shadow-md flex items-center justify-between">
+      <header className="bg-black text-white p-4 shadow-md flex items-center justify-between">
         <div className="flex items-center gap-4">
           {isMobile && renderMobileNav()}
-          <Link to="/dashboard" className="text-2xl font-bold">MB.PONSEL</Link>
+          <Link to="/dashboard" className="text-2xl font-bold">CELLKOM</Link>
         </div>
         {!isMobile && renderNavLinks()}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-blue-700 hover:text-white">
+            <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-red-600 hover:text-white">
               <UserCircle className="h-6 w-6" />
               <span className="hidden md:inline">admin</span>
             </Button>

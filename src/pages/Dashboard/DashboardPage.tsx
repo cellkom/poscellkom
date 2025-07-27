@@ -102,7 +102,7 @@ const DashboardPage = () => {
                   <YAxis tickFormatter={(value) => `Rp${Number(value) / 1000}k`} />
                   <Tooltip formatter={(value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(Number(value))} />
                   <Legend />
-                  <Bar dataKey="Penjualan" fill="#3b82f6" />
+                  <Bar dataKey="Penjualan" fill="#ef4444" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
