@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusCircle, Search, Edit, Trash2, RefreshCw, PlusSquare } from "lucide-react";
 import Barcode from "@/components/Barcode";
+import { showSuccess, showError } from "@/utils/toast";
 
 // Mock data for stock items with barcodes
 const initialStockData = [
@@ -20,10 +21,24 @@ const initialStockData = [
   { id: 'BRG006', name: 'RAM DDR4 8GB', category: 'Sparepart Komputer', stock: 18, buyPrice: 350000, sellPrice: 500000, barcode: '8991234567895' },
 ];
 
+const newItemInitialState = {
+  name: '',
+  category: '',
+  stock: 0,
+  buyPrice: 0,
+  sellPrice: 0,
+  barcode: ''
+};
+
 const StockPage = () => {
   const [stockData, setStockData] = useState(initialStockData);
   const [searchTerm, setSearchTerm] = useState("");
-  const [newBarcode, setNewBarcode] = useState("");
+
+  const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
+  const [newItem, setNewItem] = useState(newItemInitialState);
+
+  const [isAddStockDialogOpen, setIsAddStockDialogOpen] = useState(false);
+  const [stockToAdd, setStockToAdd] = useState({ itemId: '', quantity: 0 });
 
   const filteredStock = stockData.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -35,7 +50,44 @@ const StockPage = () => {
 
   const handleGenerateBarcode = () => {
     const generated = Math.floor(1000000000000 + Math.random() * 9000000000000).toString();
-    setNewBarcode(generated);
+    setNewItem(prev => ({ ...prev, barcode: generated }));
+  };
+
+  const handleNewItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const isNumeric = ['stock', 'buyPrice', 'sellPrice'].includes(name);
+    setNewItem(prev => ({ ...prev, [name]: isNumeric ? Number(value) : value }));
+  };
+
+  const handleAddItemSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newItem.name || !newItem.category || !newItem.barcode) {
+      showError("Harap isi semua field yang wajib diisi.");
+      return;
+    }
+    const newId = `BRG${(stockData.length + 1).toString().padStart(3, '0')}`;
+    setStockData(prev => [...prev, { ...newItem, id: newId }]);
+    showSuccess("Barang baru berhasil ditambahkan!");
+    setIsAddItemDialogOpen(false);
+    setNewItem(newItemInitialState);
+  };
+
+  const handleAddStockSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stockToAdd.itemId || stockToAdd.quantity <= 0) {
+      showError("Pilih barang dan masukkan jumlah yang valid.");
+      return;
+    }
+    setStockData(prevData =>
+      prevData.map(item =>
+        item.id === stockToAdd.itemId
+          ? { ...item, stock: item.stock + stockToAdd.quantity }
+          : item
+      )
+    );
+    showSuccess("Stok berhasil diperbarui!");
+    setIsAddStockDialogOpen(false);
+    setStockToAdd({ itemId: '', quantity: 0 });
   };
 
   return (
@@ -55,7 +107,7 @@ const StockPage = () => {
                 />
               </div>
               {/* Add Stock Dialog */}
-              <Dialog>
+              <Dialog open={isAddStockDialogOpen} onOpenChange={setIsAddStockDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" className="flex items-center gap-2">
                     <PlusSquare className="h-4 w-4" />
@@ -66,35 +118,35 @@ const StockPage = () => {
                   <DialogHeader>
                     <DialogTitle>Tambah Stok Barang</DialogTitle>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="item" className="text-right">Barang</Label>
-                      <Select>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Pilih Barang" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {stockData.map(item => (
-                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  <form onSubmit={handleAddStockSubmit}>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="item" className="text-right">Barang</Label>
+                        <Select onValueChange={(value) => setStockToAdd(prev => ({ ...prev, itemId: value }))} value={stockToAdd.itemId}>
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Pilih Barang" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {stockData.map(item => (
+                              <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="quantity" className="text-right">Jumlah</Label>
+                        <Input id="quantity" type="number" placeholder="0" className="col-span-3" value={stockToAdd.quantity} onChange={(e) => setStockToAdd(prev => ({ ...prev, quantity: Number(e.target.value) }))} />
+                      </div>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="quantity" className="text-right">Jumlah</Label>
-                      <Input id="quantity" type="number" placeholder="0" className="col-span-3" />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button type="button" variant="secondary">Batal</Button>
-                    </DialogClose>
-                    <Button type="submit">Tambah</Button>
-                  </DialogFooter>
+                    <DialogFooter>
+                      <Button type="button" variant="secondary" onClick={() => setIsAddStockDialogOpen(false)}>Batal</Button>
+                      <Button type="submit">Tambah</Button>
+                    </DialogFooter>
+                  </form>
                 </DialogContent>
               </Dialog>
               {/* Add Item Dialog */}
-              <Dialog onOpenChange={(open) => { if (open) handleGenerateBarcode() }}>
+              <Dialog open={isAddItemDialogOpen} onOpenChange={(open) => { setIsAddItemDialogOpen(open); if (open) handleGenerateBarcode(); }}>
                 <DialogTrigger asChild>
                   <Button className="flex items-center gap-2">
                     <PlusCircle className="h-4 w-4" />
@@ -105,65 +157,27 @@ const StockPage = () => {
                   <DialogHeader>
                     <DialogTitle>Tambah Barang Baru</DialogTitle>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="barcode" className="text-right">
-                        Barcode
-                      </Label>
-                      <div className="col-span-3 flex items-center gap-2">
-                        <Input
-                          id="barcode"
-                          value={newBarcode}
-                          onChange={(e) => setNewBarcode(e.target.value)}
-                          placeholder="Scan atau buat baru"
-                          className="font-mono"
-                        />
-                        <Button type="button" variant="outline" size="icon" onClick={handleGenerateBarcode} aria-label="Buat Barcode Baru">
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4 -mt-2">
-                        <div className="col-start-2 col-span-3">
-                            <Barcode value={newBarcode} />
+                  <form onSubmit={handleAddItemSubmit}>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="barcode" className="text-right">Barcode</Label>
+                        <div className="col-span-3 flex items-center gap-2">
+                          <Input id="barcode" name="barcode" value={newItem.barcode} onChange={(e) => setNewItem(prev => ({ ...prev, barcode: e.target.value }))} placeholder="Scan atau buat baru" className="font-mono" />
+                          <Button type="button" variant="outline" size="icon" onClick={handleGenerateBarcode} aria-label="Buat Barcode Baru"><RefreshCw className="h-4 w-4" /></Button>
                         </div>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4 -mt-2"><div className="col-start-2 col-span-3"><Barcode value={newItem.barcode} /></div></div>
+                      <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="name" className="text-right">Nama</Label><Input id="name" name="name" placeholder="Nama Barang" className="col-span-3" value={newItem.name} onChange={handleNewItemChange} /></div>
+                      <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="category" className="text-right">Kategori</Label><Select name="category" onValueChange={(value) => setNewItem(prev => ({ ...prev, category: value }))} value={newItem.category}><SelectTrigger className="col-span-3"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger><SelectContent><SelectItem value="Sparepart HP">Sparepart HP</SelectItem><SelectItem value="Sparepart Komputer">Sparepart Komputer</SelectItem><SelectItem value="Aksesoris">Aksesoris</SelectItem></SelectContent></Select></div>
+                      <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="stock" className="text-right">Stok</Label><Input id="stock" name="stock" type="number" placeholder="0" className="col-span-3" value={newItem.stock} onChange={handleNewItemChange} /></div>
+                      <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="buyPrice" className="text-right">Harga Beli</Label><Input id="buyPrice" name="buyPrice" type="number" placeholder="Rp 0" className="col-span-3" value={newItem.buyPrice} onChange={handleNewItemChange} /></div>
+                      <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="sellPrice" className="text-right">Harga Jual</Label><Input id="sellPrice" name="sellPrice" type="number" placeholder="Rp 0" className="col-span-3" value={newItem.sellPrice} onChange={handleNewItemChange} /></div>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="name" className="text-right">Nama</Label>
-                      <Input id="name" placeholder="Nama Barang" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="category" className="text-right">Kategori</Label>
-                      <Select>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Pilih Kategori" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sparepart-hp">Sparepart HP</SelectItem>
-                          <SelectItem value="sparepart-komputer">Sparepart Komputer</SelectItem>
-                          <SelectItem value="aksesoris">Aksesoris</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="stock" className="text-right">Stok</Label>
-                      <Input id="stock" type="number" placeholder="0" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="buyPrice" className="text-right">Harga Beli</Label>
-                      <Input id="buyPrice" type="number" placeholder="Rp 0" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="sellPrice" className="text-right">Harga Jual</Label>
-                      <Input id="sellPrice" type="number" placeholder="Rp 0" className="col-span-3" />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button type="button" variant="secondary">Batal</Button>
-                    </DialogClose>
-                    <Button type="submit">Simpan</Button>
-                  </DialogFooter>
+                    <DialogFooter>
+                      <Button type="button" variant="secondary" onClick={() => setIsAddItemDialogOpen(false)}>Batal</Button>
+                      <Button type="submit">Simpan</Button>
+                    </DialogFooter>
+                  </form>
                 </DialogContent>
               </Dialog>
             </div>
