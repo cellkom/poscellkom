@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusCircle, Search, Edit, Trash2, RefreshCw, PlusSquare } from "lucide-react";
+import Barcode from "@/components/Barcode";
 
 // Mock data for stock items with barcodes
 const initialStockData = [
@@ -22,6 +23,7 @@ const initialStockData = [
 const StockPage = () => {
   const [stockData, setStockData] = useState(initialStockData);
   const [searchTerm, setSearchTerm] = useState("");
+  const [newBarcode, setNewBarcode] = useState("");
 
   const filteredStock = stockData.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -31,8 +33,9 @@ const StockPage = () => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
   };
 
-  const generateBarcode = () => {
-    return Math.floor(1000000000000 + Math.random() * 9000000000000).toString();
+  const handleGenerateBarcode = () => {
+    const generated = Math.floor(1000000000000 + Math.random() * 9000000000000).toString();
+    setNewBarcode(generated);
   };
 
   return (
@@ -91,7 +94,7 @@ const StockPage = () => {
                 </DialogContent>
               </Dialog>
               {/* Add Item Dialog */}
-              <Dialog>
+              <Dialog onOpenChange={(open) => { if (open) handleGenerateBarcode() }}>
                 <DialogTrigger asChild>
                   <Button className="flex items-center gap-2">
                     <PlusCircle className="h-4 w-4" />
@@ -103,13 +106,14 @@ const StockPage = () => {
                     <DialogTitle>Tambah Barang Baru</DialogTitle>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="barcode" className="text-right">Barcode</Label>
-                      <div className="col-span-3 flex items-center gap-2">
-                        <Input id="barcode" defaultValue={generateBarcode()} readOnly />
-                        <Button type="button" variant="outline" size="icon" onClick={(e) => (e.currentTarget.previousElementSibling as HTMLInputElement).value = generateBarcode()}>
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
+                    <div className="space-y-2">
+                      <Label className="text-center block font-semibold">Barcode</Label>
+                      <Barcode value={newBarcode} />
+                      <div className="flex justify-center">
+                          <Button type="button" variant="outline" size="sm" onClick={handleGenerateBarcode}>
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Buat Barcode Baru
+                          </Button>
                       </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
