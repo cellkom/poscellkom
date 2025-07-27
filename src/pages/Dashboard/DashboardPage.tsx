@@ -2,32 +2,29 @@ import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { DollarSign, Wrench, ShoppingBag, Archive, ArrowUp, ArrowDown } from "lucide-react";
+import { DollarSign, Wrench, Receipt, CreditCard, ArrowUp } from "lucide-react";
 
-const salesData = [
-  { name: 'Sen', Penjualan: 400000 },
-  { name: 'Sel', Penjualan: 300000 },
-  { name: 'Rab', Penjualan: 600000 },
-  { name: 'Kam', Penjualan: 800000 },
-  { name: 'Jum', Penjualan: 500000 },
-  { name: 'Sab', Penjualan: 1200000 },
-  { name: 'Min', Penjualan: 900000 },
+// Mock data for dashboard summary
+const summaryData = {
+  revenueToday: 1850000,
+  transactionsToday: 25,
+  totalReceivables: 12500000,
+  servicesInProgress: 8,
+};
+
+// Mock data for recent activities (sales and services)
+const recentActivities = [
+  { id: 'TRX001', customer: 'Budi Santoso', type: 'Penjualan', detail: 'iPhone 13 Pro', status: 'Lunas', total: 15000000 },
+  { id: 'SRV005', customer: 'Ani Wijaya', type: 'Servis', detail: 'Ganti Baterai Samsung S21', status: 'Dikerjakan', total: 450000 },
+  { id: 'TRX002', customer: 'Citra Lestari', type: 'Penjualan', detail: 'Charger Anker 65W', status: 'Lunas', total: 350000 },
+  { id: 'SRV006', customer: 'Doni Firmansyah', type: 'Servis', detail: 'Perbaikan LCD Xiaomi Note 10', status: 'Menunggu Sparepart', total: 750000 },
+  { id: 'TRX003', customer: 'Eka Putri', type: 'Penjualan', detail: 'Headset Bluetooth', status: 'Cicilan', total: 600000 },
+  { id: 'SRV007', customer: 'Fahmi Rizal', type: 'Servis', detail: 'Update Software Laptop', status: 'Selesai', total: 150000 },
 ];
 
-const recentSales = [
-    { invoice: 'INV001', customer: 'Budi', item: 'LCD iPhone X', total: 'Rp 850.000' },
-    { invoice: 'INV002', customer: 'Ani', item: 'Baterai Samsung A50', total: 'Rp 350.000' },
-    { invoice: 'INV003', customer: 'Citra', item: 'Charger Type-C', total: 'Rp 150.000' },
-    { invoice: 'INV004', customer: 'Dewi', item: 'Tempered Glass', total: 'Rp 50.000' },
-];
-
-const serviceStatus = [
-    { id: 'SRV001', customer: 'Eko', device: 'Poco X3 Pro', status: 'Selesai' },
-    { id: 'SRV002', customer: 'Fahmi', device: 'Laptop Asus', status: 'Dikerjakan' },
-    { id: 'SRV003', customer: 'Gilang', device: 'iPhone 11', status: 'Antrian' },
-    { id: 'SRV004', customer: 'Hadi', device: 'Realme 5', status: 'Menunggu Sparepart' },
-];
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+};
 
 const DashboardPage = () => {
   return (
@@ -41,133 +38,87 @@ const DashboardPage = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">Rp 1.250.000</div>
+              <div className="text-2xl font-bold">{formatCurrency(summaryData.revenueToday)}</div>
               <p className="text-xs text-muted-foreground flex items-center">
                 <ArrowUp className="h-3 w-3 text-green-500 mr-1" />
-                +20.1% dari kemarin
+                +15% dari kemarin
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Servis Masuk</CardTitle>
+              <CardTitle className="text-sm font-medium">Transaksi Hari Ini</CardTitle>
+              <Receipt className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{summaryData.transactionsToday} Transaksi</div>
+              <p className="text-xs text-muted-foreground">+5 dari kemarin</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Piutang</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(summaryData.totalReceivables)}</div>
+              <p className="text-xs text-muted-foreground">dari 15 pelanggan</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Servis Dalam Proses</CardTitle>
               <Wrench className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+12</div>
-              <p className="text-xs text-muted-foreground flex items-center">
-                <ArrowUp className="h-3 w-3 text-green-500 mr-1" />
-                +5 dari kemarin
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Barang Terjual</CardTitle>
-              <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">+35</div>
-              <p className="text-xs text-muted-foreground flex items-center">
-                <ArrowDown className="h-3 w-3 text-red-500 mr-1" />
-                -10.5% dari kemarin
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Stok</CardTitle>
-              <Archive className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">1,245 pcs</div>
-              <p className="text-xs text-muted-foreground">
-                25 item di bawah stok minimum
-              </p>
+              <div className="text-2xl font-bold">{summaryData.servicesInProgress} Servis</div>
+              <p className="text-xs text-muted-foreground">3 servis baru hari ini</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Content */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="lg:col-span-4">
-            <CardHeader>
-              <CardTitle>Grafik Penjualan Mingguan</CardTitle>
-            </CardHeader>
-            <CardContent className="pl-2">
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={salesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis tickFormatter={(value) => `Rp${Number(value) / 1000}k`} />
-                  <Tooltip formatter={(value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(Number(value))} />
-                  <Legend />
-                  <Bar dataKey="Penjualan" fill="#ef4444" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-          <div className="lg:col-span-3 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Penjualan Terakhir</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Invoice</TableHead>
-                      <TableHead>Item</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentSales.map((sale) => (
-                      <TableRow key={sale.invoice}>
-                        <TableCell className="font-medium">{sale.invoice}</TableCell>
-                        <TableCell>{sale.item}</TableCell>
-                        <TableCell className="text-right">{sale.total}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Status Servis Terbaru</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Device</TableHead>
-                      <TableHead className="text-right">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {serviceStatus.map((service) => (
-                      <TableRow key={service.id}>
-                        <TableCell>
-                            <div className="font-medium">{service.device}</div>
-                            <div className="text-xs text-muted-foreground">{service.customer}</div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                            <Badge variant={
-                                service.status === 'Selesai' ? 'default' : 
-                                service.status === 'Dikerjakan' ? 'secondary' : 'destructive'
-                            }>
-                                {service.status}
-                            </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        {/* Recent Activities Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Aktivitas Terbaru</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Pelanggan</TableHead>
+                  <TableHead>Jenis</TableHead>
+                  <TableHead>Detail</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentActivities.map((activity) => (
+                  <TableRow key={activity.id}>
+                    <TableCell className="font-medium">{activity.customer}</TableCell>
+                    <TableCell>
+                      <Badge variant={activity.type === 'Penjualan' ? 'secondary' : 'outline'} className={activity.type === 'Penjualan' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}>
+                        {activity.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{activity.detail}</TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        activity.status === 'Lunas' || activity.status === 'Selesai' ? 'default' :
+                        activity.status === 'Dikerjakan' ? 'secondary' :
+                        activity.status === 'Cicilan' ? 'destructive' : 'outline'
+                      }>
+                        {activity.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{formatCurrency(activity.total)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
