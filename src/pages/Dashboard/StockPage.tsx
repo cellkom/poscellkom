@@ -143,13 +143,13 @@ const StockPage = () => {
                           </PopoverTrigger>
                           <PopoverContent className="w-[300px] p-0">
                             <Command>
-                              <CommandInput placeholder="Cari barang..." />
+                              <CommandInput placeholder="Cari (nama, kode, barcode)..." />
                               <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
                               <CommandGroup>
                                 {stockData.map((item) => (
                                   <CommandItem
                                     key={item.id}
-                                    value={item.name}
+                                    value={`${item.name} ${item.id} ${item.barcode}`}
                                     onSelect={() => {
                                       setStockToAdd(prev => ({ ...prev, itemId: item.id }));
                                       setIsComboboxOpen(false);
@@ -161,7 +161,12 @@ const StockPage = () => {
                                         stockToAdd.itemId === item.id ? "opacity-100" : "opacity-0"
                                       )}
                                     />
-                                    {item.name}
+                                    <div>
+                                      <div className="font-medium">{item.name}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {item.id} | Stok: {item.stock}
+                                      </div>
+                                    </div>
                                   </CommandItem>
                                 ))}
                               </CommandGroup>
