@@ -7,9 +7,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Search, Edit, Trash2, RefreshCw, PlusSquare } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { PlusCircle, Search, Edit, Trash2, RefreshCw, PlusSquare, ChevronsUpDown, Check } from "lucide-react";
 import Barcode from "@/components/Barcode";
 import { showSuccess, showError } from "@/utils/toast";
+import { cn } from "@/lib/utils";
 
 // Mock data for stock items with barcodes
 const initialStockData = [
@@ -40,6 +43,7 @@ const StockPage = () => {
 
   const [isAddStockDialogOpen, setIsAddStockDialogOpen] = useState(false);
   const [stockToAdd, setStockToAdd] = useState({ itemId: '', quantity: 0 });
+  const [isComboboxOpen, setIsComboboxOpen] = useState(false);
 
   const filteredStock = stockData.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -123,16 +127,47 @@ const StockPage = () => {
                     <div className="grid gap-4 py-4">
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="item" className="text-right">Barang</Label>
-                        <Select onValueChange={(value) => setStockToAdd(prev => ({ ...prev, itemId: value }))} value={stockToAdd.itemId}>
-                          <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="Pilih Barang" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {stockData.map(item => (
-                              <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={isComboboxOpen}
+                              className="col-span-3 justify-between"
+                            >
+                              {stockToAdd.itemId
+                                ? stockData.find((item) => item.id === stockToAdd.itemId)?.name
+                                : "Pilih Barang..."}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[300px] p-0">
+                            <Command>
+                              <CommandInput placeholder="Cari barang..." />
+                              <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
+                              <CommandGroup>
+                                {stockData.map((item) => (
+                                  <CommandItem
+                                    key={item.id}
+                                    value={item.name}
+                                    onSelect={() => {
+                                      setStockToAdd(prev => ({ ...prev, itemId: item.id }));
+                                      setIsComboboxOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        stockToAdd.itemId === item.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {item.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="quantity" className="text-right">Jumlah</Label>
