@@ -13,12 +13,12 @@ import { showSuccess, showError } from "@/utils/toast";
 
 // Mock data for stock items with barcodes
 const initialStockData = [
-  { id: 'BRG001', name: 'LCD iPhone X', category: 'Sparepart HP', stock: 15, buyPrice: 650000, sellPrice: 850000, barcode: '8991234567890' },
-  { id: 'BRG002', name: 'Baterai Samsung A50', category: 'Sparepart HP', stock: 25, buyPrice: 200000, sellPrice: 350000, barcode: '8991234567891' },
-  { id: 'BRG003', name: 'Charger Type-C 25W', category: 'Aksesoris', stock: 50, buyPrice: 80000, sellPrice: 150000, barcode: '8991234567892' },
-  { id: 'BRG004', name: 'Tempered Glass Universal', category: 'Aksesoris', stock: 120, buyPrice: 15000, sellPrice: 50000, barcode: '8991234567893' },
-  { id: 'BRG005', name: 'SSD 256GB NVMe', category: 'Sparepart Komputer', stock: 10, buyPrice: 450000, sellPrice: 600000, barcode: '8991234567894' },
-  { id: 'BRG006', name: 'RAM DDR4 8GB', category: 'Sparepart Komputer', stock: 18, buyPrice: 350000, sellPrice: 500000, barcode: '8991234567895' },
+  { id: 'BRG001', name: 'LCD iPhone X', category: 'Sparepart HP', stock: 15, buyPrice: 650000, retailPrice: 850000, resellerPrice: 800000, barcode: '8991234567890' },
+  { id: 'BRG002', name: 'Baterai Samsung A50', category: 'Sparepart HP', stock: 25, buyPrice: 200000, retailPrice: 350000, resellerPrice: 320000, barcode: '8991234567891' },
+  { id: 'BRG003', name: 'Charger Type-C 25W', category: 'Aksesoris', stock: 50, buyPrice: 80000, retailPrice: 150000, resellerPrice: 125000, barcode: '8991234567892' },
+  { id: 'BRG004', name: 'Tempered Glass Universal', category: 'Aksesoris', stock: 120, buyPrice: 15000, retailPrice: 50000, resellerPrice: 35000, barcode: '8991234567893' },
+  { id: 'BRG005', name: 'SSD 256GB NVMe', category: 'Sparepart Komputer', stock: 10, buyPrice: 450000, retailPrice: 600000, resellerPrice: 550000, barcode: '8991234567894' },
+  { id: 'BRG006', name: 'RAM DDR4 8GB', category: 'Sparepart Komputer', stock: 18, buyPrice: 350000, retailPrice: 500000, resellerPrice: 450000, barcode: '8991234567895' },
 ];
 
 const newItemInitialState = {
@@ -26,7 +26,8 @@ const newItemInitialState = {
   category: '',
   stock: 0,
   buyPrice: 0,
-  sellPrice: 0,
+  retailPrice: 0,
+  resellerPrice: 0,
   barcode: ''
 };
 
@@ -55,7 +56,7 @@ const StockPage = () => {
 
   const handleNewItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const isNumeric = ['stock', 'buyPrice', 'sellPrice'].includes(name);
+    const isNumeric = ['stock', 'buyPrice', 'retailPrice', 'resellerPrice'].includes(name);
     setNewItem(prev => ({ ...prev, [name]: isNumeric ? Number(value) : value }));
   };
 
@@ -171,7 +172,8 @@ const StockPage = () => {
                       <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="category" className="text-right">Kategori</Label><Select name="category" onValueChange={(value) => setNewItem(prev => ({ ...prev, category: value }))} value={newItem.category}><SelectTrigger className="col-span-3"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger><SelectContent><SelectItem value="Sparepart HP">Sparepart HP</SelectItem><SelectItem value="Sparepart Komputer">Sparepart Komputer</SelectItem><SelectItem value="Aksesoris">Aksesoris</SelectItem></SelectContent></Select></div>
                       <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="stock" className="text-right">Stok</Label><Input id="stock" name="stock" type="number" placeholder="0" className="col-span-3" value={newItem.stock} onChange={handleNewItemChange} /></div>
                       <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="buyPrice" className="text-right">Harga Beli</Label><Input id="buyPrice" name="buyPrice" type="number" placeholder="Rp 0" className="col-span-3" value={newItem.buyPrice} onChange={handleNewItemChange} /></div>
-                      <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="sellPrice" className="text-right">Harga Jual</Label><Input id="sellPrice" name="sellPrice" type="number" placeholder="Rp 0" className="col-span-3" value={newItem.sellPrice} onChange={handleNewItemChange} /></div>
+                      <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="retailPrice" className="text-right">Harga Ecer</Label><Input id="retailPrice" name="retailPrice" type="number" placeholder="Rp 0" className="col-span-3" value={newItem.retailPrice} onChange={handleNewItemChange} /></div>
+                      <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="resellerPrice" className="text-right">Harga Reseller</Label><Input id="resellerPrice" name="resellerPrice" type="number" placeholder="Rp 0" className="col-span-3" value={newItem.resellerPrice} onChange={handleNewItemChange} /></div>
                     </div>
                     <DialogFooter>
                       <Button type="button" variant="secondary" onClick={() => setIsAddItemDialogOpen(false)}>Batal</Button>
@@ -194,7 +196,8 @@ const StockPage = () => {
                   <TableHead>Kategori</TableHead>
                   <TableHead className="text-center">Stok</TableHead>
                   <TableHead className="text-right">Harga Beli</TableHead>
-                  <TableHead className="text-right">Harga Jual</TableHead>
+                  <TableHead className="text-right">Harga Ecer</TableHead>
+                  <TableHead className="text-right">Harga Reseller</TableHead>
                   <TableHead className="text-center">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
@@ -207,7 +210,8 @@ const StockPage = () => {
                     <TableCell>{item.category}</TableCell>
                     <TableCell className="text-center">{item.stock}</TableCell>
                     <TableCell className="text-right">{formatCurrency(item.buyPrice)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.sellPrice)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.retailPrice)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.resellerPrice)}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center gap-2">
                         <Button variant="outline" size="icon" className="h-8 w-8">
