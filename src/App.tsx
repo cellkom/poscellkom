@@ -7,7 +7,10 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/Auth/LoginPage";
 import DashboardPage from "./pages/Dashboard/DashboardPage";
-import StockPage from "./pages/Dashboard/StockPage"; // Import StockPage
+import StockPage from "./pages/Dashboard/StockPage";
+import SalesPage from "./pages/Dashboard/Transaction/SalesPage";
+import ServicePage from "./pages/Dashboard/Transaction/ServicePage";
+import InstallmentPage from "./pages/Dashboard/Transaction/InstallmentPage";
 
 const queryClient = new QueryClient();
 
@@ -21,7 +24,10 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/dashboard/stock" element={<StockPage />} /> {/* Add StockPage route */}
+          <Route path="/dashboard/stock" element={<StockPage />} />
+          <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
+          <Route path="/dashboard/transaction/service" element={<ServicePage />} />
+          <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
