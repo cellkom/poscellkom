@@ -45,9 +45,14 @@ const StockPage = () => {
   const [stockToAdd, setStockToAdd] = useState({ itemId: '', quantity: 0 });
   const [isComboboxOpen, setIsComboboxOpen] = useState(false);
 
-  const filteredStock = stockData.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredStock = stockData.filter(item => {
+    const term = searchTerm.toLowerCase();
+    return (
+      item.name.toLowerCase().includes(term) ||
+      item.id.toLowerCase().includes(term) ||
+      item.barcode.toLowerCase().includes(term)
+    );
+  });
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
@@ -105,7 +110,7 @@ const StockPage = () => {
               <div className="relative w-full md:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                 <Input
-                  placeholder="Cari barang..."
+                  placeholder="Cari (nama, kode, barcode)..."
                   className="pl-10"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
