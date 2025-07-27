@@ -21,13 +21,16 @@ interface ReceiptProps {
     customerName: string;
     paymentMethod: string;
     date: Date;
+    paymentAmount: number;
+    change: number;
+    remainingAmount: number;
   };
 }
 
 const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }, ref) => {
   if (!transaction) return null;
 
-  const { id: transactionId, items, summary, customerName, paymentMethod, date } = transaction;
+  const { id: transactionId, items, summary, customerName, paymentMethod, date, paymentAmount, change, remainingAmount } = transaction;
 
   return (
     <div ref={ref} id="receipt-print-area" className="bg-white text-black p-4 font-mono max-w-sm mx-auto border rounded-lg">
@@ -79,9 +82,21 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }, ref) 
           <span>{formatCurrency(summary.totalSale)}</span>
         </div>
         <div className="flex justify-between text-xs">
-          <span>Metode Bayar:</span>
-          <span>{paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}</span>
+          <span>Bayar ({paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}):</span>
+          <span>{formatCurrency(paymentAmount)}</span>
         </div>
+        {change > 0 && (
+          <div className="flex justify-between text-xs">
+            <span>Kembali:</span>
+            <span>{formatCurrency(change)}</span>
+          </div>
+        )}
+        {remainingAmount > 0 && (
+          <div className="flex justify-between text-xs font-semibold">
+            <span>Sisa:</span>
+            <span>{formatCurrency(remainingAmount)}</span>
+          </div>
+        )}
       </div>
 
       <div className="text-center text-xs mt-4">

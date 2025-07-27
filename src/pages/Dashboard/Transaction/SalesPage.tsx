@@ -41,6 +41,9 @@ type CompletedTransaction = {
   customerName: string;
   paymentMethod: PaymentMethod;
   date: Date;
+  paymentAmount: number;
+  change: number;
+  remainingAmount: number;
 };
 
 const SalesPage = () => {
@@ -48,6 +51,7 @@ const SalesPage = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState('CUS001');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('tunai');
+  const [paymentAmount, setPaymentAmount] = useState(0);
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false);
   const [lastTransaction, setLastTransaction] = useState<CompletedTransaction | null>(null);
@@ -92,6 +96,13 @@ const SalesPage = () => {
     return { totalSale, totalCost, profit: totalSale - totalCost };
   }, [cart]);
 
+  const paymentDetails = useMemo(() => {
+    const totalSale = transactionSummary.totalSale;
+    const change = paymentAmount > totalSale ? paymentAmount - totalSale : 0;
+    const remainingAmount = paymentAmount < totalSale ? totalSale - paymentAmount : 0;
+    return { change, remainingAmount };
+  }, [paymentAmount, transactionSummary.totalSale]);
+
   const handleProcessTransaction = () => {
     if (cart.length === 0) {
       showError("Keranjang belanja masih kosong.");
@@ -111,6 +122,9 @@ const SalesPage = () => {
       customerName: customers.find(c => c.id === selectedCustomer)?.name || 'Umum',
       paymentMethod,
       date: new Date(),
+      paymentAmount,
+      change: paymentDetails.change,
+      remainingAmount: paymentDetails.remainingAmount,
     };
     setLastTransaction(transaction);
     setIsReceiptDialogOpen(true);
@@ -121,6 +135,7 @@ const SalesPage = () => {
     setCart([]);
     setSelectedCustomer('CUS001');
     setPaymentMethod('tunai');
+    setPaymentAmount(0);
     setLastTransaction(null);
     setIsReceiptDialogOpen(false);
   };
@@ -240,9 +255,17 @@ const SalesPage = () => {
             </CardContent>
             <CardFooter className="flex-col space-y-4 p-4">
               <div className="w-full space-y-2 text-lg">
-                <div className="flex justify-between"><span>Total Modal:</span> <span className="font-semibold">{formatCurrency(transactionSummary.totalCost)}</span></div>
                 <div className="flex justify-between"><span>Total Belanja:</span> <span className="font-bold text-2xl">{formatCurrency(transactionSummary.totalSale)}</span></div>
-                <div className="flex justify-between text-green-400"><span>Estimasi Laba:</span> <span className="font-bold text-xl">{formatCurrency(transactionSummary.profit)}</span></div>
+                <div className="flex justify-between items-center border-t border-gray-600 pt-2 mt-2">
+                  <Label htmlFor="paymentAmount" className="text-base">Jumlah Bayar:</Label>
+                  <Input id="paymentAmount" type="number" value={paymentAmount || ''} onChange={(e) => setPaymentAmount(Number(e.target.value))} className="w-40 text-right bg-gray-700 border-gray-600 text-white text-lg" placeholder="Rp 0" />
+                </div>
+                {paymentDetails.change > 0 && (
+                  <div className="flex justify-between text-cyan-400"><span>Kembalian:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.change)}</span></div>
+                )}
+                {paymentDetails.remainingAmount > 0 && (
+                  <div className="flex justify-between text-yellow-400"><span>Sisa Bayar:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.remainingAmount)}</span></div>
+                )}
               </div>
               <Button size="lg" className="w-full bg-red-600 hover:bg-red-700 text-lg" onClick={handleProcessTransaction} disabled={cart.length === 0}><Banknote className="h-5 w-5 mr-2" /> Proses Transaksi</Button>
             </CardFooter>
