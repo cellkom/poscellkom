@@ -58,6 +58,17 @@ const SalesPage = () => {
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+  
+  const formatNumberInput = (num: number): string => {
+    if (num === 0) return '';
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  const handlePaymentAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const numericValue = parseInt(rawValue.replace(/[^0-9]/g, ''), 10);
+    setPaymentAmount(isNaN(numericValue) ? 0 : numericValue);
+  };
 
   const handleAddItemToCart = (item: StockItem) => {
     const existingItem = cart.find(cartItem => cartItem.id === item.id);
@@ -258,7 +269,14 @@ const SalesPage = () => {
                 <div className="flex justify-between"><span>Total Belanja:</span> <span className="font-bold text-2xl">{formatCurrency(transactionSummary.totalSale)}</span></div>
                 <div className="flex justify-between items-center border-t border-gray-600 pt-2 mt-2">
                   <Label htmlFor="paymentAmount" className="text-base">Jumlah Bayar:</Label>
-                  <Input id="paymentAmount" type="number" value={paymentAmount || ''} onChange={(e) => setPaymentAmount(Number(e.target.value))} className="w-40 text-right bg-gray-700 border-gray-600 text-white text-lg" placeholder="Rp 0" />
+                  <Input
+                    id="paymentAmount"
+                    type="text"
+                    value={formatNumberInput(paymentAmount)}
+                    onChange={handlePaymentAmountChange}
+                    className="w-40 text-right bg-gray-700 border-gray-600 text-white text-lg"
+                    placeholder="0"
+                  />
                 </div>
                 {paymentDetails.change > 0 && (
                   <div className="flex justify-between text-cyan-400"><span>Kembalian:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.change)}</span></div>
