@@ -106,15 +106,27 @@ const StockPage = () => {
                     <DialogTitle>Tambah Barang Baru</DialogTitle>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
-                    <div className="space-y-2">
-                      <Label className="text-center block font-semibold">Barcode</Label>
-                      <Barcode value={newBarcode} />
-                      <div className="flex justify-center">
-                          <Button type="button" variant="outline" size="sm" onClick={handleGenerateBarcode}>
-                              <RefreshCw className="h-4 w-4 mr-2" />
-                              Buat Barcode Baru
-                          </Button>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="barcode" className="text-right">
+                        Barcode
+                      </Label>
+                      <div className="col-span-3 flex items-center gap-2">
+                        <Input
+                          id="barcode"
+                          value={newBarcode}
+                          onChange={(e) => setNewBarcode(e.target.value)}
+                          placeholder="Scan atau buat baru"
+                          className="font-mono"
+                        />
+                        <Button type="button" variant="outline" size="icon" onClick={handleGenerateBarcode} aria-label="Buat Barcode Baru">
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
                       </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4 -mt-2">
+                        <div className="col-start-2 col-span-3">
+                            <Barcode value={newBarcode} />
+                        </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="name" className="text-right">Nama</Label>
