@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/Auth/LoginPage";
 import DashboardPage from "./pages/Dashboard/DashboardPage";
 import StockPage from "./pages/Dashboard/StockPage";
+import ServiceMasukPage from "./pages/Dashboard/ServiceMasukPage";
 import SalesPage from "./pages/Dashboard/Transaction/SalesPage";
 import ServicePage from "./pages/Dashboard/Transaction/ServicePage";
 import InstallmentPage from "./pages/Dashboard/Transaction/InstallmentPage";
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/dashboard/stock" element={<StockPage />} />
+          <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
           <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
           <Route path="/dashboard/transaction/service" element={<ServicePage />} />
           <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
