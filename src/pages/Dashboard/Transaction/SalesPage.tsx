@@ -232,14 +232,15 @@ const SalesPage = () => {
                 <DialogContent className="max-w-2xl">
                   <DialogHeader><DialogTitle>Pilih Barang</DialogTitle></DialogHeader>
                   <Command>
-                    <CommandInput placeholder="Cari nama atau kode barang..." />
+                    <CommandInput placeholder="Cari nama, kode, atau barcode..." />
                     <CommandList>
                       <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
                       <CommandGroup>
                         {products.filter(item => item.stock > 0).map(item => (
-                          <CommandItem key={item.id} onSelect={() => handleAddToCart(item)} className="flex justify-between items-center cursor-pointer">
+                          <CommandItem key={item.id} value={`${item.name} ${item.id} ${item.barcode}`} onSelect={() => handleAddToCart(item)} className="flex justify-between items-center cursor-pointer">
                             <div>
                               <p className="font-medium">{item.name}</p>
+                              <p className="text-sm text-muted-foreground font-mono">{item.barcode}</p>
                               <p className="text-sm text-muted-foreground">Stok: {item.stock} | {formatCurrency(item.retailPrice)}</p>
                             </div>
                             <Button variant="outline" size="sm">Pilih</Button>
