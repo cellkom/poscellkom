@@ -18,6 +18,9 @@ interface ServiceTransaction {
   usedParts: UsedPart[];
   serviceFee: number;
   total: number;
+  paymentAmount: number;
+  change: number;
+  remainingAmount: number;
 }
 
 interface ReceiptProps {
@@ -27,7 +30,7 @@ interface ReceiptProps {
 const ServiceReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }, ref) => {
   if (!transaction) return null;
 
-  const { id, date, customerName, description, usedParts, total } = transaction;
+  const { id, date, customerName, description, usedParts, total, paymentAmount, change, remainingAmount } = transaction;
 
   return (
     <div ref={ref} id="receipt-print-area" className="bg-white text-black p-4 font-mono max-w-sm mx-auto border rounded-lg">
@@ -68,6 +71,22 @@ const ServiceReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }
           <span>TOTAL</span>
           <span>{formatCurrency(total)}</span>
         </div>
+        <div className="flex justify-between text-xs">
+          <span>Bayar:</span>
+          <span>{formatCurrency(paymentAmount)}</span>
+        </div>
+        {change > 0 && (
+          <div className="flex justify-between text-xs">
+            <span>Kembali:</span>
+            <span>{formatCurrency(change)}</span>
+          </div>
+        )}
+        {remainingAmount > 0 && (
+          <div className="flex justify-between text-xs font-semibold">
+            <span>Sisa:</span>
+            <span>{formatCurrency(remainingAmount)}</span>
+          </div>
+        )}
       </div>
 
       <div className="text-center text-xs mt-4">

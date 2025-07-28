@@ -10,11 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { PlusCircle, Wrench, Trash2, Minus, Plus, ClipboardList, Printer, Download, FilePlus2 } from "lucide-react";
+import { PlusCircle, Wrench, Trash2, Minus, Plus, ClipboardList, Printer, Download, FilePlus2, Banknote } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import { serviceEntriesDB, useServiceEntries } from "@/data/service-entries";
 import ServiceReceipt from "@/components/ServiceReceipt";
 import { toPng } from 'html-to-image';
+import { installmentsDB } from "@/data/installments";
 
 // --- Mock Data ---
 const initialStockData = [
@@ -43,6 +44,9 @@ type CompletedServiceTransaction = {
   usedParts: UsedPart[];
   serviceFee: number;
   total: number;
+  paymentAmount: number;
+  change: number;
+  remainingAmount: number;
 };
 
 const ServicePage = () => {
@@ -52,6 +56,7 @@ const ServicePage = () => {
   const [serviceDescription, setServiceDescription] = useState('');
   const [serviceFee, setServiceFee] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('tunai');
+  const [paymentAmount, setPaymentAmount] = useState(0);
   const [status, setStatus] = useState<ServiceStatus>('Proses');
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const allServiceEntries = useServiceEntries();
@@ -61,6 +66,17 @@ const ServicePage = () => {
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+  
+  const formatNumberInput = (num: number): string => {
+    if (num === 0) return '';
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  const handlePaymentAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const numericValue = parseInt(rawValue.replace(/[^0-9]/g, ''), 10);
+    setPaymentAmount(isNaN(numericValue) ? 0 : numericValue);
+  };
 
   const handleAddPart = (item: StockItem) => {
     const existingPart = usedParts.find(part => part.id === item.id);
@@ -97,6 +113,13 @@ const ServicePage = () => {
     return { sparepartCost, total, sparepartModal, profit };
   }, [usedParts, serviceFee]);
 
+  const paymentDetails = useMemo(() => {
+    const total = summary.total;
+    const change = paymentAmount > total ? paymentAmount - total : 0;
+    const remainingAmount = paymentAmount < total ? total - paymentAmount : 0;
+    return { change, remainingAmount };
+  }, [paymentAmount, summary.total]);
+
   const handleSelectService = (serviceId: string) => {
     const service = allServiceEntries.find(s => s.id === serviceId);
     if (service) {
@@ -128,7 +151,23 @@ const ServicePage = () => {
       usedParts: usedParts,
       serviceFee: serviceFee,
       total: summary.total,
+      paymentAmount: paymentAmount,
+      change: paymentDetails.change,
+      remainingAmount: paymentDetails.remainingAmount,
     };
+
+    if (paymentDetails.remainingAmount > 0) {
+      installmentsDB.add({
+        id: transaction.id,
+        type: 'Servis',
+        customerName: transaction.customerName,
+        transactionDate: transaction.date,
+        totalAmount: transaction.total,
+        initialPayment: transaction.paymentAmount,
+        details: transaction.description,
+      });
+    }
+    
     setLastTransaction(transaction);
     setIsReceiptOpen(true);
     
@@ -151,6 +190,7 @@ const ServicePage = () => {
     setServiceDescription('');
     setServiceFee(0);
     setPaymentMethod('tunai');
+    setPaymentAmount(0);
     setStatus('Proses');
     setSelectedServiceId(null);
     setLastTransaction(null);
@@ -300,9 +340,29 @@ const ServicePage = () => {
               <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2"><span>Total:</span> <span>{formatCurrency(summary.total)}</span></div>
               <div className="flex justify-between text-sm text-muted-foreground"><span>Modal Sparepart:</span> <span>{formatCurrency(summary.sparepartModal)}</span></div>
               <div className="flex justify-between text-lg font-bold text-green-600"><span>Laba:</span> <span>{formatCurrency(summary.profit)}</span></div>
+              
+              <div className="border-t pt-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="paymentAmount" className="text-base">Jumlah Bayar:</Label>
+                  <Input
+                    id="paymentAmount"
+                    type="text"
+                    value={formatNumberInput(paymentAmount)}
+                    onChange={handlePaymentAmountChange}
+                    className="w-40 text-right text-lg"
+                    placeholder="0"
+                  />
+                </div>
+                {paymentDetails.change > 0 && (
+                  <div className="flex justify-between text-cyan-500"><span>Kembalian:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.change)}</span></div>
+                )}
+                {paymentDetails.remainingAmount > 0 && (
+                  <div className="flex justify-between text-yellow-500"><span>Sisa Bayar:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.remainingAmount)}</span></div>
+                )}
+              </div>
             </CardContent>
             <CardFooter>
-              <Button size="lg" className="w-full" onClick={handleProcessService}><Wrench className="h-5 w-5 mr-2" /> Proses & Cetak Nota</Button>
+              <Button size="lg" className="w-full" onClick={handleProcessService} disabled={!selectedServiceId}><Banknote className="h-5 w-5 mr-2" /> Proses & Cetak Nota</Button>
             </CardFooter>
           </Card>
         </div>
