@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 
+// Interface ini digunakan di seluruh aplikasi (camelCase)
 export interface Product {
   id: string;
-  created_at: string;
+  createdAt: string;
   name: string;
   category: string;
   stock: number;
@@ -13,8 +14,54 @@ export interface Product {
   resellerPrice: number;
   barcode: string;
   supplierId: string | null;
-  entryDate: string; // ISO string for date
+  entryDate: string;
 }
+
+// Interface ini merepresentasikan skema di database (snake_case)
+interface DbProduct {
+  id: string;
+  created_at: string;
+  name: string;
+  category: string;
+  stock: number;
+  buy_price: number;
+  retail_price: number;
+  reseller_price: number;
+  barcode: string;
+  supplier_id: string | null;
+  entry_date: string;
+}
+
+// Fungsi untuk mengubah format dari database ke format aplikasi
+const fromDbProduct = (dbProduct: DbProduct): Product => ({
+  id: dbProduct.id,
+  createdAt: dbProduct.created_at,
+  name: dbProduct.name,
+  category: dbProduct.category,
+  stock: dbProduct.stock,
+  buyPrice: dbProduct.buy_price,
+  retailPrice: dbProduct.retail_price,
+  resellerPrice: dbProduct.reseller_price,
+  barcode: dbProduct.barcode,
+  supplierId: dbProduct.supplier_id,
+  entryDate: dbProduct.entry_date,
+});
+
+// Fungsi untuk mengubah format dari aplikasi ke format database
+const toDbProduct = (product: Partial<Omit<Product, 'id' | 'createdAt'>>): Partial<Omit<DbProduct, 'id' | 'created_at'>> => {
+  const dbProduct: Partial<Omit<DbProduct, 'id' | 'created_at'>> = {};
+  if (product.name !== undefined) dbProduct.name = product.name;
+  if (product.category !== undefined) dbProduct.category = product.category;
+  if (product.stock !== undefined) dbProduct.stock = product.stock;
+  if (product.buyPrice !== undefined) dbProduct.buy_price = product.buyPrice;
+  if (product.retailPrice !== undefined) dbProduct.retail_price = product.retailPrice;
+  if (product.resellerPrice !== undefined) dbProduct.reseller_price = product.resellerPrice;
+  if (product.barcode !== undefined) dbProduct.barcode = product.barcode;
+  if (product.supplierId !== undefined) dbProduct.supplier_id = product.supplierId;
+  if (product.entryDate !== undefined) dbProduct.entry_date = product.entryDate;
+  return dbProduct;
+};
+
 
 export const useStock = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,7 +79,7 @@ export const useStock = () => {
         showError(`Gagal memuat data produk: ${error.message}`);
         console.error(error);
       } else {
-        setProducts(data || []);
+        setProducts((data || []).map(fromDbProduct));
       }
       setLoading(false);
     };
@@ -46,13 +93,13 @@ export const useStock = () => {
         { event: '*', schema: 'public', table: 'products' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setProducts(prev => [...prev, payload.new as Product].sort((a, b) => a.name.localeCompare(b.name)));
+            setProducts(prev => [...prev, fromDbProduct(payload.new as DbProduct)].sort((a, b) => a.name.localeCompare(b.name)));
           }
           if (payload.eventType === 'UPDATE') {
-            setProducts(prev => prev.map(p => p.id === payload.new.id ? payload.new as Product : p));
+            setProducts(prev => prev.map(p => p.id === payload.new.id ? fromDbProduct(payload.new as DbProduct) : p));
           }
           if (payload.eventType === 'DELETE') {
-            setProducts(prev => prev.filter(p => p.id !== (payload.old as Product).id));
+            setProducts(prev => prev.filter(p => p.id !== (payload.old as DbProduct).id));
           }
         }
       )
@@ -63,10 +110,11 @@ export const useStock = () => {
     };
   }, []);
 
-  const addProduct = async (newProductData: Omit<Product, 'id' | 'created_at'>) => {
+  const addProduct = async (newProductData: Omit<Product, 'id' | 'createdAt'>) => {
+    const dbData = toDbProduct(newProductData);
     const { data, error } = await supabase
       .from('products')
-      .insert(newProductData)
+      .insert(dbData)
       .select()
       .single();
 
@@ -76,13 +124,14 @@ export const useStock = () => {
       return null;
     }
     showSuccess("Produk baru berhasil ditambahkan!");
-    return data;
+    return data ? fromDbProduct(data) : null;
   };
 
-  const updateProduct = async (id: string, updatedFields: Partial<Omit<Product, 'id' | 'created_at'>>) => {
+  const updateProduct = async (id: string, updatedFields: Partial<Omit<Product, 'id' | 'createdAt'>>) => {
+    const dbData = toDbProduct(updatedFields);
     const { data, error } = await supabase
       .from('products')
-      .update(updatedFields)
+      .update(dbData)
       .eq('id', id)
       .select()
       .single();
@@ -93,7 +142,7 @@ export const useStock = () => {
       return null;
     }
     showSuccess("Data produk berhasil diperbarui!");
-    return data;
+    return data ? fromDbProduct(data) : null;
   };
 
   const deleteProduct = async (id: string) => {
@@ -137,7 +186,7 @@ export const useStock = () => {
       return null;
     }
     showSuccess("Stok berhasil diperbarui!");
-    return data;
+    return data ? fromDbProduct(data) : null;
   };
 
   return {
