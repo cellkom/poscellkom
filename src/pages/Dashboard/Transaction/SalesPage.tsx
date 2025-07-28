@@ -33,6 +33,7 @@ type CompletedTransaction = {
   paymentAmount: number;
   change: number;
   remainingAmount: number;
+  paymentMethod: PaymentMethod;
 };
 
 const SalesPage = () => {
@@ -147,18 +148,29 @@ const SalesPage = () => {
       paymentAmount: paymentAmount,
       change: paymentDetails.change,
       remainingAmount: paymentDetails.remainingAmount,
+      paymentMethod: paymentMethod,
     };
 
     // Add to sales history
     salesHistoryDB.add({
-      ...transaction,
+      id: transaction.id,
       items: transaction.items.map(i => ({
         id: i.id,
         name: i.name,
         quantity: i.quantity,
         buyPrice: i.buyPrice,
-        sellPrice: customerType === 'reseller' ? i.resellerPrice : i.retailPrice,
+        salePrice: customerType === 'reseller' ? i.resellerPrice : i.retailPrice,
       })),
+      summary: {
+        totalSale: transaction.total,
+        totalCost: summary.modal,
+        profit: summary.profit,
+      },
+      customerName: transaction.customerName,
+      paymentMethod: transaction.paymentMethod,
+      date: transaction.date,
+      paymentAmount: transaction.paymentAmount,
+      remainingAmount: transaction.remainingAmount,
     });
 
     if (paymentDetails.remainingAmount > 0) {
@@ -377,7 +389,7 @@ const SalesPage = () => {
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Nota Penjualan</DialogTitle></DialogHeader>
-          {lastTransaction && <SalesReceipt ref={receiptRef} transaction={lastTransaction} />}
+          {lastTransaction && <SalesReceipt ref={receiptRef} transaction={lastTransaction} customerType={customerType} />}
           <DialogFooter className="sm:justify-between gap-2">
             <Button type="button" variant="secondary" onClick={handleNewTransaction}><FilePlus2 className="mr-2 h-4 w-4" /> Transaksi Baru</Button>
             <div className="flex gap-2">

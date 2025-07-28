@@ -57,5 +57,20 @@ export const useCustomers = () => {
         };
     }, []);
 
-    return { customers, loading };
+    const addCustomer = async (newCustomerData: { name: string; phone: string | null; address: string | null; }) => {
+        const { data, error } = await supabase
+            .from('customers')
+            .insert(newCustomerData)
+            .select()
+            .single();
+
+        if (error) {
+            showError(`Gagal menambah pelanggan: ${error.message}`);
+            console.error(error);
+            return null;
+        }
+        return data;
+    };
+
+    return { customers, loading, addCustomer };
 };
