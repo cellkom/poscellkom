@@ -61,9 +61,7 @@ const ServiceReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }
           )}
           {usedParts.map((part, index) => (
             <tr key={index}>
-              <td className="text-left">{part.name} ({part.quantity}x)</td>
-              <td colSpan={2}></td>
-              <td className="text-right">{formatCurrency(part.retailPrice * part.quantity)}</td>
+              <td colSpan={4} className="text-left">{part.name} ({part.quantity}x)</td>
             </tr>
           ))}
         </tbody>
