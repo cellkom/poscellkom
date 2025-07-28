@@ -163,9 +163,9 @@ const ServiceMasukPage = () => {
   };
 
   const filteredEntries = serviceEntries.filter(entry =>
-    (entry.customerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (entry.device_type || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (String(entry.id) || '').toLowerCase().includes(searchTerm.toLowerCase())
+    entry.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    entry.device_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(entry.id).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const formatCurrency = (value: number) => {
