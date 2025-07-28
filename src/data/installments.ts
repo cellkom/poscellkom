@@ -38,11 +38,6 @@ const initialInstallments: Installment[] = [
 type Listener = (installments: Installment[]) => void;
 const listeners: Set<Listener> = new Set();
 
-const subscribe = (listener: Listener) => {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-};
-
 const notify = () => {
     listeners.forEach(listener => listener([...initialInstallments]));
 };
@@ -89,7 +84,10 @@ export const installmentsDB = {
         }
     },
     
-    subscribe,
+    subscribe: (listener: Listener) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+    },
 };
 
 // --- React Hook for easy data access ---
