@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Menu, LayoutDashboard, Package, ShoppingCart, Database, FileText, Users, UserCircle, Receipt, Wrench, CreditCard, ChevronDown, ClipboardPlus, Truck } from "lucide-react";
@@ -6,41 +6,49 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-const navItems = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { name: "Stok", icon: Package, path: "/dashboard/stock" },
-  { name: "Service Masuk", icon: ClipboardPlus, path: "/dashboard/service-masuk" },
-  { 
-    name: "Transaksi", 
-    icon: Receipt,
-    path: "/dashboard/transaction", // Base path for active state
-    subItems: [
-        { name: "Penjualan", icon: ShoppingCart, path: "/dashboard/transaction/sales" },
-        { name: "Jasa Service", icon: Wrench, path: "/dashboard/transaction/service" },
-        { name: "Kelola Cicilan", icon: CreditCard, path: "/dashboard/transaction/installments" },
-    ]
-  },
-  { 
-    name: "Data", 
-    icon: Database, 
-    path: "/dashboard/data",
-    subItems: [
-        { name: "Pelanggan", icon: Users, path: "/dashboard/data/customers" },
-        { name: "Supplier", icon: Truck, path: "/dashboard/data/suppliers" },
-    ]
-  },
-  { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
-  { name: "Users", icon: Users, path: "/dashboard/users" },
-];
-
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const isMobile = useIsMobile();
   const location = useLocation();
+  const { logout, profile } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  const navItems = [
+    { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+    { name: "Stok", icon: Package, path: "/dashboard/stock" },
+    { name: "Service Masuk", icon: ClipboardPlus, path: "/dashboard/service-masuk" },
+    { 
+      name: "Transaksi", 
+      icon: Receipt,
+      path: "/dashboard/transaction", // Base path for active state
+      subItems: [
+          { name: "Penjualan", icon: ShoppingCart, path: "/dashboard/transaction/sales" },
+          { name: "Jasa Service", icon: Wrench, path: "/dashboard/transaction/service" },
+          { name: "Kelola Cicilan", icon: CreditCard, path: "/dashboard/transaction/installments" },
+      ]
+    },
+    { 
+      name: "Data", 
+      icon: Database, 
+      path: "/dashboard/data",
+      subItems: [
+          { name: "Pelanggan", icon: Users, path: "/dashboard/data/customers" },
+          { name: "Supplier", icon: Truck, path: "/dashboard/data/suppliers" },
+      ]
+    },
+    { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
+    ...(profile?.role === 'Admin' ? [{ name: "Users", icon: Users, path: "/dashboard/users" }] : []),
+  ];
 
   const renderNavLinks = () => (
     <nav className="hidden md:flex items-center space-x-1">
@@ -136,17 +144,17 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-red-600 hover:text-white">
               <UserCircle className="h-6 w-6" />
-              <span className="hidden md:inline">admin</span>
+              <span className="hidden md:inline">{profile?.full_name || 'Pengguna'}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>Akun Saya ({profile?.role})</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem>Profil</DropdownMenuItem>
+            <DropdownMenuItem>Pengaturan</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/login" className="cursor-pointer">Log out</Link>
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+              Keluar
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

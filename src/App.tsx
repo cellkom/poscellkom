@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/Auth/LoginPage";
@@ -22,25 +24,33 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/dashboard/stock" element={<StockPage />} />
-          <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
-          <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
-          <Route path="/dashboard/transaction/service" element={<ServicePage />} />
-          <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
-          <Route path="/dashboard/reports" element={<ReportsPage />} />
-          <Route path="/dashboard/reports/sales" element={<SalesReportPage />} />
-          <Route path="/dashboard/data/customers" element={<CustomerPage />} />
-          <Route path="/dashboard/data/suppliers" element={<SupplierPage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<LoginPage />} />
+            
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/dashboard/stock" element={<StockPage />} />
+              <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
+              <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
+              <Route path="/dashboard/transaction/service" element={<ServicePage />} />
+              <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
+              <Route path="/dashboard/reports" element={<ReportsPage />} />
+              <Route path="/dashboard/reports/sales" element={<SalesReportPage />} />
+              <Route path="/dashboard/data/customers" element={<CustomerPage />} />
+              <Route path="/dashboard/data/suppliers" element={<SupplierPage />} />
+              {/* The /dashboard/users route is implicitly protected here */}
+            </Route>
+
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
