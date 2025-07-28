@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { showSuccess, showError } from "@/utils/toast";
 import { toPng } from 'html-to-image';
 import ServiceMasukReceipt from "@/components/ServiceMasukReceipt";
+import { serviceEntriesDB } from "@/data/service-entries";
 
 // Mock Data
 const initialCustomers = [
@@ -90,14 +91,16 @@ const ServiceMasukPage = () => {
     }
 
     const selectedCustomer = customers.find(c => c.id === formData.customerId);
-    const newEntry: ServiceEntry = {
+    const newEntryData = {
       ...formData,
       id: `SRV-IN-${Date.now()}`,
       customerName: selectedCustomer?.name || '',
       customerPhone: selectedCustomer?.phone || '',
     };
 
-    setLastEntry(newEntry);
+    serviceEntriesDB.add(newEntryData);
+
+    setLastEntry(newEntryData);
     setIsReceiptOpen(true);
     showSuccess("Data service masuk berhasil disimpan.");
     setFormData(initialState);

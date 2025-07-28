@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { PlusCircle, Wrench, Trash2, Minus, Plus } from "lucide-react";
+import { PlusCircle, Wrench, Trash2, Minus, Plus, ClipboardList } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
+import { serviceEntriesDB, useServiceEntries } from "@/data/service-entries";
 
 // --- Mock Data (reusing from other pages for consistency) ---
 const initialStockData = [
@@ -31,7 +32,7 @@ const customers = [
 type StockItem = typeof initialStockData[0];
 type UsedPart = StockItem & { quantity: number };
 type PaymentMethod = 'tunai' | 'cicilan';
-type ServiceStatus = 'Proses' | 'Selesai' | 'Sudah Diambil';
+type ServiceStatus = 'Proses' | 'Selesai' | 'Sudah Diambil' | 'Gagal/Cancel';
 
 const ServicePage = () => {
   const [stockData, setStockData] = useState(initialStockData);
@@ -42,6 +43,8 @@ const ServicePage = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('tunai');
   const [status, setStatus] = useState<ServiceStatus>('Proses');
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
+  const allServiceEntries = useServiceEntries();
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
@@ -80,11 +83,30 @@ const ServicePage = () => {
     return { sparepartCost, total, sparepartModal, profit };
   }, [usedParts, serviceFee]);
 
+  const handleSelectService = (serviceId: string) => {
+    const service = allServiceEntries.find(s => s.id === serviceId);
+    if (service) {
+        setSelectedServiceId(service.id);
+        setSelectedCustomer(service.customerId);
+        setServiceDescription(`${service.damageType} - ${service.description}`);
+        setUsedParts([]);
+        setServiceFee(0);
+        setPaymentMethod('tunai');
+        setStatus('Proses');
+    }
+  };
+
   const handleProcessService = () => {
-    if (!selectedCustomer || !serviceDescription || serviceFee <= 0) {
-      showError("Harap lengkapi data customer, deskripsi, dan biaya service.");
+    if (!selectedServiceId) {
+      showError("Harap pilih service yang sedang berjalan dari daftar.");
       return;
     }
+    if (serviceFee <= 0 && usedParts.length === 0) {
+        showError("Harap masukkan biaya service atau tambahkan sparepart.");
+        return;
+    }
+
+    serviceEntriesDB.update(selectedServiceId, { status });
 
     const newStockData = [...stockData];
     usedParts.forEach(part => {
@@ -95,34 +117,57 @@ const ServicePage = () => {
     });
     setStockData(newStockData);
 
-    // Reset form
     setUsedParts([]);
     setSelectedCustomer('');
     setServiceDescription('');
     setServiceFee(0);
     setPaymentMethod('tunai');
     setStatus('Proses');
+    setSelectedServiceId(null);
 
     showSuccess("Transaksi service berhasil diproses!");
   };
+
+  const pendingServices = useMemo(() => {
+    return allServiceEntries.filter(entry => entry.status === 'Pending' || entry.status === 'Proses');
+  }, [allServiceEntries]);
 
   return (
     <DashboardLayout>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div className="lg:col-span-2 space-y-6">
           <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><ClipboardList className="h-5 w-5" /> Pilih Service Masuk</CardTitle></CardHeader>
+            <CardContent>
+              <Select onValueChange={handleSelectService} value={selectedServiceId || ''}>
+                <SelectTrigger><SelectValue placeholder="Pilih dari daftar service yang sedang berjalan..." /></SelectTrigger>
+                <SelectContent>
+                  {pendingServices.length > 0 ? (
+                    pendingServices.map(s => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.id} - {s.customerName} ({s.deviceType})
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-sm text-muted-foreground">Tidak ada service yang sedang berjalan.</div>
+                  )}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+          <Card>
             <CardHeader><CardTitle>Form Service</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="customer">Customer</Label>
-                <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
+                <Select value={selectedCustomer} onValueChange={setSelectedCustomer} disabled={!!selectedServiceId}>
                   <SelectTrigger id="customer"><SelectValue placeholder="Pilih Customer" /></SelectTrigger>
                   <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name} - {c.phone}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
                 <Label htmlFor="description">Deskripsi Service</Label>
-                <Textarea id="description" placeholder="Contoh: Service LCD iPhone 12, ganti touchscreen, cleaning speaker, dll" value={serviceDescription} onChange={(e) => setServiceDescription(e.target.value)} />
+                <Textarea id="description" placeholder="Deskripsi akan terisi otomatis jika memilih service dari daftar di atas" value={serviceDescription} onChange={(e) => setServiceDescription(e.target.value)} disabled={!!selectedServiceId} />
               </div>
               <div>
                 <Label htmlFor="serviceFee">Biaya Service</Label>
@@ -136,6 +181,7 @@ const ServicePage = () => {
                     <SelectItem value="Proses">Proses</SelectItem>
                     <SelectItem value="Selesai">Selesai</SelectItem>
                     <SelectItem value="Sudah Diambil">Sudah Diambil</SelectItem>
+                    <SelectItem value="Gagal/Cancel">Gagal/Cancel</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
