@@ -16,6 +16,7 @@ import { id } from "date-fns/locale";
 import { toPng } from 'html-to-image';
 import Receipt from "@/components/Receipt";
 import { installmentsDB } from "@/data/installments";
+import { salesHistoryDB } from "@/data/salesHistory";
 
 // --- Mock Data ---
 const initialStockData = [
@@ -138,6 +139,18 @@ const SalesPage = () => {
       change: paymentDetails.change,
       remainingAmount: paymentDetails.remainingAmount,
     };
+
+    // Add to sales history
+    salesHistoryDB.add({
+      ...transaction,
+      items: cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        buyPrice: item.buyPrice,
+        salePrice: item.priceType === 'retail' ? item.retailPrice : item.resellerPrice,
+      })),
+    });
 
     // Add to installments if not fully paid
     if (transaction.remainingAmount > 0) {

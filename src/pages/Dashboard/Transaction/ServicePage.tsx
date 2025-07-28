@@ -16,6 +16,7 @@ import { serviceEntriesDB, useServiceEntries } from "@/data/service-entries";
 import ServiceReceipt from "@/components/ServiceReceipt";
 import { toPng } from 'html-to-image';
 import { installmentsDB } from "@/data/installments";
+import { serviceHistoryDB } from "@/data/serviceHistory";
 
 // --- Mock Data ---
 const initialStockData = [
@@ -155,6 +156,18 @@ const ServicePage = () => {
       change: paymentDetails.change,
       remainingAmount: paymentDetails.remainingAmount,
     };
+
+    // Add to service history
+    serviceHistoryDB.add({
+      ...transaction,
+      usedParts: usedParts.map(p => ({
+        id: p.id,
+        name: p.name,
+        quantity: p.quantity,
+        buyPrice: p.buyPrice,
+        retailPrice: p.retailPrice,
+      })),
+    });
 
     if (paymentDetails.remainingAmount > 0) {
       installmentsDB.add({
