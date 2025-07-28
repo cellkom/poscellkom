@@ -1,404 +1,417 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { ShoppingCart, Tag, Trash2, Minus, Plus, UserPlus, Banknote, Printer, Download, FilePlus2 } from "lucide-react";
-import { showSuccess, showError } from "@/utils/toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { PlusCircle, Trash2, ChevronsUpDown, Check, UserPlus, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useStock, Product } from "@/hooks/use-stock";
 import { useCustomers } from "@/hooks/use-customers";
+import { showError, showSuccess } from "@/utils/toast";
 import SalesReceipt from "@/components/SalesReceipt";
-import { toPng } from 'html-to-image';
-import { salesHistoryDB } from "@/data/salesHistory";
-import { installmentsDB } from "@/data/installments";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 
-// --- Type Definitions ---
-type CartItem = Product & { quantity: number };
-type CustomerType = 'umum' | 'reseller';
-type PaymentMethod = 'tunai' | 'cicilan';
-type CompletedTransaction = {
-  id: string;
-  date: Date;
-  customerName: string;
-  items: CartItem[];
-  subtotal: number;
-  discount: number;
-  total: number;
-  paymentAmount: number;
-  change: number;
-  remainingAmount: number;
-  paymentMethod: PaymentMethod;
-};
+type CartItem = Product & { quantity: number; subtotal: number };
 
 const SalesPage = () => {
-  const { products, updateStockQuantity } = useStock();
-  const { customers, addCustomer } = useCustomers();
+  const { products, loading: productsLoading, decreaseStock } = useStock();
+  const { customers, loading: customersLoading, addCustomer } = useCustomers();
+
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [customerType, setCustomerType] = useState<CustomerType>('umum');
+  const [customerType, setCustomerType] = useState<"retail" | "reseller">("retail");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('tunai');
-  const [paymentAmount, setPaymentAmount] = useState(0);
-  const [discount, setDiscount] = useState(0);
-  const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
-  const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [isComboboxOpen, setIsComboboxOpen] = useState(false);
+  const [currentItemId, setCurrentItemId] = useState<string>("");
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
-  const [lastTransaction, setLastTransaction] = useState<CompletedTransaction | null>(null);
+  const [lastTransaction, setLastTransaction] = useState<{ cart: CartItem[], total: number, payment: number, change: number, customerName: string | null } | null>(null);
+
+  const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', address: '' });
-  const receiptRef = useRef<HTMLDivElement>(null);
 
-  const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
-  
-  const formatNumberInput = (num: number): string => {
-    if (num === 0) return '';
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const getPrice = (product: Product) => {
+    return customerType === "reseller" ? product.resellerPrice : product.retailPrice;
   };
 
-  const handlePaymentAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value;
-    const numericValue = parseInt(rawValue.replace(/[^0-9]/g, ''), 10);
-    setPaymentAmount(isNaN(numericValue) ? 0 : numericValue);
-  };
-
-  const handleAddToCart = (item: Product) => {
-    const existingItem = cart.find(cartItem => cartItem.id === item.id);
-    if (item.stock <= (existingItem?.quantity || 0)) {
-      showError(`Stok ${item.name} tidak mencukupi.`);
-      return;
-    }
-    if (existingItem) {
-      setCart(cart.map(cartItem => cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem));
-    } else {
-      setCart([...cart, { ...item, quantity: 1 }]);
-    }
-    setIsItemDialogOpen(false);
-  };
-
-  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
-    const itemInStock = products.find(item => item.id === itemId);
-    if (newQuantity > (itemInStock?.stock || 0)) {
-      showError(`Stok ${itemInStock?.name} tidak mencukupi.`);
-      return;
-    }
-    if (newQuantity <= 0) {
-      setCart(cart.filter(item => item.id !== itemId));
-    } else {
-      setCart(cart.map(item => item.id === itemId ? { ...item, quantity: newQuantity } : item));
-    }
-  };
-
-  const selectedCustomerName = useMemo(() => {
-    if (!selectedCustomerId) return 'Umum';
-    return customers.find(c => c.id === selectedCustomerId)?.name || 'Umum';
-  }, [selectedCustomerId, customers]);
-
-  const summary = useMemo(() => {
-    const subtotal = cart.reduce((sum, item) => {
-      const price = customerType === 'reseller' ? item.resellerPrice : item.retailPrice;
-      return price * item.quantity + sum;
-    }, 0);
-    const total = subtotal - discount;
-    const modal = cart.reduce((sum, item) => item.buyPrice * item.quantity + sum, 0);
-    const profit = total - modal;
-    return { subtotal, total, modal, profit };
-  }, [cart, customerType, discount]);
-
-  const paymentDetails = useMemo(() => {
-    const total = summary.total;
-    const change = paymentAmount > total ? paymentAmount - total : 0;
-    const remainingAmount = paymentAmount < total ? total - paymentAmount : 0;
-    return { change, remainingAmount };
-  }, [paymentAmount, summary.total]);
-
-  const handleCustomerSubmit = async (e: React.FormEvent) => {
+  const handleAddItemToCart = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCustomer.name || !newCustomer.phone) {
-      showError("Nama dan nomor telepon wajib diisi.");
+    if (!currentItemId) {
+      showError("Pilih barang terlebih dahulu.");
       return;
     }
-    await addCustomer(newCustomer);
-    showSuccess("Customer baru berhasil ditambahkan!");
-    setNewCustomer({ name: '', phone: '', address: '' });
-    setIsCustomerDialogOpen(false);
+
+    const product = products.find((p) => p.id === currentItemId);
+    if (!product) {
+      showError("Barang tidak ditemukan.");
+      return;
+    }
+
+    const existingCartItem = cart.find((item) => item.id === product.id);
+
+    if (product.stock <= (existingCartItem?.quantity || 0)) {
+      showError("Stok tidak mencukupi.");
+      return;
+    }
+
+    if (existingCartItem) {
+      setCart(
+        cart.map((item) =>
+          item.id === product.id
+            ? {
+                ...item,
+                quantity: item.quantity + 1,
+                subtotal: (item.quantity + 1) * getPrice(product),
+              }
+            : item
+        )
+      );
+    } else {
+      setCart([
+        ...cart,
+        { ...product, quantity: 1, subtotal: getPrice(product) },
+      ]);
+    }
+    setCurrentItemId("");
+  };
+
+  const handleQuantityChange = (productId: string, newQuantity: number) => {
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
+
+    if (newQuantity > product.stock) {
+      showError(`Stok hanya tersisa ${product.stock}.`);
+      return;
+    }
+
+    if (newQuantity <= 0) {
+      handleRemoveItem(productId);
+    } else {
+      setCart(
+        cart.map((item) =>
+          item.id === productId
+            ? {
+                ...item,
+                quantity: newQuantity,
+                subtotal: newQuantity * getPrice(product),
+              }
+            : item
+        )
+      );
+    }
+  };
+
+  const handleRemoveItem = (productId: string) => {
+    setCart(cart.filter((item) => item.id !== productId));
+  };
+
+  const totalAmount = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.subtotal, 0);
+  }, [cart]);
+
+  const changeAmount = useMemo(() => {
+    return paymentAmount - totalAmount;
+  }, [paymentAmount, totalAmount]);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const handleCustomerTypeChange = (value: "retail" | "reseller") => {
+    if (cart.length > 0) {
+      if (!window.confirm("Mengubah tipe pelanggan akan mengosongkan keranjang. Lanjutkan?")) {
+        return;
+      }
+      setCart([]);
+    }
+    setCustomerType(value);
+    setSelectedCustomerId(null);
+  };
+
+  const resetTransaction = () => {
+    setCart([]);
+    setPaymentAmount(0);
+    setSelectedCustomerId(null);
+    setCurrentItemId("");
   };
 
   const handleProcessTransaction = async () => {
     if (cart.length === 0) {
-      showError("Keranjang belanja masih kosong.");
+      showError("Keranjang belanja kosong.");
       return;
     }
-    if (paymentMethod === 'tunai' && paymentAmount < summary.total) {
-      showError("Jumlah bayar kurang dari total belanja.");
+    if (changeAmount < 0) {
+      showError("Jumlah pembayaran kurang.");
       return;
     }
 
-    const transaction: CompletedTransaction = {
-      id: `TRX-${Date.now()}`,
-      date: new Date(),
-      customerName: selectedCustomerName,
-      items: cart,
-      subtotal: summary.subtotal,
-      discount: discount,
-      total: summary.total,
-      paymentAmount: paymentAmount,
-      change: paymentDetails.change,
-      remainingAmount: paymentDetails.remainingAmount,
-      paymentMethod: paymentMethod,
-    };
+    try {
+      // Decrease stock for each item in cart
+      await decreaseStock(cart.map(item => ({ productId: item.id, quantity: item.quantity })));
 
-    // Add to sales history
-    salesHistoryDB.add({
-      id: transaction.id,
-      items: transaction.items.map(i => ({
-        id: i.id,
-        name: i.name,
-        quantity: i.quantity,
-        buyPrice: i.buyPrice,
-        salePrice: customerType === 'reseller' ? i.resellerPrice : i.retailPrice,
-      })),
-      summary: {
-        totalSale: transaction.total,
-        totalCost: summary.modal,
-        profit: summary.profit,
-      },
-      customerName: transaction.customerName,
-      paymentMethod: transaction.paymentMethod,
-      date: transaction.date,
-      paymentAmount: transaction.paymentAmount,
-      remainingAmount: transaction.remainingAmount,
-    });
+      const customer = customers.find(c => c.id === selectedCustomerId);
 
-    if (paymentDetails.remainingAmount > 0) {
-      installmentsDB.add({
-        id: transaction.id,
-        type: 'Penjualan',
-        customerName: transaction.customerName,
-        transactionDate: transaction.date,
-        totalAmount: transaction.total,
-        initialPayment: transaction.paymentAmount,
-        details: `${transaction.items.length} item`,
+      // Prepare data for receipt
+      setLastTransaction({
+        cart,
+        total: totalAmount,
+        payment: paymentAmount,
+        change: changeAmount,
+        customerName: customer ? customer.name : (customerType === 'retail' ? 'Pelanggan' : 'Reseller')
       });
+
+      showSuccess("Transaksi berhasil!");
+      setIsReceiptOpen(true);
+      resetTransaction();
+    } catch (error: any) {
+      showError(error.message || "Gagal memproses transaksi.");
     }
-    
-    setLastTransaction(transaction);
-    setIsReceiptOpen(true);
-    
-    // Update stock in Supabase
-    for (const item of cart) {
-      await updateStockQuantity(item.id, -item.quantity); // Decrease stock
-    }
-    showSuccess("Transaksi berhasil diproses!");
   };
 
-  const handleNewTransaction = () => {
-    setCart([]);
-    setCustomerType('umum');
-    setSelectedCustomerId(null);
-    setPaymentMethod('tunai');
-    setPaymentAmount(0);
-    setDiscount(0);
-    setLastTransaction(null);
-    setIsReceiptOpen(false);
+  const handleAddCustomerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomer.name) {
+      showError("Nama pelanggan tidak boleh kosong.");
+      return;
+    }
+    const added = await addCustomer(newCustomer);
+    if (added) {
+      setIsAddCustomerDialogOpen(false);
+      setNewCustomer({ name: '', phone: '', address: '' });
+      setSelectedCustomerId(added.id);
+    }
   };
+  
+  useEffect(() => {
+    // Recalculate cart subtotals if customer type changes
+    if (cart.length > 0) {
+      setCart(cart.map(item => {
+        const product = products.find(p => p.id === item.id);
+        if (!product) return item; // Should not happen
+        const price = getPrice(product);
+        return {
+          ...item,
+          subtotal: item.quantity * price
+        };
+      }));
+    }
+  }, [customerType, products]);
 
-  const handlePrint = () => window.print();
-
-  const handleDownload = useCallback(() => {
-    if (receiptRef.current === null) return;
-    toPng(receiptRef.current, { cacheBust: true })
-      .then((dataUrl) => {
-        const link = document.createElement('a');
-        link.download = `nota-${lastTransaction?.id}.png`;
-        link.href = dataUrl;
-        link.click();
-      })
-      .catch((err) => console.error('Gagal membuat gambar struk:', err));
-  }, [receiptRef, lastTransaction]);
 
   return (
     <DashboardLayout>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Transaction Column */}
+        <div className="lg:col-span-2">
           <Card>
-            <CardHeader className="flex flex-row justify-between items-center">
-              <CardTitle>Pilih Barang</CardTitle>
-              <Dialog open={isItemDialogOpen} onOpenChange={setIsItemDialogOpen}>
-                <DialogTrigger asChild><Button variant="outline">Cari Barang</Button></DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader><DialogTitle>Pilih Barang</DialogTitle></DialogHeader>
-                  <Command>
-                    <CommandInput placeholder="Cari nama atau kode barang..." />
-                    <CommandList>
-                      <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
-                      <CommandGroup>
-                        {products.filter(item => item.stock > 0).map(item => (
-                          <CommandItem key={item.id} onSelect={() => handleAddToCart(item)} className="flex justify-between items-center cursor-pointer">
-                            <div>
-                              <p className="font-medium">{item.name}</p>
-                              <p className="text-sm text-muted-foreground">Stok: {item.stock} | {formatCurrency(item.retailPrice)}</p>
-                            </div>
-                            <Button variant="outline" size="sm">Pilih</Button>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </DialogContent>
-              </Dialog>
+            <CardHeader>
+              <CardTitle>Transaksi Penjualan</CardTitle>
             </CardHeader>
             <CardContent>
-              {cart.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <ShoppingCart className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-2">Keranjang belanja masih kosong</p>
+              <form onSubmit={handleAddItemToCart} className="flex items-end gap-4 mb-4">
+                <div className="flex-grow">
+                  <Label>Cari Barang</Label>
+                  <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" aria-expanded={isComboboxOpen} className="w-full justify-between">
+                        {currentItemId ? products.find((product) => product.id === currentItemId)?.name : "Pilih Barang..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
+                      <Command>
+                        <CommandInput placeholder="Cari nama, kode, atau barcode..." />
+                        <CommandList>
+                          <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
+                          <CommandGroup>
+                            {products.map((product) => (
+                              <CommandItem
+                                key={product.id}
+                                value={`${product.name} ${product.id} ${product.barcode}`}
+                                onSelect={() => {
+                                  setCurrentItemId(product.id);
+                                  setIsComboboxOpen(false);
+                                }}
+                              >
+                                <Check className={cn("mr-2 h-4 w-4", currentItemId === product.id ? "opacity-100" : "opacity-0")} />
+                                <div>
+                                  <div className="font-medium">{product.name}</div>
+                                  <div className="text-xs text-muted-foreground font-mono">{product.barcode}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Stok: {product.stock} | {formatCurrency(getPrice(product))}
+                                  </div>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
-              ) : (
+                <Button type="submit" className="flex-shrink-0">
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Tambah
+                </Button>
+              </form>
+
+              <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader><TableRow><TableHead>Barang</TableHead><TableHead className="w-[120px]">Jumlah</TableHead><TableHead className="text-right">Harga</TableHead><TableHead className="w-[50px]"></TableHead></TableRow></TableHeader>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[40%]">Nama Barang</TableHead>
+                      <TableHead>Harga</TableHead>
+                      <TableHead className="w-[100px]">Jumlah</TableHead>
+                      <TableHead className="text-right">Subtotal</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
                   <TableBody>
-                    {cart.map(item => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}><Minus className="h-4 w-4" /></Button>
-                            <Input type="number" value={item.quantity} onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value) || 0)} className="w-14 text-center" />
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}><Plus className="h-4 w-4" /></Button>
-                          </div>
+                    {cart.length > 0 ? (
+                      cart.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>{formatCurrency(getPrice(item))}</TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value))}
+                              className="h-8 w-20 text-center"
+                              min="1"
+                              max={item.stock}
+                            />
+                          </TableCell>
+                          <TableCell className="text-right">{formatCurrency(item.subtotal)}</TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveItem(item.id)}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center h-24">
+                          Keranjang masih kosong
                         </TableCell>
-                        <TableCell className="text-right font-semibold">{formatCurrency((customerType === 'reseller' ? item.resellerPrice : item.retailPrice) * item.quantity)}</TableCell>
-                        <TableCell><Button variant="ghost" size="icon" onClick={() => handleUpdateQuantity(item.id, 0)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
-              )}
+              </div>
             </CardContent>
           </Card>
         </div>
-        <div className="space-y-6">
-          <Card className="bg-slate-900 text-slate-50">
+
+        {/* Summary Column */}
+        <div>
+          <Card className="bg-gray-900 text-white">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 border-b border-slate-700 pb-4">
-                <Tag className="h-5 w-5" />
-                Info Transaksi
-              </CardTitle>
+              <CardTitle className="text-xl">Info Transaksi</CardTitle>
             </CardHeader>
-            <CardContent className="pt-6 space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Item:</span>
-                <span className="font-medium">{cart.length} produk</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Kasir:</span>
-                <span className="font-medium">admin</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Customer:</span>
-                <span className="font-medium">{selectedCustomerName || 'Umum'}</span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Customer & Pembayaran</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label>Tipe Customer</Label>
-                <RadioGroup value={customerType} onValueChange={(value: CustomerType) => setCustomerType(value)} className="flex items-center gap-4 mt-2">
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="umum" id="umum" /><Label htmlFor="umum">Umum</Label></div>
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="reseller" id="reseller" /><Label htmlFor="reseller">Reseller</Label></div>
-                </RadioGroup>
+                <Label className="text-gray-400">Tipe Pelanggan</Label>
+                <Select value={customerType} onValueChange={handleCustomerTypeChange}>
+                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="retail">Eceran</SelectItem>
+                    <SelectItem value="reseller">Reseller</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div>
-                <Label htmlFor="customer">Pilih Customer</Label>
-                <div className="flex gap-2">
-                  <Select value={selectedCustomerId || ''} onValueChange={setSelectedCustomerId}>
-                    <SelectTrigger id="customer"><SelectValue placeholder="Pilih dari daftar" /></SelectTrigger>
-                    <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
-                    <DialogTrigger asChild><Button variant="outline" size="icon"><UserPlus className="h-4 w-4" /></Button></DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                      <DialogHeader><DialogTitle>Tambah Customer Baru</DialogTitle></DialogHeader>
-                      <form onSubmit={handleCustomerSubmit}>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="name" className="text-right">Nama</Label><Input id="name" value={newCustomer.name} onChange={(e) => setNewCustomer(p => ({ ...p, name: e.target.value }))} className="col-span-3" /></div>
-                          <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="phone" className="text-right">Telepon</Label><Input id="phone" value={newCustomer.phone} onChange={(e) => setNewCustomer(p => ({ ...p, phone: e.target.value }))} className="col-span-3" /></div>
-                          <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="address" className="text-right">Alamat</Label><Input id="address" value={newCustomer.address} onChange={(e) => setNewCustomer(p => ({ ...p, address: e.target.value }))} className="col-span-3" /></div>
-                        </div>
-                        <DialogFooter><Button type="submit">Simpan</Button></DialogFooter>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
+              {customerType === "reseller" && (
+                <div>
+                  <Label className="text-gray-400">Pilih Pelanggan</Label>
+                  <div className="flex gap-2">
+                    <Select value={selectedCustomerId || ""} onValueChange={setSelectedCustomerId}>
+                      <SelectTrigger className="bg-gray-800 border-gray-700 text-white flex-grow">
+                        <SelectValue placeholder="Pilih pelanggan..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {customers.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="icon" className="bg-gray-800 border-gray-700 hover:bg-gray-700 flex-shrink-0">
+                          <UserPlus className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader><DialogTitle>Tambah Pelanggan Baru</DialogTitle></DialogHeader>
+                        <form onSubmit={handleAddCustomerSubmit}>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="name" className="text-right">Nama</Label><Input id="name" value={newCustomer.name} onChange={(e) => setNewCustomer(p => ({ ...p, name: e.target.value }))} className="col-span-3" /></div>
+                            <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="phone" className="text-right">Telepon</Label><Input id="phone" value={newCustomer.phone} onChange={(e) => setNewCustomer(p => ({ ...p, phone: e.target.value }))} className="col-span-3" /></div>
+                            <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="address" className="text-right">Alamat</Label><Input id="address" value={newCustomer.address} onChange={(e) => setNewCustomer(p => ({ ...p, address: e.target.value }))} className="col-span-3" /></div>
+                          </div>
+                          <DialogFooter>
+                            <Button type="button" variant="secondary" onClick={() => setIsAddCustomerDialogOpen(false)}>Batal</Button>
+                            <Button type="submit">Simpan</Button>
+                          </DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <Label>Metode Pembayaran</Label>
-                <RadioGroup value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)} className="flex items-center gap-4 mt-2">
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="tunai" id="tunai" /><Label htmlFor="tunai">Tunai</Label></div>
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="cicilan" id="cicilan" /><Label htmlFor="cicilan">Cicilan</Label></div>
-                </RadioGroup>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Total Belanja</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between"><span>Subtotal:</span> <span className="font-medium">{formatCurrency(summary.subtotal)}</span></div>
-              <div className="flex justify-between items-center">
-                <Label htmlFor="discount">Diskon:</Label>
-                <Input id="discount" type="number" value={discount || ''} onChange={(e) => setDiscount(Number(e.target.value))} className="w-32 text-right" placeholder="0" />
-              </div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2"><span>Total:</span> <span>{formatCurrency(summary.total)}</span></div>
-              <div className="flex justify-between text-sm text-muted-foreground"><span>Modal:</span> <span>{formatCurrency(summary.modal)}</span></div>
-              <div className="flex justify-between text-lg font-bold text-primary"><span>Laba:</span> <span>{formatCurrency(summary.profit)}</span></div>
-              
-              <div className="border-t pt-4 space-y-2">
+              )}
+              <div className="space-y-2 pt-4 border-t border-gray-700">
                 <div className="flex justify-between items-center">
-                  <Label htmlFor="paymentAmount" className="text-base">Jumlah Bayar:</Label>
+                  <span className="text-gray-400">Total</span>
+                  <span className="text-2xl font-bold">{formatCurrency(totalAmount)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Bayar</span>
                   <Input
-                    id="paymentAmount"
-                    type="text"
-                    value={formatNumberInput(paymentAmount)}
-                    onChange={handlePaymentAmountChange}
-                    className="w-40 text-right text-lg"
-                    placeholder="0"
+                    type="number"
+                    placeholder="Rp 0"
+                    value={paymentAmount || ""}
+                    onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                    className="bg-gray-800 border-gray-700 text-white text-right w-36 font-bold"
                   />
                 </div>
-                {paymentDetails.change > 0 && (
-                  <div className="flex justify-between text-primary"><span>Kembalian:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.change)}</span></div>
-                )}
-                {paymentDetails.remainingAmount > 0 && (
-                  <div className="flex justify-between text-destructive"><span>Sisa Bayar:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.remainingAmount)}</span></div>
-                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Kembali</span>
+                  <span className={cn("text-xl font-bold", changeAmount < 0 ? "text-red-500" : "text-green-400")}>
+                    {formatCurrency(changeAmount)}
+                  </span>
+                </div>
               </div>
             </CardContent>
             <CardFooter>
-              <Button size="lg" className="w-full" onClick={handleProcessTransaction}><Banknote className="h-5 w-5 mr-2" /> Proses & Cetak Nota</Button>
+              <Button
+                size="lg"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
+                onClick={handleProcessTransaction}
+                disabled={cart.length === 0 || changeAmount < 0}
+              >
+                Proses Transaksi
+              </Button>
             </CardFooter>
           </Card>
         </div>
       </div>
-
-      {/* Receipt Dialog */}
-      <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Nota Penjualan</DialogTitle></DialogHeader>
-          {lastTransaction && <SalesReceipt ref={receiptRef} transaction={lastTransaction} customerType={customerType} />}
-          <DialogFooter className="sm:justify-between gap-2">
-            <Button type="button" variant="secondary" onClick={handleNewTransaction}><FilePlus2 className="mr-2 h-4 w-4" /> Transaksi Baru</Button>
-            <div className="flex gap-2">
-              <Button type="button" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Unduh</Button>
-              <Button type="button" onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Cetak</Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {lastTransaction && (
+        <SalesReceipt
+          isOpen={isReceiptOpen}
+          onClose={() => setIsReceiptOpen(false)}
+          transaction={lastTransaction}
+        />
+      )}
     </DashboardLayout>
   );
 };
