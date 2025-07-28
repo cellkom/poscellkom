@@ -1,333 +1,391 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarIcon, Printer, Download, FilePlus2, PlusCircle, Eye } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { PlusCircle, Search, Edit, Trash2, Printer, Eye } from "lucide-react";
 import { format } from "date-fns";
-import { id } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { showSuccess, showError } from "@/utils/toast";
-import { toPng } from 'html-to-image';
-import ServiceMasukReceipt from "@/components/ServiceMasukReceipt";
-import { useServiceEntries, ServiceEntryWithCustomer } from "@/hooks/use-service-entries";
-import { useCustomers } from "@/hooks/use-customers";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { showSuccess, showError } from "@/utils/toast";
+import { useCustomers } from "@/hooks/use-customers";
+import { ServiceStatus, ServiceEntry } from "@/types/service-types";
 
-interface ServiceEntryFormData {
-  date: Date;
-  customerId: string;
-  category: string;
-  deviceType: string;
-  damageType: string;
-  description: string;
-}
-
-interface ReceiptServiceEntry {
-  id: string;
-  date: Date;
-  customerName: string;
-  customerPhone: string;
-  category: string;
-  deviceType: string;
-  damageType: string;
-  description: string;
-}
-
-const initialState: ServiceEntryFormData = {
-  date: new Date(),
-  customerId: '',
-  category: '',
-  deviceType: '',
-  damageType: '',
-  description: '',
+const initialServiceState: Omit<ServiceEntry, 'id' | 'date' | 'status'> = {
+  customerName: '',
+  customerPhone: '',
+  device_type: '',
+  serial_number: '',
+  problem_description: '',
+  equipment_received: '',
+  estimated_cost: 0,
+  technician: '',
 };
 
-const newCustomerInitialState = { name: '', phone: '', address: '' };
-
 const ServiceMasukPage = () => {
-  const { customers } = useCustomers();
-  const { serviceEntries, loading, addServiceEntry } = useServiceEntries();
-  const { user } = useAuth();
+  const [serviceEntries, setServiceEntries] = useState<ServiceEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [newServiceEntry, setNewServiceEntry] = useState(initialServiceState);
+  const [editingServiceEntry, setEditingServiceEntry] = useState<ServiceEntry | null>(null);
+  const [viewingServiceEntry, setViewingServiceEntry] = useState<ServiceEntry | null>(null);
+  const { customers, addCustomer } = useCustomers();
 
-  const [formData, setFormData] = useState(initialState);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
-  const [lastEntry, setLastEntry] = useState<ReceiptServiceEntry | null>(null);
-  const receiptRef = useRef<HTMLDivElement>(null);
-  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
-  const [newCustomer, setNewCustomer] = useState(newCustomerInitialState);
-
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleNewCustomerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewCustomer(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleNewCustomerSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCustomer.name) {
-      showError("Nama pelanggan tidak boleh kosong.");
-      return;
-    }
-    
-    const { data: addedCustomer, error } = await supabase
-      .from('customers')
-      .insert({ name: newCustomer.name, phone: newCustomer.phone, address: newCustomer.address })
-      .select()
-      .single();
+  const fetchServiceEntries = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('service_entries')
+      .select('*')
+      .order('date', { ascending: false });
 
     if (error) {
-      showError(`Gagal menambah pelanggan: ${error.message}`);
-      return;
+      showError("Gagal memuat data servis: " + error.message);
+      console.error("Error fetching service entries:", error);
+    } else {
+      setServiceEntries(data as ServiceEntry[]);
     }
-
-    if (addedCustomer) {
-      handleInputChange('customerId', addedCustomer.id);
-    }
-    
-    showSuccess("Pelanggan baru berhasil ditambahkan!");
-    setIsAddCustomerOpen(false);
-    setNewCustomer(newCustomerInitialState);
+    setLoading(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.customerId || !formData.category || !formData.damageType || !formData.deviceType) {
-      showError("Harap lengkapi semua field yang wajib diisi.");
-      return;
-    }
-    if (!user?.id) {
-      showError("Anda harus login untuk menambah service masuk.");
-      return;
-    }
+  useEffect(() => {
+    fetchServiceEntries();
+  }, []);
 
-    const selectedCustomerData = customers.find(c => c.id === formData.customerId);
-    if (!selectedCustomerData) {
-      showError("Pelanggan tidak ditemukan.");
-      return;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    const isNumeric = ['estimated_cost'].includes(name);
+    if (isEditDialogOpen && editingServiceEntry) {
+      setEditingServiceEntry({ ...editingServiceEntry, [name]: isNumeric ? Number(value) : value });
+    } else {
+      setNewServiceEntry({ ...newServiceEntry, [name]: isNumeric ? Number(value) : value });
     }
+  };
 
-    const newEntry = await addServiceEntry({
-      date: formData.date.toISOString(),
-      customer_id: formData.customerId,
-      kasir_id: user.id,
-      category: formData.category,
-      device_type: formData.deviceType,
-      damage_type: formData.damageType,
-      description: formData.description,
-    });
+  const handleSelectChange = (name: string, value: string) => {
+    if (isEditDialogOpen && editingServiceEntry) {
+      setEditingServiceEntry({ ...editingServiceEntry, [name]: value });
+    } else {
+      setNewServiceEntry({ ...newServiceEntry, [name]: value });
+    }
+  };
 
-    if (newEntry) {
-      const receiptData: ReceiptServiceEntry = {
-        id: newEntry.id,
-        date: new Date(newEntry.date),
-        customerName: selectedCustomerData.name,
-        customerPhone: selectedCustomerData.phone || '',
-        category: newEntry.category,
-        deviceType: newEntry.device_type,
-        damageType: newEntry.damage_type,
-        description: newEntry.description,
+  const handleCustomerSelect = (customerId: string) => {
+    const selectedCustomer = customers.find(c => c.id === customerId);
+    if (selectedCustomer) {
+      const customerData = {
+        customerName: selectedCustomer.name,
+        customerPhone: selectedCustomer.phone,
       };
-      setLastEntry(receiptData);
-      setIsFormOpen(false); // Close form dialog
-      setIsReceiptOpen(true); // Open receipt dialog
-      setFormData(initialState);
+      if (isEditDialogOpen && editingServiceEntry) {
+        setEditingServiceEntry({ ...editingServiceEntry, ...customerData });
+      } else {
+        setNewServiceEntry({ ...newServiceEntry, ...customerData });
+      }
     }
   };
 
-  const handleViewReceipt = (entry: ServiceEntryWithCustomer) => {
-    const receiptData: ReceiptServiceEntry = {
-      id: entry.id,
-      date: new Date(entry.date),
-      customerName: entry.customerName,
-      customerPhone: entry.customerPhone,
-      category: entry.category,
-      deviceType: entry.device_type,
-      damageType: entry.damage_type,
-      description: entry.description,
-    };
-    setLastEntry(receiptData);
-    setIsReceiptOpen(true);
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Check if customer exists, if not, add them
+    let customer = customers.find(c => c.name === newServiceEntry.customerName && c.phone === newServiceEntry.customerPhone);
+    if (!customer && newServiceEntry.customerName) {
+        const newCustomer = await addCustomer({ name: newServiceEntry.customerName, phone: newServiceEntry.customerPhone, address: '' });
+        if (newCustomer) {
+            customer = newCustomer;
+        }
+    }
+
+    const { error } = await supabase
+      .from('service_entries')
+      .insert([{ ...newServiceEntry, status: 'Pending' }]);
+
+    if (error) {
+      showError("Gagal menambah data servis: " + error.message);
+    } else {
+      showSuccess("Data servis berhasil ditambahkan!");
+      setIsAddDialogOpen(false);
+      setNewServiceEntry(initialServiceState);
+      fetchServiceEntries();
+    }
   };
 
-  const handlePrint = () => window.print();
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingServiceEntry) return;
 
-  const handleDownload = useCallback(() => {
-    if (receiptRef.current === null) return;
-    toPng(receiptRef.current, { cacheBust: true })
-      .then((dataUrl) => {
-        const link = document.createElement('a');
-        link.download = `tanda-terima-${lastEntry?.id}.png`;
-        link.href = dataUrl;
-        link.click();
-      })
-      .catch((err) => console.error('Gagal membuat gambar struk:', err));
-  }, [receiptRef, lastEntry]);
+    const { error } = await supabase
+      .from('service_entries')
+      .update({ ...editingServiceEntry })
+      .eq('id', editingServiceEntry.id);
 
-  const getStatusBadgeVariant = (status: string) => {
+    if (error) {
+      showError("Gagal memperbarui data servis: " + error.message);
+    } else {
+      showSuccess("Data servis berhasil diperbarui!");
+      setIsEditDialogOpen(false);
+      setEditingServiceEntry(null);
+      fetchServiceEntries();
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Apakah Anda yakin ingin menghapus data servis ini?")) {
+      const { error } = await supabase
+        .from('service_entries')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        showError("Gagal menghapus data servis: " + error.message);
+      } else {
+        showSuccess("Data servis berhasil dihapus.");
+        fetchServiceEntries();
+      }
+    }
+  };
+
+  const openEditDialog = (entry: ServiceEntry) => {
+    setEditingServiceEntry(entry);
+    setIsEditDialogOpen(true);
+  };
+
+  const openViewDialog = (entry: ServiceEntry) => {
+    setViewingServiceEntry(entry);
+    setIsViewDialogOpen(true);
+  };
+
+  const filteredEntries = serviceEntries.filter(entry =>
+    entry.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    entry.device_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(entry.id).toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+  };
+
+  const getStatusBadge = (status: ServiceStatus) => {
     switch (status) {
-      case 'Selesai': return 'default';
-      case 'Sudah Diambil': return 'default';
-      case 'Proses': return 'secondary';
-      case 'Gagal/Cancel': return 'destructive';
-      case 'Pending':
-      default:
-        return 'outline';
+      case 'Pending': return <span className="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">Pending</span>;
+      case 'In Progress': return <span className="bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">In Progress</span>;
+      case 'Completed': return <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Completed</span>;
+      case 'Cancelled': return <span className="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">Cancelled</span>;
+      default: return <span className="bg-gray-100 text-gray-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">Unknown</span>;
     }
   };
+
+  const renderFormFields = (entry: any, handler: any, customerHandler: any) => (
+    <div className="grid gap-4 py-4">
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="customerName" className="text-right">Pelanggan</Label>
+        <div className="col-span-3">
+          <Select onValueChange={customerHandler}>
+            <SelectTrigger>
+              <SelectValue placeholder="Pilih pelanggan yang sudah ada" />
+            </SelectTrigger>
+            <SelectContent>
+              {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name} - {c.phone}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input id="customerName" name="customerName" placeholder="Atau masukkan nama baru" value={entry.customerName} onChange={handler} className="mt-2" />
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="customerPhone" className="text-right">No. HP</Label>
+        <Input id="customerPhone" name="customerPhone" value={entry.customerPhone} onChange={handler} className="col-span-3" />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="device_type" className="text-right">Tipe Perangkat</Label>
+        <Input id="device_type" name="device_type" value={entry.device_type} onChange={handler} className="col-span-3" />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="serial_number" className="text-right">Serial Number</Label>
+        <Input id="serial_number" name="serial_number" value={entry.serial_number} onChange={handler} className="col-span-3" />
+      </div>
+      <div className="grid grid-cols-4 items-start gap-4">
+        <Label htmlFor="problem_description" className="text-right pt-2">Deskripsi Masalah</Label>
+        <Textarea id="problem_description" name="problem_description" value={entry.problem_description} onChange={handler} className="col-span-3" />
+      </div>
+      <div className="grid grid-cols-4 items-start gap-4">
+        <Label htmlFor="equipment_received" className="text-right pt-2">Kelengkapan</Label>
+        <Textarea id="equipment_received" name="equipment_received" value={entry.equipment_received} onChange={handler} className="col-span-3" />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="estimated_cost" className="text-right">Estimasi Biaya</Label>
+        <Input id="estimated_cost" name="estimated_cost" type="number" value={entry.estimated_cost} onChange={handler} className="col-span-3" />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="technician" className="text-right">Teknisi</Label>
+        <Input id="technician" name="technician" value={entry.technician} onChange={handler} className="col-span-3" />
+      </div>
+    </div>
+  );
 
   return (
     <DashboardLayout>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Data Service Masuk</CardTitle>
-          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <DialogTrigger asChild>
-              <Button><PlusCircle className="mr-2 h-4 w-4" /> Tambah Data Service</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl">
-              <DialogHeader><DialogTitle>Masukan Data Service Baru</DialogTitle></DialogHeader>
-              <form onSubmit={handleSubmit}>
-                <div className="space-y-4 p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="date">Tanggal Masuk</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !formData.date && "text-muted-foreground")}>
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {formData.date ? format(formData.date, "PPP", { locale: id }) : <span>Pilih tanggal</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formData.date} onSelect={(date) => handleInputChange('date', date || new Date())} initialFocus /></PopoverContent>
-                      </Popover>
-                    </div>
-                    <div>
-                      <Label htmlFor="customer">Pelanggan</Label>
-                      <div className="flex gap-2">
-                        <Select value={formData.customerId} onValueChange={(value) => handleInputChange('customerId', value)}>
-                          <SelectTrigger id="customer"><SelectValue placeholder="Pilih Pelanggan" /></SelectTrigger>
-                          <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name} - {c.phone}</SelectItem>)}</SelectContent>
-                        </Select>
-                        <Button type="button" variant="outline" size="icon" onClick={() => setIsAddCustomerOpen(true)}><PlusCircle className="h-4 w-4" /></Button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="category">Kategori Service</Label>
-                      <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                        <SelectTrigger id="category"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Handphone">Handphone</SelectItem>
-                          <SelectItem value="Komputer/Laptop">Komputer/Laptop</SelectItem>
-                          <SelectItem value="Printer">Printer</SelectItem>
-                          <SelectItem value="Lainnya">Lainnya</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="deviceType">Tipe Perangkat</Label>
-                      <Input id="deviceType" placeholder="Contoh: iPhone 13 Pro" value={formData.deviceType} onChange={(e) => handleInputChange('deviceType', e.target.value)} />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="damageType">Jenis Kerusakan</Label>
-                    <Input id="damageType" placeholder="Contoh: Mati total, LCD pecah" value={formData.damageType} onChange={(e) => handleInputChange('damageType', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label htmlFor="description">Deskripsi / Kelengkapan</Label>
-                    <Textarea id="description" placeholder="Deskripsikan keluhan dan kelengkapan" value={formData.description} onChange={(e) => handleInputChange('description', e.target.value)} />
-                  </div>
-                </div>
-                <DialogFooter className="p-4 pt-0">
-                  <Button type="submit" size="lg">Simpan & Cetak Tanda Terima</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+        <CardHeader>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <CardTitle className="text-2xl font-bold">Servis Masuk</CardTitle>
+            <div className="flex gap-2 w-full md:w-auto">
+              <div className="relative w-full md:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder="Cari (nama, perangkat, no. servis)..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2">
+                    <PlusCircle className="h-4 w-4" />
+                    <span className="hidden sm:inline">Tambah Servis</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle>Tambah Data Servis Baru</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleAddSubmit}>
+                    {renderFormFields(newServiceEntry, handleInputChange, handleCustomerSelect)}
+                    <DialogFooter>
+                      <Button type="button" variant="secondary" onClick={() => setIsAddDialogOpen(false)}>Batal</Button>
+                      <Button type="submit">Simpan</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>No. Service</TableHead>
-                <TableHead>Tanggal</TableHead>
-                <TableHead>Pelanggan</TableHead>
-                <TableHead>Perangkat</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-center">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center h-24">Memuat data...</TableCell></TableRow>
-              ) : serviceEntries.length > 0 ? (
-                serviceEntries.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell className="font-mono">{String(entry.id).substring(0, 8)}...</TableCell>
-                    <TableCell>{format(new Date(entry.date), "dd/MM/yyyy")}</TableCell>
-                    <TableCell>{entry.customerName}</TableCell>
-                    <TableCell>{entry.device_type}</TableCell>
-                    <TableCell><Badge variant={getStatusBadgeVariant(entry.status)}>{entry.status}</Badge></TableCell>
-                    <TableCell className="text-center">
-                      <Button variant="outline" size="sm" onClick={() => handleViewReceipt(entry)}>
-                        <Eye className="mr-2 h-4 w-4" /> Lihat Struk
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow><TableCell colSpan={6} className="text-center h-24">Belum ada data service masuk.</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>No. Servis</TableHead>
+                  <TableHead>Tanggal</TableHead>
+                  <TableHead>Pelanggan</TableHead>
+                  <TableHead>Perangkat</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Estimasi Biaya</TableHead>
+                  <TableHead className="text-center">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow><TableCell colSpan={7} className="text-center h-24">Memuat data...</TableCell></TableRow>
+                ) : filteredEntries.length > 0 ? (
+                  filteredEntries.map((entry) => (
+                    <TableRow key={entry.id}>
+                      <TableCell className="font-mono">SVC-{String(entry.id).substring(0, 8)}</TableCell>
+                      <TableCell>{format(new Date(entry.date), "dd/MM/yyyy")}</TableCell>
+                      <TableCell>{entry.customerName}</TableCell>
+                      <TableCell>{entry.device_type}</TableCell>
+                      <TableCell>{getStatusBadge(entry.status)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(entry.estimated_cost)}</TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex justify-center gap-2">
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => openViewDialog(entry)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => openEditDialog(entry)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(entry.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow><TableCell colSpan={7} className="text-center h-24">Tidak ada data servis.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Add Customer Dialog */}
-      <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader><DialogTitle>Tambah Pelanggan Baru</DialogTitle></DialogHeader>
-          <form onSubmit={handleNewCustomerSubmit}>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="name" className="text-right">Nama</Label><Input id="name" name="name" className="col-span-3" value={newCustomer.name} onChange={handleNewCustomerChange} /></div>
-              <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="phone" className="text-right">Telepon</Label><Input id="phone" name="phone" className="col-span-3" value={newCustomer.phone} onChange={handleNewCustomerChange} /></div>
-              <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="address" className="text-right">Alamat</Label><Input id="address" name="address" className="col-span-3" value={newCustomer.address} onChange={handleNewCustomerChange} /></div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="secondary" onClick={() => setIsAddCustomerOpen(false)}>Batal</Button>
-              <Button type="submit">Simpan</Button>
-            </DialogFooter>
-          </form>
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Edit Data Servis</DialogTitle>
+          </DialogHeader>
+          {editingServiceEntry && (
+            <form onSubmit={handleEditSubmit}>
+              {renderFormFields(editingServiceEntry, handleInputChange, handleCustomerSelect)}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">Status</Label>
+                <Select name="status" value={editingServiceEntry.status} onValueChange={(value) => handleSelectChange('status', value)}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter className="mt-4">
+                <Button type="button" variant="secondary" onClick={() => setIsEditDialogOpen(false)}>Batal</Button>
+                <Button type="submit">Simpan Perubahan</Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
 
-      {/* Receipt Dialog */}
-      <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Tanda Terima Service</DialogTitle></DialogHeader>
-          {lastEntry && <ServiceMasukReceipt ref={receiptRef} entry={lastEntry} />}
-          <DialogFooter className="sm:justify-between gap-2">
-            <Button type="button" variant="secondary" onClick={() => setIsReceiptOpen(false)}><FilePlus2 className="mr-2 h-4 w-4" /> Selesai</Button>
-            <div className="flex gap-2">
-              <Button type="button" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Unduh</Button>
-              <Button type="button" onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Cetak</Button>
+      {/* View Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Detail Servis - SVC-{viewingServiceEntry?.id.substring(0, 8)}</DialogTitle>
+          </DialogHeader>
+          {viewingServiceEntry && (
+            <div className="py-4 space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">{viewingServiceEntry.customerName}</h3>
+                <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Cetak Nota</Button>
+              </div>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                <div><strong>No. HP:</strong> {viewingServiceEntry.customerPhone}</div>
+                <div><strong>Tanggal:</strong> {format(new Date(viewingServiceEntry.date), "dd MMMM yyyy")}</div>
+                <div><strong>Perangkat:</strong> {viewingServiceEntry.device_type}</div>
+                <div><strong>Serial Number:</strong> {viewingServiceEntry.serial_number || '-'}</div>
+                <div><strong>Teknisi:</strong> {viewingServiceEntry.technician || '-'}</div>
+                <div><strong>Status:</strong> {getStatusBadge(viewingServiceEntry.status)}</div>
+              </div>
+              <div className="space-y-2 text-sm">
+                <h4 className="font-semibold">Deskripsi Masalah:</h4>
+                <p className="p-2 bg-gray-50 rounded border">{viewingServiceEntry.problem_description}</p>
+              </div>
+              <div className="space-y-2 text-sm">
+                <h4 className="font-semibold">Kelengkapan:</h4>
+                <p className="p-2 bg-gray-50 rounded border">{viewingServiceEntry.equipment_received}</p>
+              </div>
+              <div className="text-right font-bold text-lg">
+                Estimasi Biaya: {formatCurrency(viewingServiceEntry.estimated_cost)}
+              </div>
+              <DialogFooter className="mt-4">
+                <Button type="button" variant="secondary" onClick={() => setIsViewDialogOpen(false)}>Tutup</Button>
+              </DialogFooter>
             </div>
-          </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     </DashboardLayout>
