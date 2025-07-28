@@ -1,5 +1,3 @@
-import { useState, useEffect } from 'react';
-
 // --- Type Definitions ---
 export interface CartItemForHistory {
   id: string;
@@ -61,18 +59,8 @@ export const salesHistoryDB = {
     },
     subscribe: (listener: Listener) => {
         listeners.add(listener);
-        return () => listeners.delete(listener);
+        return () => {
+            listeners.delete(listener);
+        };
     },
-};
-
-// --- React Hook for easy data access ---
-export const useSalesHistory = () => {
-    const [history, setHistory] = useState(salesHistoryDB.getAll());
-
-    useEffect(() => {
-        const unsubscribe = salesHistoryDB.subscribe(setHistory);
-        return () => unsubscribe();
-    }, []);
-
-    return history;
 };

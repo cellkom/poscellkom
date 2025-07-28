@@ -7,7 +7,7 @@ export const useInstallments = () => {
 
     useEffect(() => {
         const unsubscribe = installmentsDB.subscribe(setInstallments);
-        return () => unsubscribe();
+        return unsubscribe;
     }, []);
 
     return installments;

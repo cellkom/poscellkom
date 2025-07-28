@@ -1,5 +1,3 @@
-import { useState, useEffect } from 'react';
-
 // --- Type Definitions ---
 export interface UsedPartForHistory {
   id: string;
@@ -40,18 +38,8 @@ export const serviceHistoryDB = {
     },
     subscribe: (listener: Listener) => {
         listeners.add(listener);
-        return () => listeners.delete(listener);
+        return () => {
+            listeners.delete(listener);
+        };
     },
-};
-
-// --- React Hook for easy data access ---
-export const useServiceHistory = () => {
-    const [history, setHistory] = useState(serviceHistoryDB.getAll());
-
-    useEffect(() => {
-        const unsubscribe = serviceHistoryDB.subscribe(setHistory);
-        return () => unsubscribe();
-    }, []);
-
-    return history;
 };

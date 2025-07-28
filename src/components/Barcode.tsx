@@ -13,18 +13,16 @@ const BarcodeComponent: React.FC<BarcodeProps> = ({ value }) => {
     <div className="flex justify-center">
       <ReactBarcode 
         value={value} 
-        options={{
-          format: 'CODE128',
-          displayValue: true,
-          fontOptions: 'bold',
-          textAlign: 'center',
-          textPosition: 'bottom',
-          textMargin: 2,
-          fontSize: 14,
-          height: 60,
-          width: 2,
-          margin: 10,
-        }}
+        format='CODE128'
+        displayValue={true}
+        fontOptions='bold'
+        textAlign='center'
+        textPosition='bottom'
+        textMargin={2}
+        fontSize={14}
+        height={60}
+        width={2}
+        margin={10}
       />
     </div>
   );
