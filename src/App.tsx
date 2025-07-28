@@ -17,6 +17,7 @@ import ServicePage from "./pages/Dashboard/Transaction/ServicePage";
 import InstallmentPage from "./pages/Dashboard/Transaction/InstallmentPage";
 import ReportsPage from "./pages/Dashboard/ReportsPage";
 import SalesReportPage from "./pages/Dashboard/Reports/SalesReportPage";
+import ServiceReportPage from "./pages/Dashboard/Reports/ServiceReportPage";
 import CustomerPage from "./pages/Dashboard/Data/CustomerPage";
 import SupplierPage from "./pages/Dashboard/Data/SupplierPage";
 import UsersPage from "./pages/Dashboard/UsersPage";
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
               <Route path="/dashboard/reports" element={<ReportsPage />} />
               <Route path="/dashboard/reports/sales" element={<SalesReportPage />} />
+              <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
               <Route path="/dashboard/data/customers" element={<CustomerPage />} />
               <Route path="/dashboard/data/suppliers" element={<SupplierPage />} />
               
