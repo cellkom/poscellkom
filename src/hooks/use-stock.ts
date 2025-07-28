@@ -17,7 +17,7 @@ export interface Product {
   entryDate: string;
 }
 
-// Interface ini merepresentasikan skema di database (snake_case, dengan pengecualian)
+// Interface ini merepresentasikan skema di database (snake_case)
 interface DbProduct {
   id: string;
   created_at: string;
@@ -29,7 +29,7 @@ interface DbProduct {
   reseller_price: number;
   barcode: string;
   supplier_id: string | null;
-  entryDate: string; // Disesuaikan dengan nama kolom di DB
+  entry_date: string;
 }
 
 // Fungsi untuk mengubah format dari database ke format aplikasi
@@ -44,12 +44,12 @@ const fromDbProduct = (dbProduct: DbProduct): Product => ({
   resellerPrice: dbProduct.reseller_price,
   barcode: dbProduct.barcode,
   supplierId: dbProduct.supplier_id,
-  entryDate: dbProduct.entryDate, // Membaca dari kolom 'entryDate'
+  entryDate: dbProduct.entry_date,
 });
 
 // Fungsi untuk mengubah format dari aplikasi ke format database
 const toDbProduct = (product: Partial<Omit<Product, 'id' | 'createdAt'>>) => {
-  const dbProduct: Partial<DbProduct> = {};
+  const dbProduct: Partial<Omit<DbProduct, 'id' | 'created_at'>> = {};
   if (product.name !== undefined) dbProduct.name = product.name;
   if (product.category !== undefined) dbProduct.category = product.category;
   if (product.stock !== undefined) dbProduct.stock = product.stock;
@@ -58,7 +58,7 @@ const toDbProduct = (product: Partial<Omit<Product, 'id' | 'createdAt'>>) => {
   if (product.resellerPrice !== undefined) dbProduct.reseller_price = product.resellerPrice;
   if (product.barcode !== undefined) dbProduct.barcode = product.barcode;
   if (product.supplierId !== undefined) dbProduct.supplier_id = product.supplierId;
-  if (product.entryDate !== undefined) dbProduct.entryDate = product.entryDate; // Mengirim ke kolom 'entryDate'
+  if (product.entryDate !== undefined) dbProduct.entry_date = product.entryDate;
   return dbProduct;
 };
 
@@ -160,7 +160,7 @@ export const useStock = () => {
     return true;
   };
 
-  const updateStockQuantity = async (productId: string, quantityChange: number) => {
+  const updateStockQuantity = async (productId: string, quantityChange: number, entryDate?: string, supplierId?: string | null) => {
     const productToUpdate = products.find(p => p.id === productId);
     if (!productToUpdate) {
       showError("Produk tidak ditemukan.");
@@ -173,9 +173,25 @@ export const useStock = () => {
       return null;
     }
 
+    const updateData: {
+        stock: number;
+        entry_date?: string;
+        supplier_id?: string | null;
+    } = {
+        stock: newStock,
+    };
+
+    if (entryDate) {
+        updateData.entry_date = entryDate;
+    }
+    // Check for undefined to allow setting supplier to null
+    if (supplierId !== undefined) {
+        updateData.supplier_id = supplierId;
+    }
+
     const { data, error } = await supabase
       .from('products')
-      .update({ stock: newStock })
+      .update(updateData)
       .eq('id', productId)
       .select()
       .single();

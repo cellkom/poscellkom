@@ -125,7 +125,12 @@ const StockPage = () => {
       return;
     }
     
-    await updateStockQuantity(stockToAdd.itemId, stockToAdd.quantity);
+    await updateStockQuantity(
+      stockToAdd.itemId,
+      stockToAdd.quantity,
+      stockToAdd.entryDate.toISOString(),
+      stockToAdd.supplierId || null
+    );
     setIsAddStockDialogOpen(false);
     setStockToAdd(addStockInitialState);
   };
