@@ -15,10 +15,11 @@ import Barcode from "@/components/Barcode";
 import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useSuppliers } from "@/hooks/use-suppliers";
+import { suppliersDB } from "@/data/suppliers";
 
 // Define types for our data structures
 type StockItem = typeof initialStockData[0];
-type Supplier = typeof initialSuppliers[0];
 
 // Mock data for stock items with barcodes
 const initialStockData = [
@@ -30,18 +31,13 @@ const initialStockData = [
   { id: 'BRG006', name: 'RAM DDR4 8GB', category: 'Sparepart Komputer', stock: 18, buyPrice: 350000, retailPrice: 500000, resellerPrice: 450000, barcode: '8991234567895', supplierId: 'SUP002', entryDate: new Date('2023-10-06') },
 ];
 
-const initialSuppliers = [
-  { id: 'SUP001', name: 'PT Jaya Abadi', phone: '081234567890', address: 'Jl. Elektronik No. 1' },
-  { id: 'SUP002', name: 'CV Mitra Perkasa', phone: '081209876543', address: 'Jl. Gadget No. 2' },
-];
-
 const newItemInitialState = { name: '', category: '', stock: 0, buyPrice: 0, retailPrice: 0, resellerPrice: 0, barcode: '', entryDate: new Date(), supplierId: '' };
 const newSupplierInitialState = { name: '', phone: '', address: '' };
 const addStockInitialState = { itemId: '', quantity: 0, entryDate: new Date(), supplierId: '' };
 
 const StockPage = () => {
   const [stockData, setStockData] = useState(initialStockData);
-  const [suppliers, setSuppliers] = useState(initialSuppliers);
+  const suppliers = useSuppliers();
   const [searchTerm, setSearchTerm] = useState("");
 
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
@@ -134,12 +130,10 @@ const StockPage = () => {
       showError("Nama supplier tidak boleh kosong.");
       return;
     }
-    const newId = `SUP${(suppliers.length + 1).toString().padStart(3, '0')}`;
-    const newSupplierData = { ...newSupplier, id: newId };
-    setSuppliers(prev => [...prev, newSupplierData]);
+    const addedSupplier = suppliersDB.add(newSupplier);
     // Update supplier in both forms
-    setStockToAdd(prev => ({ ...prev, supplierId: newId }));
-    setNewItem(prev => ({ ...prev, supplierId: newId }));
+    setStockToAdd(prev => ({ ...prev, supplierId: addedSupplier.id }));
+    setNewItem(prev => ({ ...prev, supplierId: addedSupplier.id }));
     showSuccess("Supplier baru berhasil ditambahkan!");
     setIsAddSupplierDialogOpen(false);
     setNewSupplier(newSupplierInitialState);

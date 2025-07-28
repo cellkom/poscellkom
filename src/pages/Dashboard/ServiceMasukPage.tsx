@@ -16,13 +16,8 @@ import { showSuccess, showError } from "@/utils/toast";
 import { toPng } from 'html-to-image';
 import ServiceMasukReceipt from "@/components/ServiceMasukReceipt";
 import { serviceEntriesDB } from "@/data/service-entries";
-
-// Mock Data
-const initialCustomers = [
-  { id: 'CUS001', name: 'Pelanggan Umum', phone: '-' },
-  { id: 'CUS002', name: 'Budi Santoso', phone: '081234567890' },
-  { id: 'CUS003', name: 'Ani Wijaya', phone: '081209876543' },
-];
+import { useCustomers } from "@/hooks/use-customers";
+import { customersDB } from "@/data/customers";
 
 // Type Definitions
 interface ServiceEntry {
@@ -46,10 +41,10 @@ const initialState = {
   description: '',
 };
 
-const newCustomerInitialState = { name: '', phone: '' };
+const newCustomerInitialState = { name: '', phone: '', address: '' };
 
 const ServiceMasukPage = () => {
-  const [customers, setCustomers] = useState(initialCustomers);
+  const customers = useCustomers();
   const [formData, setFormData] = useState(initialState);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [lastEntry, setLastEntry] = useState<ServiceEntry | null>(null);
@@ -72,11 +67,8 @@ const ServiceMasukPage = () => {
       showError("Nama pelanggan tidak boleh kosong.");
       return;
     }
-    const newId = `CUS${(customers.length + 1).toString().padStart(3, '0')}`;
-    const newCustomerData = { ...newCustomer, id: newId };
-    
-    setCustomers(prev => [...prev, newCustomerData]);
-    handleInputChange('customerId', newId);
+    const addedCustomer = customersDB.add(newCustomer);
+    handleInputChange('customerId', addedCustomer.id);
     
     showSuccess("Pelanggan baru berhasil ditambahkan!");
     setIsAddCustomerOpen(false);
