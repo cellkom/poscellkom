@@ -23,7 +23,7 @@ import { useCustomers } from "@/hooks/use-customers";
 // --- Type Definitions ---
 type UsedPart = Product & { quantity: number };
 type PaymentMethod = 'tunai' | 'cicilan';
-type ServiceStatus = 'Proses' | 'Selesai' | 'Sudah Diambil' | 'Gagal/Cancel';
+type ServiceStatus = 'Pending' | 'Proses' | 'Selesai' | 'Sudah Diambil' | 'Gagal/Cancel';
 type CompletedServiceTransaction = {
   id: string;
   date: Date;
@@ -267,6 +267,7 @@ const ServicePage = () => {
                 <Select value={status} onValueChange={(value: ServiceStatus) => setStatus(value)}>
                   <SelectTrigger id="status"><SelectValue /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
                     <SelectItem value="Proses">Proses</SelectItem>
                     <SelectItem value="Selesai">Selesai</SelectItem>
                     <SelectItem value="Sudah Diambil">Sudah Diambil</SelectItem>
