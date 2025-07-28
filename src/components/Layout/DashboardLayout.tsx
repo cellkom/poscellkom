@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -41,11 +42,13 @@ const navItems = [
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const isMobile = useIsMobile();
   const location = useLocation();
+  const { profile, signOut } = useAuth();
 
   const renderNavLinks = () => (
     <nav className="hidden md:flex items-center space-x-1">
-      {navItems.map((item) => 
-        item.subItems ? (
+      {navItems.map((item) => {
+        if (item.name === "Users" && profile?.role !== 'Admin') return null;
+        return item.subItems ? (
           <DropdownMenu key={item.name}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className={cn("text-white hover:bg-red-600 hover:text-white", location.pathname.startsWith(item.path) && "bg-red-700")}>
@@ -73,7 +76,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </Link>
           </Button>
         )
-      )}
+      })}
     </nav>
   );
 
@@ -87,8 +90,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <SheetContent side="left" className="w-64 bg-gray-900 text-white p-4">
         <div className="text-2xl font-bold mb-6">CELLKOM</div>
         <nav className="flex flex-col space-y-1">
-          {navItems.map((item) => 
-            item.subItems ? (
+          {navItems.map((item) => {
+            if (item.name === "Users" && profile?.role !== 'Admin') return null;
+            return item.subItems ? (
               <Collapsible key={item.name}>
                 <CollapsibleTrigger asChild>
                   <Button variant="ghost" className="w-full justify-between text-white hover:bg-red-600 hover:text-white">
@@ -118,7 +122,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </Link>
               </Button>
             )
-          )}
+          })}
         </nav>
       </SheetContent>
     </Sheet>
@@ -136,7 +140,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-red-600 hover:text-white">
               <UserCircle className="h-6 w-6" />
-              <span className="hidden md:inline">admin</span>
+              <span className="hidden md:inline">{profile?.full_name || 'User'}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
@@ -145,8 +149,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/login" className="cursor-pointer">Log out</Link>
+            <DropdownMenuItem onClick={signOut} className="cursor-pointer">
+              Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
