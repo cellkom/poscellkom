@@ -40,7 +40,7 @@ const DashboardPage = () => {
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(summaryData.revenueToday)}</div>
               <p className="text-xs text-muted-foreground flex items-center">
-                <ArrowUp className="h-3 w-3 text-green-500 mr-1" />
+                <ArrowUp className="h-3 w-3 text-primary mr-1" />
                 +15% dari kemarin
               </p>
             </CardContent>
@@ -98,7 +98,7 @@ const DashboardPage = () => {
                   <TableRow key={activity.id}>
                     <TableCell className="font-medium">{activity.customer}</TableCell>
                     <TableCell>
-                      <Badge variant={activity.type === 'Penjualan' ? 'secondary' : 'outline'} className={activity.type === 'Penjualan' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}>
+                      <Badge variant={activity.type === 'Penjualan' ? 'default' : 'secondary'}>
                         {activity.type}
                       </Badge>
                     </TableCell>

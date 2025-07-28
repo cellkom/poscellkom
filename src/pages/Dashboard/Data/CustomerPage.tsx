@@ -4,15 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Search, Edit, Trash2, Users } from "lucide-react";
-import { useCustomers } from "@/hooks/use-customers";
-import { customersDB, Customer } from "@/data/customers";
+import { useCustomers, Customer } from "@/hooks/use-customers";
+import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
 
 const CustomerPage = () => {
-  const customers = useCustomers();
+  const { customers, loading } = useCustomers();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -20,7 +20,7 @@ const CustomerPage = () => {
 
   const handleOpenDialog = (customer: Customer | null = null) => {
     setEditingCustomer(customer);
-    setFormData(customer ? { name: customer.name, phone: customer.phone, address: customer.address || '' } : { name: '', phone: '', address: '' });
+    setFormData(customer ? { name: customer.name, phone: customer.phone || '', address: customer.address || '' } : { name: '', phone: '', address: '' });
     setIsDialogOpen(true);
   };
 
@@ -28,25 +28,51 @@ const CustomerPage = () => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) {
       showError("Nama pelanggan tidak boleh kosong.");
       return;
     }
+
+    let error;
     if (editingCustomer) {
-      customersDB.update(editingCustomer.id, formData);
-      showSuccess("Data pelanggan berhasil diperbarui.");
+      // Update existing customer
+      const { error: updateError } = await supabase
+        .from('customers')
+        .update({ name: formData.name, phone: formData.phone, address: formData.address })
+        .eq('id', editingCustomer.id);
+      error = updateError;
     } else {
-      customersDB.add(formData);
-      showSuccess("Pelanggan baru berhasil ditambahkan.");
+      // Add new customer
+      const { error: insertError } = await supabase
+        .from('customers')
+        .insert({ name: formData.name, phone: formData.phone, address: formData.address });
+      error = insertError;
     }
-    setIsDialogOpen(false);
+
+    if (error) {
+      showError(`Gagal menyimpan data: ${error.message}`);
+    } else {
+      showSuccess(`Data pelanggan berhasil ${editingCustomer ? 'diperbarui' : 'ditambahkan'}.`);
+      setIsDialogOpen(false);
+    }
+  };
+
+  const handleDelete = async (customerId: string) => {
+    if (window.confirm("Apakah Anda yakin ingin menghapus pelanggan ini?")) {
+      const { error } = await supabase.from('customers').delete().eq('id', customerId);
+      if (error) {
+        showError(`Gagal menghapus: ${error.message}`);
+      } else {
+        showSuccess("Pelanggan berhasil dihapus.");
+      }
+    }
   };
 
   const filteredCustomers = customers.filter(c =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.phone.toLowerCase().includes(searchTerm.toLowerCase())
+    (c.phone && c.phone.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -74,19 +100,25 @@ const CustomerPage = () => {
           <Table>
             <TableHeader><TableRow><TableHead>Nama</TableHead><TableHead>Telepon</TableHead><TableHead>Alamat</TableHead><TableHead className="text-center">Aksi</TableHead></TableRow></TableHeader>
             <TableBody>
-              {filteredCustomers.map(customer => (
-                <TableRow key={customer.id}>
-                  <TableCell className="font-medium">{customer.name}</TableCell>
-                  <TableCell>{customer.phone}</TableCell>
-                  <TableCell>{customer.address || '-'}</TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex justify-center gap-2">
-                      <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(customer)}><Edit className="h-4 w-4" /></Button>
-                      <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => customersDB.delete(customer.id)}><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {loading ? (
+                <TableRow><TableCell colSpan={4} className="text-center h-24">Memuat data pelanggan...</TableCell></TableRow>
+              ) : filteredCustomers.length > 0 ? (
+                filteredCustomers.map(customer => (
+                  <TableRow key={customer.id}>
+                    <TableCell className="font-medium">{customer.name}</TableCell>
+                    <TableCell>{customer.phone || '-'}</TableCell>
+                    <TableCell>{customer.address || '-'}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center gap-2">
+                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(customer)}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(customer.id)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow><TableCell colSpan={4} className="text-center h-24">Tidak ada data pelanggan.</TableCell></TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

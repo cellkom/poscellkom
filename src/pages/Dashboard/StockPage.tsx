@@ -16,35 +16,23 @@ import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useSuppliers } from "@/hooks/use-suppliers";
-import { suppliersDB } from "@/data/suppliers";
-
-// Define types for our data structures
-type StockItem = typeof initialStockData[0];
-
-// Mock data for stock items with barcodes
-const initialStockData = [
-  { id: 'BRG001', name: 'LCD iPhone X', category: 'Sparepart HP', stock: 15, buyPrice: 650000, retailPrice: 850000, resellerPrice: 800000, barcode: '8991234567890', supplierId: 'SUP001', entryDate: new Date('2023-10-01') },
-  { id: 'BRG002', name: 'Baterai Samsung A50', category: 'Sparepart HP', stock: 25, buyPrice: 200000, retailPrice: 350000, resellerPrice: 320000, barcode: '8991234567891', supplierId: 'SUP001', entryDate: new Date('2023-10-02') },
-  { id: 'BRG003', name: 'Charger Type-C 25W', category: 'Aksesoris', stock: 50, buyPrice: 80000, retailPrice: 150000, resellerPrice: 125000, barcode: '8991234567892', supplierId: 'SUP002', entryDate: new Date('2023-10-03') },
-  { id: 'BRG004', name: 'Tempered Glass Universal', category: 'Aksesoris', stock: 120, buyPrice: 15000, retailPrice: 50000, resellerPrice: 35000, barcode: '8991234567893', supplierId: 'SUP002', entryDate: new Date('2023-10-04') },
-  { id: 'BRG005', name: 'SSD 256GB NVMe', category: 'Sparepart Komputer', stock: 10, buyPrice: 450000, retailPrice: 600000, resellerPrice: 550000, barcode: '8991234567894', supplierId: 'SUP001', entryDate: new Date('2023-10-05') },
-  { id: 'BRG006', name: 'RAM DDR4 8GB', category: 'Sparepart Komputer', stock: 18, buyPrice: 350000, retailPrice: 500000, resellerPrice: 450000, barcode: '8991234567895', supplierId: 'SUP002', entryDate: new Date('2023-10-06') },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useStock, Product } from "@/hooks/use-stock"; // Import useStock hook
 
 const newItemInitialState = { name: '', category: '', stock: 0, buyPrice: 0, retailPrice: 0, resellerPrice: 0, barcode: '', entryDate: new Date(), supplierId: '' };
 const newSupplierInitialState = { name: '', phone: '', address: '' };
 const addStockInitialState = { itemId: '', quantity: 0, entryDate: new Date(), supplierId: '' };
 
 const StockPage = () => {
-  const [stockData, setStockData] = useState(initialStockData);
-  const suppliers = useSuppliers();
+  const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct, updateStockQuantity } = useStock();
+  const { suppliers } = useSuppliers();
   const [searchTerm, setSearchTerm] = useState("");
 
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
   const [newItem, setNewItem] = useState(newItemInitialState);
 
   const [isEditItemDialogOpen, setIsEditItemDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<StockItem | null>(null);
+  const [editingItem, setEditingItem] = useState<Product | null>(null);
 
   const [isAddStockDialogOpen, setIsAddStockDialogOpen] = useState(false);
   const [stockToAdd, setStockToAdd] = useState(addStockInitialState);
@@ -53,7 +41,7 @@ const StockPage = () => {
   const [isAddSupplierDialogOpen, setIsAddSupplierDialogOpen] = useState(false);
   const [newSupplier, setNewSupplier] = useState(newSupplierInitialState);
 
-  const filteredStock = stockData.filter(item => {
+  const filteredStock = products.filter(item => {
     const term = searchTerm.toLowerCase();
     return (
       item.name.toLowerCase().includes(term) ||
@@ -77,17 +65,22 @@ const StockPage = () => {
     setNewItem(prev => ({ ...prev, [name]: isNumeric ? Number(value) : value }));
   };
 
-  const handleAddItemSubmit = (e: React.FormEvent) => {
+  const handleAddItemSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItem.name || !newItem.category || !newItem.barcode) {
       showError("Harap isi semua field yang wajib diisi.");
       return;
     }
-    const newId = `BRG${(stockData.length + 1).toString().padStart(3, '0')}`;
-    setStockData(prev => [...prev, { ...newItem, id: newId }]);
-    showSuccess("Barang baru berhasil ditambahkan!");
-    setIsAddItemDialogOpen(false);
-    setNewItem(newItemInitialState);
+    
+    const added = await addProduct({
+      ...newItem,
+      entryDate: newItem.entryDate.toISOString(), // Convert Date to ISO string
+    });
+
+    if (added) {
+      setIsAddItemDialogOpen(false);
+      setNewItem(newItemInitialState);
+    }
   };
 
   const handleEditItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,43 +90,70 @@ const StockPage = () => {
     setEditingItem({ ...editingItem, [name]: isNumeric ? Number(value) : value });
   };
 
-  const handleEditItemSubmit = (e: React.FormEvent) => {
+  const handleEditItemSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingItem) return;
-    setStockData(prev => prev.map(item => item.id === editingItem.id ? editingItem : item));
-    showSuccess("Data barang berhasil diperbarui!");
-    setIsEditItemDialogOpen(false);
-    setEditingItem(null);
+    
+    const updated = await updateProduct(editingItem.id, {
+      name: editingItem.name,
+      category: editingItem.category,
+      stock: editingItem.stock,
+      buyPrice: editingItem.buyPrice,
+      retailPrice: editingItem.retailPrice,
+      resellerPrice: editingItem.resellerPrice,
+      barcode: editingItem.barcode,
+      supplierId: editingItem.supplierId,
+      entryDate: editingItem.entryDate, // Already ISO string from fetched data
+    });
+
+    if (updated) {
+      setIsEditItemDialogOpen(false);
+      setEditingItem(null);
+    }
   };
 
-  const handleAddStockSubmit = (e: React.FormEvent) => {
+  const handleDeleteItem = async (itemId: string) => {
+    if (window.confirm("Apakah Anda yakin ingin menghapus barang ini?")) {
+      await deleteProduct(itemId);
+    }
+  };
+
+  const handleAddStockSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stockToAdd.itemId || stockToAdd.quantity <= 0) {
       showError("Pilih barang dan masukkan jumlah yang valid.");
       return;
     }
-    setStockData(prevData =>
-      prevData.map(item =>
-        item.id === stockToAdd.itemId
-          ? { ...item, stock: item.stock + stockToAdd.quantity }
-          : item
-      )
-    );
-    showSuccess("Stok berhasil diperbarui!");
+    
+    await updateStockQuantity(stockToAdd.itemId, stockToAdd.quantity);
     setIsAddStockDialogOpen(false);
     setStockToAdd(addStockInitialState);
   };
 
-  const handleSupplierSubmit = (e: React.FormEvent) => {
+  const handleSupplierSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSupplier.name) {
       showError("Nama supplier tidak boleh kosong.");
       return;
     }
-    const addedSupplier = suppliersDB.add(newSupplier);
-    // Update supplier in both forms
-    setStockToAdd(prev => ({ ...prev, supplierId: addedSupplier.id }));
-    setNewItem(prev => ({ ...prev, supplierId: addedSupplier.id }));
+    
+    const { data: addedSupplier, error } = await supabase
+      .from('suppliers')
+      .insert({ name: newSupplier.name, phone: newSupplier.phone, address: newSupplier.address })
+      .select()
+      .single();
+
+    if (error) {
+      showError(`Gagal menambah supplier: ${error.message}`);
+      return;
+    }
+
+    if (addedSupplier) {
+      // Update supplier in both forms
+      setStockToAdd(prev => ({ ...prev, supplierId: addedSupplier.id }));
+      setNewItem(prev => ({ ...prev, supplierId: addedSupplier.id }));
+    }
+    
     showSuccess("Supplier baru berhasil ditambahkan!");
     setIsAddSupplierDialogOpen(false);
     setNewSupplier(newSupplierInitialState);
@@ -174,7 +194,7 @@ const StockPage = () => {
                         <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
                           <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={isComboboxOpen} className="col-span-3 justify-between">
-                              {stockToAdd.itemId ? stockData.find((item) => item.id === stockToAdd.itemId)?.name : "Pilih Barang..."}
+                              {stockToAdd.itemId ? products.find((item) => item.id === stockToAdd.itemId)?.name : "Pilih Barang..."}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </PopoverTrigger>
@@ -183,7 +203,7 @@ const StockPage = () => {
                               <CommandInput placeholder="Cari (nama, kode, barcode)..." />
                               <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
                               <CommandGroup>
-                                {stockData.map((item) => (
+                                {products.map((item) => (
                                   <CommandItem key={item.id} value={`${item.name} ${item.id} ${item.barcode}`} onSelect={() => { setStockToAdd(prev => ({ ...prev, itemId: item.id })); setIsComboboxOpen(false); }}>
                                     <Check className={cn("mr-2 h-4 w-4", stockToAdd.itemId === item.id ? "opacity-100" : "opacity-0")} />
                                     <div>
@@ -229,7 +249,7 @@ const StockPage = () => {
                       <div className="grid grid-cols-4 items-center gap-4">
                         <div />
                         <div className="col-span-3">
-                          <Button type="button" variant="link" className="p-0 h-auto text-sm text-blue-600 hover:text-blue-800" onClick={() => setIsAddSupplierDialogOpen(true)}>
+                          <Button type="button" variant="link" className="p-0 h-auto text-sm" onClick={() => setIsAddSupplierDialogOpen(true)}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Tambah Supplier Baru
                           </Button>
@@ -318,7 +338,7 @@ const StockPage = () => {
                       <div className="grid grid-cols-4 items-center gap-4">
                         <div />
                         <div className="col-span-3">
-                          <Button type="button" variant="link" className="p-0 h-auto text-sm text-blue-600 hover:text-blue-800" onClick={() => setIsAddSupplierDialogOpen(true)}>
+                          <Button type="button" variant="link" className="p-0 h-auto text-sm" onClick={() => setIsAddSupplierDialogOpen(true)}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Tambah Supplier Baru
                           </Button>
@@ -351,27 +371,33 @@ const StockPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStock.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.id}</TableCell>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell>{item.category}</TableCell>
-                    <TableCell>{suppliers.find(s => s.id === item.supplierId)?.name || '-'}</TableCell>
-                    <TableCell>{format(item.entryDate, "dd/MM/yyyy")}</TableCell>
-                    <TableCell className="text-center">{item.stock}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.retailPrice)}</TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex justify-center gap-2">
-                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => { setEditingItem(item); setIsEditItemDialogOpen(true); }}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="destructive" size="icon" className="h-8 w-8">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {productsLoading ? (
+                  <TableRow><TableCell colSpan={8} className="text-center h-24">Memuat data stok...</TableCell></TableRow>
+                ) : filteredStock.length > 0 ? (
+                  filteredStock.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.id}</TableCell>
+                      <TableCell>{item.name}</TableCell>
+                      <TableCell>{item.category}</TableCell>
+                      <TableCell>{suppliers.find(s => s.id === item.supplierId)?.name || '-'}</TableCell>
+                      <TableCell>{format(new Date(item.entryDate), "dd/MM/yyyy")}</TableCell>
+                      <TableCell className="text-center">{item.stock}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(item.retailPrice)}</TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex justify-center gap-2">
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => { setEditingItem(item); setIsEditItemDialogOpen(true); }}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDeleteItem(item.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow><TableCell colSpan={8} className="text-center h-24">Tidak ada data stok.</TableCell></TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
@@ -394,6 +420,31 @@ const StockPage = () => {
                 <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-buyPrice" className="text-right">Harga Beli</Label><Input id="edit-buyPrice" name="buyPrice" type="number" value={editingItem.buyPrice} onChange={handleEditItemChange} className="col-span-3" /></div>
                 <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-retailPrice" className="text-right">Harga Ecer</Label><Input id="edit-retailPrice" name="retailPrice" type="number" value={editingItem.retailPrice} onChange={handleEditItemChange} className="col-span-3" /></div>
                 <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-resellerPrice" className="text-right">Harga Reseller</Label><Input id="edit-resellerPrice" name="resellerPrice" type="number" value={editingItem.resellerPrice} onChange={handleEditItemChange} className="col-span-3" /></div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-entryDate" className="text-right">Tgl. Masuk</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant={"outline"} className={cn("col-span-3 justify-start text-left font-normal", !editingItem.entryDate && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {editingItem.entryDate ? format(new Date(editingItem.entryDate), "PPP") : <span>Pilih tanggal</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar mode="single" selected={new Date(editingItem.entryDate)} onSelect={(date) => setEditingItem(prev => ({ ...prev!, entryDate: (date || new Date()).toISOString() }))} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-supplier" className="text-right">Supplier</Label>
+                  <Select value={editingItem.supplierId || ''} onValueChange={(value) => setEditingItem(prev => ({ ...prev!, supplierId: value }))}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Pilih Supplier (Opsional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {suppliers.map(supplier => (<SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => setIsEditItemDialogOpen(false)}>Batal</Button>

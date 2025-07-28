@@ -7,12 +7,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Search, Edit, Trash2, Truck } from "lucide-react";
-import { useSuppliers } from "@/hooks/use-suppliers";
-import { suppliersDB, Supplier } from "@/data/suppliers";
+import { useSuppliers, Supplier } from "@/hooks/use-suppliers";
+import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
 
 const SupplierPage = () => {
-  const suppliers = useSuppliers();
+  const { suppliers, loading } = useSuppliers();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
@@ -20,7 +20,7 @@ const SupplierPage = () => {
 
   const handleOpenDialog = (supplier: Supplier | null = null) => {
     setEditingSupplier(supplier);
-    setFormData(supplier ? { name: supplier.name, phone: supplier.phone, address: supplier.address } : { name: '', phone: '', address: '' });
+    setFormData(supplier ? { name: supplier.name, phone: supplier.phone || '', address: supplier.address || '' } : { name: '', phone: '', address: '' });
     setIsDialogOpen(true);
   };
 
@@ -28,25 +28,51 @@ const SupplierPage = () => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) {
       showError("Nama supplier tidak boleh kosong.");
       return;
     }
+
+    let error;
     if (editingSupplier) {
-      suppliersDB.update(editingSupplier.id, formData);
-      showSuccess("Data supplier berhasil diperbarui.");
+      // Update existing supplier
+      const { error: updateError } = await supabase
+        .from('suppliers')
+        .update({ name: formData.name, phone: formData.phone, address: formData.address })
+        .eq('id', editingSupplier.id);
+      error = updateError;
     } else {
-      suppliersDB.add(formData);
-      showSuccess("Supplier baru berhasil ditambahkan.");
+      // Add new supplier
+      const { error: insertError } = await supabase
+        .from('suppliers')
+        .insert({ name: formData.name, phone: formData.phone, address: formData.address });
+      error = insertError;
     }
-    setIsDialogOpen(false);
+
+    if (error) {
+      showError(`Gagal menyimpan data: ${error.message}`);
+    } else {
+      showSuccess(`Data supplier berhasil ${editingSupplier ? 'diperbarui' : 'ditambahkan'}.`);
+      setIsDialogOpen(false);
+    }
+  };
+
+  const handleDelete = async (supplierId: string) => {
+    if (window.confirm("Apakah Anda yakin ingin menghapus supplier ini?")) {
+      const { error } = await supabase.from('suppliers').delete().eq('id', supplierId);
+      if (error) {
+        showError(`Gagal menghapus: ${error.message}`);
+      } else {
+        showSuccess("Supplier berhasil dihapus.");
+      }
+    }
   };
 
   const filteredSuppliers = suppliers.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.phone.toLowerCase().includes(searchTerm.toLowerCase())
+    (s.phone && s.phone.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -74,19 +100,25 @@ const SupplierPage = () => {
           <Table>
             <TableHeader><TableRow><TableHead>Nama</TableHead><TableHead>Telepon</TableHead><TableHead>Alamat</TableHead><TableHead className="text-center">Aksi</TableHead></TableRow></TableHeader>
             <TableBody>
-              {filteredSuppliers.map(supplier => (
-                <TableRow key={supplier.id}>
-                  <TableCell className="font-medium">{supplier.name}</TableCell>
-                  <TableCell>{supplier.phone}</TableCell>
-                  <TableCell>{supplier.address || '-'}</TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex justify-center gap-2">
-                      <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(supplier)}><Edit className="h-4 w-4" /></Button>
-                      <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => suppliersDB.delete(supplier.id)}><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {loading ? (
+                <TableRow><TableCell colSpan={4} className="text-center h-24">Memuat data supplier...</TableCell></TableRow>
+              ) : filteredSuppliers.length > 0 ? (
+                filteredSuppliers.map(supplier => (
+                  <TableRow key={supplier.id}>
+                    <TableCell className="font-medium">{supplier.name}</TableCell>
+                    <TableCell>{supplier.phone || '-'}</TableCell>
+                    <TableCell>{supplier.address || '-'}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center gap-2">
+                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(supplier)}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(supplier.id)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow><TableCell colSpan={4} className="text-center h-24">Tidak ada data supplier.</TableCell></TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

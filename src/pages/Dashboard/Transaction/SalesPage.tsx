@@ -17,24 +17,11 @@ import { toPng } from 'html-to-image';
 import Receipt from "@/components/Receipt";
 import { installmentsDB } from "@/data/installments";
 import { salesHistoryDB } from "@/data/salesHistory";
-
-// --- Mock Data ---
-const initialStockData = [
-  { id: 'BRG001', name: 'LCD iPhone X', category: 'Sparepart HP', stock: 15, buyPrice: 650000, retailPrice: 850000, resellerPrice: 800000, barcode: '8991234567890' },
-  { id: 'BRG002', name: 'Baterai Samsung A50', category: 'Sparepart HP', stock: 25, buyPrice: 200000, retailPrice: 350000, resellerPrice: 320000, barcode: '8991234567891' },
-  { id: 'BRG003', name: 'Charger Type-C 25W', category: 'Aksesoris', stock: 50, buyPrice: 80000, retailPrice: 150000, resellerPrice: 125000, barcode: '8991234567892' },
-  { id: 'BRG004', name: 'Tempered Glass Universal', category: 'Aksesoris', stock: 120, buyPrice: 15000, retailPrice: 50000, resellerPrice: 35000, barcode: '8991234567893' },
-  { id: 'BRG005', name: 'SSD 256GB NVMe', category: 'Sparepart Komputer', stock: 10, buyPrice: 450000, retailPrice: 600000, resellerPrice: 550000, barcode: '8991234567894' },
-];
-const customers = [
-  { id: 'CUS001', name: 'Pelanggan Umum', phone: '-' },
-  { id: 'CUS002', name: 'Budi Santoso', phone: '081234567890' },
-  { id: 'CUS003', name: 'Ani Wijaya', phone: '081209876543' },
-];
+import { useStock, Product } from "@/hooks/use-stock"; // Import useStock hook
+import { useCustomers } from "@/hooks/use-customers"; // Import useCustomers hook
 
 // --- Type Definitions ---
-type StockItem = typeof initialStockData[0];
-type CartItem = StockItem & { quantity: number; priceType: 'retail' | 'reseller'; };
+type CartItem = Product & { quantity: number; priceType: 'retail' | 'reseller'; };
 type PaymentMethod = 'tunai' | 'cicilan';
 type CompletedTransaction = {
   id: string;
@@ -49,9 +36,10 @@ type CompletedTransaction = {
 };
 
 const SalesPage = () => {
-  const [stockData, setStockData] = useState(initialStockData);
+  const { products, updateStockQuantity } = useStock(); // Use products from useStock
+  const { customers } = useCustomers(); // Use customers from useCustomers
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState('CUS001');
+  const [selectedCustomer, setSelectedCustomer] = useState('CUS001'); // Default to 'Pelanggan Umum'
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('tunai');
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
@@ -72,7 +60,7 @@ const SalesPage = () => {
     setPaymentAmount(isNaN(numericValue) ? 0 : numericValue);
   };
 
-  const handleAddItemToCart = (item: StockItem) => {
+  const handleAddItemToCart = (item: Product) => {
     const existingItem = cart.find(cartItem => cartItem.id === item.id);
     if (item.stock <= (existingItem?.quantity || 0)) {
       showError(`Stok ${item.name} tidak mencukupi.`);
@@ -87,7 +75,7 @@ const SalesPage = () => {
   };
 
   const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
-    const itemInStock = stockData.find(item => item.id === itemId);
+    const itemInStock = products.find(item => item.id === itemId);
     if (newQuantity > (itemInStock?.stock || 0)) {
       showError(`Stok ${itemInStock?.name} tidak mencukupi.`);
       return;
@@ -116,17 +104,16 @@ const SalesPage = () => {
     return { change, remainingAmount };
   }, [paymentAmount, transactionSummary.totalSale]);
 
-  const handleProcessTransaction = () => {
+  const handleProcessTransaction = async () => {
     if (cart.length === 0) {
       showError("Keranjang belanja masih kosong.");
       return;
     }
-    const newStockData = [...stockData];
-    cart.forEach(cartItem => {
-      const itemIndex = newStockData.findIndex(stockItem => stockItem.id === cartItem.id);
-      if (itemIndex !== -1) newStockData[itemIndex].stock -= cartItem.quantity;
-    });
-    setStockData(newStockData);
+
+    // Update stock in Supabase
+    for (const cartItem of cart) {
+      await updateStockQuantity(cartItem.id, -cartItem.quantity); // Decrease stock
+    }
 
     const transaction: CompletedTransaction = {
       id: `TRX-${Date.now()}`,
@@ -219,7 +206,7 @@ const SalesPage = () => {
                     <CommandList>
                       <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
                       <CommandGroup>
-                        {stockData.filter(item => item.stock > 0).map(item => (
+                        {products.filter(item => item.stock > 0).map(item => (
                           <CommandItem key={item.id} onSelect={() => handleAddItemToCart(item)} className="flex justify-between items-center">
                             <div>
                               <p className="font-medium">{item.name}</p>
@@ -264,7 +251,7 @@ const SalesPage = () => {
                             </Select>
                           </TableCell>
                           <TableCell className="text-right font-semibold">{formatCurrency((item.priceType === 'retail' ? item.retailPrice : item.resellerPrice) * item.quantity)}</TableCell>
-                          <TableCell><Button variant="ghost" size="icon" onClick={() => handleUpdateQuantity(item.id, 0)}><Trash2 className="h-4 w-4 text-red-500" /></Button></TableCell>
+                          <TableCell><Button variant="ghost" size="icon" onClick={() => handleUpdateQuantity(item.id, 0)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -279,41 +266,40 @@ const SalesPage = () => {
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2"><Landmark className="h-5 w-5" /> Pembayaran</CardTitle></CardHeader>
             <CardContent>
-              <RadioGroup value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)}>
+              <RadioGroup value={selectedCustomer === 'CUS001' ? 'tunai' : paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)} disabled={selectedCustomer === 'CUS001'}>
                 <div className="flex items-center space-x-2 p-3 border rounded-md"><RadioGroupItem value="tunai" id="tunai" /><Label htmlFor="tunai" className="flex-grow">Tunai</Label></div>
                 <div className="flex items-center space-x-2 p-3 border rounded-md"><RadioGroupItem value="cicilan" id="cicilan" /><Label htmlFor="cicilan" className="flex-grow">Cicilan</Label></div>
               </RadioGroup>
+              {selectedCustomer === 'CUS001' && (
+                <p className="text-xs text-muted-foreground mt-2">Pelanggan Umum hanya bisa tunai.</p>
+              )}
             </CardContent>
           </Card>
-          <Card className="bg-gray-800 text-white">
-            <CardHeader><CardTitle className="flex items-center gap-2"><Tag className="h-5 w-5" /> Info Transaksi</CardTitle></CardHeader>
+          <Card className="bg-primary text-primary-foreground">
+            <CardHeader><CardTitle className="flex items-center gap-2"><Tag className="h-5 w-5" /> Info Transaksi</CardTitle></CardHeader>            
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between"><span>Item:</span> <span className="font-medium">{cart.length} produk</span></div>
               <div className="flex justify-between"><span>Kasir:</span> <span className="font-medium">admin</span></div>
               <div className="flex justify-between"><span>Tanggal:</span> <span className="font-medium">{format(new Date(), "d MMMM yyyy", { locale: id })}</span></div>
             </CardContent>
-            <CardFooter className="flex-col space-y-4 p-4">
+            <CardFooter className="flex-col space-y-4 p-4 bg-black/10 rounded-b-lg">
               <div className="w-full space-y-2 text-lg">
                 <div className="flex justify-between"><span>Total Belanja:</span> <span className="font-bold text-2xl">{formatCurrency(transactionSummary.totalSale)}</span></div>
-                <div className="flex justify-between items-center border-t border-gray-600 pt-2 mt-2">
+                <div className="flex justify-between items-center border-t border-primary-foreground/50 pt-2 mt-2">
                   <Label htmlFor="paymentAmount" className="text-base">Jumlah Bayar:</Label>
                   <Input
                     id="paymentAmount"
                     type="text"
                     value={formatNumberInput(paymentAmount)}
                     onChange={handlePaymentAmountChange}
-                    className="w-40 text-right bg-gray-700 border-gray-600 text-white text-lg"
+                    className="w-40 text-right bg-primary-foreground/20 border-primary-foreground/50 text-primary-foreground text-lg placeholder:text-primary-foreground/70"
                     placeholder="0"
                   />
                 </div>
-                {paymentDetails.change > 0 && (
-                  <div className="flex justify-between text-cyan-400"><span>Kembalian:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.change)}</span></div>
-                )}
-                {paymentDetails.remainingAmount > 0 && (
-                  <div className="flex justify-between text-yellow-400"><span>Sisa Bayar:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.remainingAmount)}</span></div>
-                )}
+                {paymentDetails.change > 0 && (<div className="flex justify-between"><span>Kembalian:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.change)}</span></div>)}
+                {paymentDetails.remainingAmount > 0 && (<div className="flex justify-between"><span>Sisa Bayar:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.remainingAmount)}</span></div>)}
               </div>
-              <Button size="lg" className="w-full bg-red-600 hover:bg-red-700 text-lg" onClick={handleProcessTransaction} disabled={cart.length === 0}><Banknote className="h-5 w-5 mr-2" /> Proses Transaksi</Button>
+              <Button size="lg" className="w-full bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg" onClick={handleProcessTransaction} disabled={cart.length === 0}><Banknote className="h-5 w-5 mr-2" /> Proses Transaksi</Button>
             </CardFooter>
           </Card>
         </div>

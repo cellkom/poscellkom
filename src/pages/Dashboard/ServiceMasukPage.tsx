@@ -15,15 +15,24 @@ import { cn } from "@/lib/utils";
 import { showSuccess, showError } from "@/utils/toast";
 import { toPng } from 'html-to-image';
 import ServiceMasukReceipt from "@/components/ServiceMasukReceipt";
-import { serviceEntriesDB } from "@/data/service-entries";
+import { useServiceEntries } from "@/hooks/use-service-entries"; // Updated import
 import { useCustomers } from "@/hooks/use-customers";
-import { customersDB } from "@/data/customers";
+import { supabase } from "@/integrations/supabase/client";
 
-// Type Definitions
-interface ServiceEntry {
-  id: string;
+// Type Definitions for form data (local state)
+interface ServiceEntryFormData {
   date: Date;
   customerId: string;
+  category: string;
+  deviceType: string;
+  damageType: string;
+  description: string;
+}
+
+// Type for the data passed to the receipt component
+interface ReceiptServiceEntry {
+  id: string;
+  date: Date;
   customerName: string;
   customerPhone: string;
   category: string;
@@ -32,7 +41,7 @@ interface ServiceEntry {
   description: string;
 }
 
-const initialState = {
+const initialState: ServiceEntryFormData = {
   date: new Date(),
   customerId: '',
   category: '',
@@ -44,10 +53,11 @@ const initialState = {
 const newCustomerInitialState = { name: '', phone: '', address: '' };
 
 const ServiceMasukPage = () => {
-  const customers = useCustomers();
+  const { customers } = useCustomers();
+  const { addServiceEntry } = useServiceEntries(); // Use addServiceEntry from hook
   const [formData, setFormData] = useState(initialState);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
-  const [lastEntry, setLastEntry] = useState<ServiceEntry | null>(null);
+  const [lastEntry, setLastEntry] = useState<ReceiptServiceEntry | null>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
   const [newCustomer, setNewCustomer] = useState(newCustomerInitialState);
@@ -61,41 +71,71 @@ const ServiceMasukPage = () => {
     setNewCustomer(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleNewCustomerSubmit = (e: React.FormEvent) => {
+  const handleNewCustomerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustomer.name) {
       showError("Nama pelanggan tidak boleh kosong.");
       return;
     }
-    const addedCustomer = customersDB.add(newCustomer);
-    handleInputChange('customerId', addedCustomer.id);
+    
+    const { data: addedCustomer, error } = await supabase
+      .from('customers')
+      .insert({ name: newCustomer.name, phone: newCustomer.phone, address: newCustomer.address })
+      .select()
+      .single();
+
+    if (error) {
+      showError(`Gagal menambah pelanggan: ${error.message}`);
+      return;
+    }
+
+    if (addedCustomer) {
+      handleInputChange('customerId', addedCustomer.id);
+    }
     
     showSuccess("Pelanggan baru berhasil ditambahkan!");
     setIsAddCustomerOpen(false);
     setNewCustomer(newCustomerInitialState);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.customerId || !formData.category || !formData.damageType || !formData.deviceType) {
       showError("Harap lengkapi semua field yang wajib diisi.");
       return;
     }
 
-    const selectedCustomer = customers.find(c => c.id === formData.customerId);
-    const newEntryData = {
-      ...formData,
-      id: `SRV-IN-${Date.now()}`,
-      customerName: selectedCustomer?.name || '',
-      customerPhone: selectedCustomer?.phone || '',
-    };
+    const selectedCustomerData = customers.find(c => c.id === formData.customerId);
+    if (!selectedCustomerData) {
+      showError("Pelanggan tidak ditemukan.");
+      return;
+    }
 
-    serviceEntriesDB.add(newEntryData);
+    const newEntry = await addServiceEntry({
+      date: formData.date.toISOString(), // Convert Date object to ISO string for Supabase
+      customer_id: formData.customerId, // Use customer_id for Supabase
+      category: formData.category,
+      device_type: formData.deviceType,
+      damage_type: formData.damageType,
+      description: formData.description,
+    });
 
-    setLastEntry(newEntryData);
-    setIsReceiptOpen(true);
-    showSuccess("Data service masuk berhasil disimpan.");
-    setFormData(initialState);
+    if (newEntry) {
+      // Prepare data for the receipt component
+      const receiptData: ReceiptServiceEntry = {
+        id: newEntry.id,
+        date: new Date(newEntry.date), // Convert back to Date for receipt component
+        customerName: selectedCustomerData.name,
+        customerPhone: selectedCustomerData.phone || '',
+        category: newEntry.category,
+        deviceType: newEntry.device_type,
+        damageType: newEntry.damage_type,
+        description: newEntry.description,
+      };
+      setLastEntry(receiptData);
+      setIsReceiptOpen(true);
+      setFormData(initialState); // Reset form
+    }
   };
 
   const handlePrint = () => window.print();
@@ -196,6 +236,10 @@ const ServiceMasukPage = () => {
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="phone" className="text-right">Telepon</Label>
                 <Input id="phone" name="phone" className="col-span-3" value={newCustomer.phone} onChange={handleNewCustomerChange} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="address" className="text-right">Alamat</Label>
+                <Input id="address" name="address" className="col-span-3" value={newCustomer.address} onChange={handleNewCustomerChange} />
               </div>
             </div>
             <DialogFooter>

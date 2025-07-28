@@ -1,91 +1,163 @@
-import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, CircleUser, Search } from "lucide-react";
-import { MainNav } from "./MainNav";
-import { MobileNav } from "./MobileNav";
-import { Input } from "../ui/input";
+import { Menu, LayoutDashboard, Package, ShoppingCart, Database, FileText, Users, UserCircle, Receipt, Wrench, CreditCard, ChevronDown, ClipboardPlus, Truck } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
+const navItems = [
+  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+  { name: "Stok", icon: Package, path: "/dashboard/stock" },
+  { name: "Service Masuk", icon: ClipboardPlus, path: "/dashboard/service-masuk" },
+  { 
+    name: "Transaksi", 
+    icon: Receipt,
+    path: "/dashboard/transaction", // Base path for active state
+    subItems: [
+        { name: "Penjualan", icon: ShoppingCart, path: "/dashboard/transaction/sales" },
+        { name: "Jasa Service", icon: Wrench, path: "/dashboard/transaction/service" },
+        { name: "Kelola Cicilan", icon: CreditCard, path: "/dashboard/transaction/installments" },
+    ]
+  },
+  { 
+    name: "Data", 
+    icon: Database, 
+    path: "/dashboard/data",
+    subItems: [
+        { name: "Pelanggan", icon: Users, path: "/dashboard/data/customers" },
+        { name: "Supplier", icon: Truck, path: "/dashboard/data/suppliers" },
+    ]
+  },
+  { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
+  { name: "Users", icon: Users, path: "/dashboard/users" },
+];
+
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { user, signOut } = useAuth();
-  const [isScrolled, setIsScrolled] = useState(false);
+  const isMobile = useIsMobile();
   const location = useLocation();
+  const { profile, signOut } = useAuth();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  return (
-    <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <aside className="fixed inset-y-0 left-0 z-10 hidden w-60 flex-col border-r bg-background sm:flex">
-        <div className="flex h-16 items-center border-b px-6">
-          <Link to="/dashboard" className="flex items-center gap-2 font-semibold">
-            <span className="text-lg">CELLKOM</span>
-          </Link>
-        </div>
-        <MainNav className="flex-1" />
-      </aside>
-      <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-60">
-        <header className={cn(
-          "sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 transition-shadow",
-          isScrolled && "shadow-sm"
-        )}>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button size="icon" variant="outline" className="sm:hidden">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle Menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="sm:max-w-xs">
-              <MobileNav />
-            </SheetContent>
-          </Sheet>
-          <div className="relative ml-auto flex-1 md:grow-0">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
-            />
-          </div>
-          <DropdownMenu>
+  const renderNavLinks = () => (
+    <nav className="hidden md:flex items-center space-x-1">
+      {navItems.map((item) => {
+        if (item.name === "Users" && profile?.role !== 'Admin') return null;
+        return item.subItems ? (
+          <DropdownMenu key={item.name}>
             <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="icon" className="rounded-full">
-                <CircleUser className="h-5 w-5" />
-                <span className="sr-only">Toggle user menu</span>
+              <Button variant="ghost" className={cn("text-primary-foreground hover:bg-black/10", location.pathname.startsWith(item.path) && "bg-black/20")}>
+                <item.icon className="h-4 w-4 mr-2" />
+                {item.name}
+                <ChevronDown className="h-4 w-4 ml-1" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/dashboard/settings" className="cursor-pointer">Settings</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut} className="cursor-pointer">
-                Log out
-              </DropdownMenuItem>
+            <DropdownMenuContent>
+              {item.subItems.map(subItem => (
+                <DropdownMenuItem key={subItem.name} asChild>
+                  <Link to={subItem.path} className="flex items-center gap-2 cursor-pointer">
+                    <subItem.icon className="h-4 w-4" />
+                    {subItem.name}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
-        </header>
-        <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-          {children}
-        </main>
-      </div>
+        ) : (
+          <Button key={item.name} variant="ghost" asChild className={cn("text-primary-foreground hover:bg-black/10", location.pathname === item.path && "bg-black/20")}>
+            <Link to={item.path!} className="flex items-center gap-2">
+              <item.icon className="h-4 w-4" />
+              {item.name}
+            </Link>
+          </Button>
+        )
+      })}
+    </nav>
+  );
+
+  const renderMobileNav = () => (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="text-primary-foreground md:hidden">
+          <Menu className="h-6 w-6" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-64 bg-primary text-primary-foreground p-4">
+        <div className="text-2xl font-bold mb-6">CELLKOM</div>
+        <nav className="flex flex-col space-y-1">
+          {navItems.map((item) => {
+            if (item.name === "Users" && profile?.role !== 'Admin') return null;
+            return item.subItems ? (
+              <Collapsible key={item.name}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between text-primary-foreground hover:bg-black/10">
+                    <div className="flex items-center gap-2">
+                      <item.icon className="h-4 w-4" />
+                      {item.name}
+                    </div>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pl-6 space-y-1 mt-1">
+                  {item.subItems.map(subItem => (
+                    <Button key={subItem.name} variant="ghost" asChild className="w-full justify-start text-primary-foreground hover:bg-black/10">
+                      <Link to={subItem.path} className="flex items-center gap-2">
+                        <subItem.icon className="h-4 w-4" />
+                        {subItem.name}
+                      </Link>
+                    </Button>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            ) : (
+              <Button key={item.name} variant="ghost" asChild className="justify-start text-primary-foreground hover:bg-black/10">
+                <Link to={item.path!} className="flex items-center gap-2">
+                  <item.icon className="h-4 w-4" />
+                  {item.name}
+                </Link>
+              </Button>
+            )
+          })}
+        </nav>
+      </SheetContent>
+    </Sheet>
+  );
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <header className="bg-primary text-primary-foreground p-4 shadow-md flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {isMobile && renderMobileNav()}
+          <Link to="/dashboard" className="text-2xl font-bold">CELLKOM</Link>
+        </div>
+        {!isMobile && renderNavLinks()}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="flex items-center gap-2 text-primary-foreground hover:bg-black/10">
+              <UserCircle className="h-6 w-6" />
+              <span className="hidden md:inline">{profile?.full_name || 'User'}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>Profile</DropdownMenuItem>
+            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={signOut} className="cursor-pointer">
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </header>
+      <main className="flex-grow p-4 bg-gray-100">
+        {children}
+      </main>
     </div>
   );
 };

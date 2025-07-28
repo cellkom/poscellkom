@@ -12,29 +12,16 @@ import { Label } from "@/components/ui/label";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { PlusCircle, Wrench, Trash2, Minus, Plus, ClipboardList, Printer, Download, FilePlus2, Banknote } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
-import { serviceEntriesDB, useServiceEntries } from "@/data/service-entries";
+import { useServiceEntries, ServiceEntryWithCustomer } from "@/hooks/use-service-entries"; // Updated import
 import ServiceReceipt from "@/components/ServiceReceipt";
 import { toPng } from 'html-to-image';
 import { installmentsDB } from "@/data/installments";
 import { serviceHistoryDB } from "@/data/serviceHistory";
-
-// --- Mock Data ---
-const initialStockData = [
-  { id: 'BRG001', name: 'LCD iPhone X', category: 'Sparepart HP', stock: 15, buyPrice: 650000, retailPrice: 850000, barcode: '8991234567890' },
-  { id: 'BRG002', name: 'Baterai Samsung A50', category: 'Sparepart HP', stock: 25, buyPrice: 200000, retailPrice: 350000, barcode: '8991234567891' },
-  { id: 'BRG003', name: 'Charger Type-C 25W', category: 'Aksesoris', stock: 50, buyPrice: 80000, retailPrice: 150000, barcode: '8991234567892' },
-  { id: 'BRG004', name: 'Tempered Glass Universal', category: 'Aksesoris', stock: 120, buyPrice: 15000, retailPrice: 50000, barcode: '8991234567893' },
-  { id: 'BRG005', name: 'SSD 256GB NVMe', category: 'Sparepart Komputer', stock: 10, buyPrice: 450000, retailPrice: 600000, barcode: '8991234567894' },
-];
-const customers = [
-  { id: 'CUS001', name: 'Pelanggan Umum', phone: '-' },
-  { id: 'CUS002', name: 'Budi Santoso', phone: '081234567890' },
-  { id: 'CUS003', name: 'Ani Wijaya', phone: '081209876543' },
-];
+import { useStock, Product } from "@/hooks/use-stock";
+import { useCustomers } from "@/hooks/use-customers";
 
 // --- Type Definitions ---
-type StockItem = typeof initialStockData[0];
-type UsedPart = StockItem & { quantity: number };
+type UsedPart = Product & { quantity: number };
 type PaymentMethod = 'tunai' | 'cicilan';
 type ServiceStatus = 'Proses' | 'Selesai' | 'Sudah Diambil' | 'Gagal/Cancel';
 type CompletedServiceTransaction = {
@@ -51,7 +38,9 @@ type CompletedServiceTransaction = {
 };
 
 const ServicePage = () => {
-  const [stockData, setStockData] = useState(initialStockData);
+  const { products, updateStockQuantity } = useStock();
+  const { customers } = useCustomers();
+  const { serviceEntries, updateServiceEntry } = useServiceEntries(); // Use from hook
   const [usedParts, setUsedParts] = useState<UsedPart[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [serviceDescription, setServiceDescription] = useState('');
@@ -60,7 +49,6 @@ const ServicePage = () => {
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [status, setStatus] = useState<ServiceStatus>('Proses');
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
-  const allServiceEntries = useServiceEntries();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [lastTransaction, setLastTransaction] = useState<CompletedServiceTransaction | null>(null);
@@ -79,7 +67,7 @@ const ServicePage = () => {
     setPaymentAmount(isNaN(numericValue) ? 0 : numericValue);
   };
 
-  const handleAddPart = (item: StockItem) => {
+  const handleAddPart = (item: Product) => {
     const existingPart = usedParts.find(part => part.id === item.id);
     if (item.stock <= (existingPart?.quantity || 0)) {
       showError(`Stok ${item.name} tidak mencukupi.`);
@@ -94,7 +82,7 @@ const ServicePage = () => {
   };
 
   const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
-    const itemInStock = stockData.find(item => item.id === itemId);
+    const itemInStock = products.find(item => item.id === itemId);
     if (newQuantity > (itemInStock?.stock || 0)) {
       showError(`Stok ${itemInStock?.name} tidak mencukupi.`);
       return;
@@ -122,19 +110,19 @@ const ServicePage = () => {
   }, [paymentAmount, summary.total]);
 
   const handleSelectService = (serviceId: string) => {
-    const service = allServiceEntries.find(s => s.id === serviceId);
+    const service = serviceEntries.find(s => s.id === serviceId);
     if (service) {
         setSelectedServiceId(service.id);
-        setSelectedCustomer(service.customerId);
-        setServiceDescription(`${service.damageType} - ${service.description}`);
+        setSelectedCustomer(service.customer_id); // Use customer_id from DB
+        setServiceDescription(`${service.damage_type} - ${service.description}`);
         setUsedParts([]);
         setServiceFee(0);
         setPaymentMethod('tunai');
-        setStatus('Proses');
+        setStatus(service.status); // Set initial status from DB
     }
   };
 
-  const handleProcessService = () => {
+  const handleProcessService = async () => {
     if (!selectedServiceId) {
       showError("Harap pilih service yang sedang berjalan dari daftar.");
       return;
@@ -144,10 +132,16 @@ const ServicePage = () => {
         return;
     }
 
+    const selectedServiceEntry = serviceEntries.find(e => e.id === selectedServiceId);
+    if (!selectedServiceEntry) {
+      showError("Entri service tidak ditemukan.");
+      return;
+    }
+
     const transaction: CompletedServiceTransaction = {
       id: selectedServiceId,
       date: new Date(),
-      customerName: customers.find(c => c.id === selectedCustomer)?.name || 'Umum',
+      customerName: selectedServiceEntry.customerName, // Use customerName from joined data
       description: serviceDescription,
       usedParts: usedParts,
       serviceFee: serviceFee,
@@ -184,15 +178,14 @@ const ServicePage = () => {
     setLastTransaction(transaction);
     setIsReceiptOpen(true);
     
-    serviceEntriesDB.update(selectedServiceId, { status });
+    // Update status in Supabase
+    await updateServiceEntry(selectedServiceId, { status });
 
     if (status !== 'Gagal/Cancel') {
-        const newStockData = [...stockData];
-        usedParts.forEach(part => {
-          const itemIndex = newStockData.findIndex(stockItem => stockItem.id === part.id);
-          if (itemIndex !== -1) newStockData[itemIndex].stock -= part.quantity;
-        });
-        setStockData(newStockData);
+        // Update stock in Supabase for used parts
+        for (const part of usedParts) {
+            await updateStockQuantity(part.id, -part.quantity); // Decrease stock
+        }
     }
     showSuccess("Transaksi service berhasil diproses!");
   };
@@ -225,8 +218,8 @@ const ServicePage = () => {
   }, [receiptRef, lastTransaction]);
 
   const pendingServices = useMemo(() => {
-    return allServiceEntries.filter(entry => entry.status === 'Pending' || entry.status === 'Proses');
-  }, [allServiceEntries]);
+    return serviceEntries.filter(entry => entry.status === 'Pending' || entry.status === 'Proses');
+  }, [serviceEntries]);
 
   return (
     <DashboardLayout>
@@ -241,7 +234,7 @@ const ServicePage = () => {
                   {pendingServices.length > 0 ? (
                     pendingServices.map(s => (
                       <SelectItem key={s.id} value={s.id}>
-                        {s.id} - {s.customerName} ({s.deviceType})
+                        {s.id} - {s.customerName} ({s.device_type})
                       </SelectItem>
                     ))
                   ) : (
@@ -302,7 +295,7 @@ const ServicePage = () => {
                     <CommandList>
                       <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
                       <CommandGroup>
-                        {stockData.filter(item => item.stock > 0).map(item => (
+                        {products.filter(item => item.stock > 0).map(item => (
                           <CommandItem key={item.id} onSelect={() => handleAddPart(item)} className="flex justify-between items-center cursor-pointer">
                             <div>
                               <p className="font-medium">{item.name}</p>
@@ -335,7 +328,7 @@ const ServicePage = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-right font-semibold">{formatCurrency(item.retailPrice * item.quantity)}</TableCell>
-                        <TableCell><Button variant="ghost" size="icon" onClick={() => handleUpdateQuantity(item.id, 0)}><Trash2 className="h-4 w-4 text-red-500" /></Button></TableCell>
+                        <TableCell><Button variant="ghost" size="icon" onClick={() => handleUpdateQuantity(item.id, 0)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -352,7 +345,7 @@ const ServicePage = () => {
               <div className="flex justify-between"><span>Biaya Sparepart:</span> <span className="font-medium">{formatCurrency(summary.sparepartCost)}</span></div>
               <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2"><span>Total:</span> <span>{formatCurrency(summary.total)}</span></div>
               <div className="flex justify-between text-sm text-muted-foreground"><span>Modal Sparepart:</span> <span>{formatCurrency(summary.sparepartModal)}</span></div>
-              <div className="flex justify-between text-lg font-bold text-green-600"><span>Laba:</span> <span>{formatCurrency(summary.profit)}</span></div>
+              <div className="flex justify-between text-lg font-bold text-primary"><span>Laba:</span> <span>{formatCurrency(summary.profit)}</span></div>
               
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between items-center">
@@ -367,10 +360,10 @@ const ServicePage = () => {
                   />
                 </div>
                 {paymentDetails.change > 0 && (
-                  <div className="flex justify-between text-cyan-500"><span>Kembalian:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.change)}</span></div>
+                  <div className="flex justify-between text-primary"><span>Kembalian:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.change)}</span></div>
                 )}
                 {paymentDetails.remainingAmount > 0 && (
-                  <div className="flex justify-between text-yellow-500"><span>Sisa Bayar:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.remainingAmount)}</span></div>
+                  <div className="flex justify-between text-destructive"><span>Sisa Bayar:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.remainingAmount)}</span></div>
                 )}
               </div>
             </CardContent>

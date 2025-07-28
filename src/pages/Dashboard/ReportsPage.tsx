@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { useSalesHistory } from "@/hooks/use-sales-history";
 import { useServiceHistory } from "@/hooks/use-service-history";
-import { useServiceEntries } from "@/data/service-entries";
+import { useServiceEntries } from "@/hooks/use-service-entries"; // Updated import
 import { useInstallments } from "@/hooks/use-installments";
 import { isToday } from "date-fns";
 import { Banknote, ShoppingCart, Wrench, Clock, BarChart3, Printer, Calendar as CalendarIcon, ArrowRight } from "lucide-react";
@@ -15,7 +15,7 @@ const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style
 const ReportsPage = () => {
   const salesHistory = useSalesHistory();
   const serviceHistory = useServiceHistory();
-  const serviceEntries = useServiceEntries();
+  const { serviceEntries } = useServiceEntries(); // Use from hook
   const installments = useInstallments();
 
   const summaryToday = useMemo(() => {
