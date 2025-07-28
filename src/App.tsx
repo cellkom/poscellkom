@@ -21,6 +21,7 @@ import ServiceReportPage from "./pages/Dashboard/Reports/ServiceReportPage";
 import CustomerPage from "./pages/Dashboard/Data/CustomerPage";
 import SupplierPage from "./pages/Dashboard/Data/SupplierPage";
 import UsersPage from "./pages/Dashboard/UsersPage";
+import SettingsPage from "./pages/Dashboard/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
               <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
               <Route path="/dashboard/data/customers" element={<CustomerPage />} />
               <Route path="/dashboard/data/suppliers" element={<SupplierPage />} />
+              <Route path="/dashboard/settings" element={<SettingsPage />} />
               
               {/* Admin Only Route */}
               <Route element={<AdminRoute />}>
