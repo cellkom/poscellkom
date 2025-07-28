@@ -1,5 +1,3 @@
-import { useState, useEffect } from 'react';
-
 // --- Type Definitions ---
 export interface Payment {
   date: Date;
@@ -88,16 +86,4 @@ export const installmentsDB = {
         listeners.add(listener);
         return () => listeners.delete(listener);
     },
-};
-
-// --- React Hook for easy data access ---
-export const useInstallments = () => {
-    const [installments, setInstallments] = useState(installmentsDB.getAll());
-
-    useEffect(() => {
-        const unsubscribe = installmentsDB.subscribe(setInstallments);
-        return () => unsubscribe();
-    }, []);
-
-    return installments;
 };
