@@ -15,8 +15,8 @@ import { useStock, Product } from "@/hooks/use-stock";
 import { useCustomers } from "@/hooks/use-customers";
 import SalesReceipt from "@/components/SalesReceipt";
 import { toPng } from 'html-to-image';
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { salesHistoryDB } from "@/data/salesHistory";
+import { installmentsDB } from "@/data/installments";
 
 // --- Type Definitions ---
 type CartItem = Product & { quantity: number };
@@ -37,9 +37,8 @@ type CompletedTransaction = {
 };
 
 const SalesPage = () => {
-  const { products } = useStock();
+  const { products, updateStockQuantity } = useStock();
   const { customers, addCustomer } = useCustomers();
-  const { user } = useAuth();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerType, setCustomerType] = useState<CustomerType>('umum');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -52,7 +51,6 @@ const SalesPage = () => {
   const [lastTransaction, setLastTransaction] = useState<CompletedTransaction | null>(null);
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', address: '' });
   const receiptRef = useRef<HTMLDivElement>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
   
@@ -112,10 +110,10 @@ const SalesPage = () => {
 
   const paymentDetails = useMemo(() => {
     const total = summary.total;
-    const change = paymentMethod === 'tunai' && paymentAmount > total ? paymentAmount - total : 0;
+    const change = paymentAmount > total ? paymentAmount - total : 0;
     const remainingAmount = paymentAmount < total ? total - paymentAmount : 0;
     return { change, remainingAmount };
-  }, [paymentAmount, summary.total, paymentMethod]);
+  }, [paymentAmount, summary.total]);
 
   const handleCustomerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,13 +121,10 @@ const SalesPage = () => {
       showError("Nama dan nomor telepon wajib diisi.");
       return;
     }
-    const added = await addCustomer(newCustomer);
-    if (added) {
-        setSelectedCustomerId(added.id);
-        showSuccess("Customer baru berhasil ditambahkan!");
-        setNewCustomer({ name: '', phone: '', address: '' });
-        setIsCustomerDialogOpen(false);
-    }
+    await addCustomer(newCustomer);
+    showSuccess("Customer baru berhasil ditambahkan!");
+    setNewCustomer({ name: '', phone: '', address: '' });
+    setIsCustomerDialogOpen(false);
   };
 
   const handleProcessTransaction = async () => {
@@ -141,49 +136,9 @@ const SalesPage = () => {
       showError("Jumlah bayar kurang dari total belanja.");
       return;
     }
-    if (!user) {
-      showError("Sesi tidak valid, harap login ulang.");
-      return;
-    }
-    setIsProcessing(true);
 
-    const transactionPayload = {
-      kasir_id: user.id,
-      customer_id: selectedCustomerId,
-      customer_name: selectedCustomerName,
-      customer_type: customerType,
-      items: cart.map(item => ({
-        id: item.id,
-        quantity: item.quantity,
-        buyPrice: item.buyPrice,
-        salePrice: customerType === 'reseller' ? item.resellerPrice : item.retailPrice,
-      })),
-      summary: {
-        subtotal: summary.subtotal,
-        discount: discount,
-        total: summary.total,
-        profit: summary.profit,
-      },
-      payment: {
-        method: paymentMethod,
-        amount: paymentAmount,
-        change: paymentDetails.change,
-        remaining: paymentDetails.remainingAmount,
-      },
-    };
-
-    const { data, error } = await supabase.functions.invoke('create-sale-transaction', {
-      body: transactionPayload,
-    });
-
-    if (error) {
-      showError(`Gagal memproses transaksi: ${error.message}`);
-      setIsProcessing(false);
-      return;
-    }
-
-    const receiptData: CompletedTransaction = {
-      id: data.transaction_id,
+    const transaction: CompletedTransaction = {
+      id: `TRX-${Date.now()}`,
       date: new Date(),
       customerName: selectedCustomerName,
       items: cart,
@@ -195,11 +150,49 @@ const SalesPage = () => {
       remainingAmount: paymentDetails.remainingAmount,
       paymentMethod: paymentMethod,
     };
+
+    // Add to sales history
+    salesHistoryDB.add({
+      id: transaction.id,
+      items: transaction.items.map(i => ({
+        id: i.id,
+        name: i.name,
+        quantity: i.quantity,
+        buyPrice: i.buyPrice,
+        salePrice: customerType === 'reseller' ? i.resellerPrice : i.retailPrice,
+      })),
+      summary: {
+        totalSale: transaction.total,
+        totalCost: summary.modal,
+        profit: summary.profit,
+      },
+      customerName: transaction.customerName,
+      paymentMethod: transaction.paymentMethod,
+      date: transaction.date,
+      paymentAmount: transaction.paymentAmount,
+      remainingAmount: transaction.remainingAmount,
+    });
+
+    if (paymentDetails.remainingAmount > 0) {
+      installmentsDB.add({
+        id: transaction.id,
+        type: 'Penjualan',
+        customerName: transaction.customerName,
+        transactionDate: transaction.date,
+        totalAmount: transaction.total,
+        initialPayment: transaction.paymentAmount,
+        details: `${transaction.items.length} item`,
+      });
+    }
     
-    setLastTransaction(receiptData);
+    setLastTransaction(transaction);
     setIsReceiptOpen(true);
+    
+    // Update stock in Supabase
+    for (const item of cart) {
+      await updateStockQuantity(item.id, -item.quantity); // Decrease stock
+    }
     showSuccess("Transaksi berhasil diproses!");
-    setIsProcessing(false);
   };
 
   const handleNewTransaction = () => {
@@ -304,7 +297,7 @@ const SalesPage = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Kasir:</span>
-                <span className="font-medium">{user?.email}</span>
+                <span className="font-medium">admin</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Customer:</span>
@@ -387,9 +380,7 @@ const SalesPage = () => {
               </div>
             </CardContent>
             <CardFooter>
-              <Button size="lg" className="w-full" onClick={handleProcessTransaction} disabled={isProcessing}>
-                {isProcessing ? 'Memproses...' : <><Banknote className="h-5 w-5 mr-2" /> Proses & Cetak Nota</>}
-              </Button>
+              <Button size="lg" className="w-full" onClick={handleProcessTransaction}><Banknote className="h-5 w-5 mr-2" /> Proses & Cetak Nota</Button>
             </CardFooter>
           </Card>
         </div>
