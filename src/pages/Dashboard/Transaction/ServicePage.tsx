@@ -1,20 +1,22 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { PlusCircle, Wrench, Trash2, Minus, Plus, ClipboardList } from "lucide-react";
+import { PlusCircle, Wrench, Trash2, Minus, Plus, ClipboardList, Printer, Download, FilePlus2 } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import { serviceEntriesDB, useServiceEntries } from "@/data/service-entries";
+import ServiceReceipt from "@/components/ServiceReceipt";
+import { toPng } from 'html-to-image';
 
-// --- Mock Data (reusing from other pages for consistency) ---
+// --- Mock Data ---
 const initialStockData = [
   { id: 'BRG001', name: 'LCD iPhone X', category: 'Sparepart HP', stock: 15, buyPrice: 650000, retailPrice: 850000, barcode: '8991234567890' },
   { id: 'BRG002', name: 'Baterai Samsung A50', category: 'Sparepart HP', stock: 25, buyPrice: 200000, retailPrice: 350000, barcode: '8991234567891' },
@@ -33,6 +35,15 @@ type StockItem = typeof initialStockData[0];
 type UsedPart = StockItem & { quantity: number };
 type PaymentMethod = 'tunai' | 'cicilan';
 type ServiceStatus = 'Proses' | 'Selesai' | 'Sudah Diambil' | 'Gagal/Cancel';
+type CompletedServiceTransaction = {
+  id: string;
+  date: Date;
+  customerName: string;
+  description: string;
+  usedParts: UsedPart[];
+  serviceFee: number;
+  total: number;
+};
 
 const ServicePage = () => {
   const [stockData, setStockData] = useState(initialStockData);
@@ -45,6 +56,9 @@ const ServicePage = () => {
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const allServiceEntries = useServiceEntries();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+  const [lastTransaction, setLastTransaction] = useState<CompletedServiceTransaction | null>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
@@ -101,29 +115,37 @@ const ServicePage = () => {
       showError("Harap pilih service yang sedang berjalan dari daftar.");
       return;
     }
-
-    // Allow processing with no cost only if status is Gagal/Cancel
     if (status !== 'Gagal/Cancel' && serviceFee <= 0 && usedParts.length === 0) {
         showError("Harap masukkan biaya service atau tambahkan sparepart.");
         return;
     }
 
-    // Update the status in our mock DB
+    const transaction: CompletedServiceTransaction = {
+      id: selectedServiceId,
+      date: new Date(),
+      customerName: customers.find(c => c.id === selectedCustomer)?.name || 'Umum',
+      description: serviceDescription,
+      usedParts: usedParts,
+      serviceFee: serviceFee,
+      total: summary.total,
+    };
+    setLastTransaction(transaction);
+    setIsReceiptOpen(true);
+    
     serviceEntriesDB.update(selectedServiceId, { status });
 
-    // Only deduct stock if the service was successful (not canceled)
     if (status !== 'Gagal/Cancel') {
         const newStockData = [...stockData];
         usedParts.forEach(part => {
           const itemIndex = newStockData.findIndex(stockItem => stockItem.id === part.id);
-          if (itemIndex !== -1) {
-            newStockData[itemIndex].stock -= part.quantity;
-          }
+          if (itemIndex !== -1) newStockData[itemIndex].stock -= part.quantity;
         });
         setStockData(newStockData);
     }
+    showSuccess("Transaksi service berhasil diproses!");
+  };
 
-    // Reset the form for the next transaction
+  const handleNewTransaction = () => {
     setUsedParts([]);
     setSelectedCustomer('');
     setServiceDescription('');
@@ -131,9 +153,23 @@ const ServicePage = () => {
     setPaymentMethod('tunai');
     setStatus('Proses');
     setSelectedServiceId(null);
-
-    showSuccess("Transaksi service berhasil diproses!");
+    setLastTransaction(null);
+    setIsReceiptOpen(false);
   };
+
+  const handlePrint = () => window.print();
+
+  const handleDownload = useCallback(() => {
+    if (receiptRef.current === null) return;
+    toPng(receiptRef.current, { cacheBust: true })
+      .then((dataUrl) => {
+        const link = document.createElement('a');
+        link.download = `nota-service-${lastTransaction?.id}.png`;
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((err) => console.error('Gagal membuat gambar struk:', err));
+  }, [receiptRef, lastTransaction]);
 
   const pendingServices = useMemo(() => {
     return allServiceEntries.filter(entry => entry.status === 'Pending' || entry.status === 'Proses');
@@ -163,7 +199,7 @@ const ServicePage = () => {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Form Service</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Transaksi Service</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="customer">Customer</Label>
@@ -266,11 +302,26 @@ const ServicePage = () => {
               <div className="flex justify-between text-lg font-bold text-green-600"><span>Laba:</span> <span>{formatCurrency(summary.profit)}</span></div>
             </CardContent>
             <CardFooter>
-              <Button size="lg" className="w-full" onClick={handleProcessService}><Wrench className="h-5 w-5 mr-2" /> Proses Service</Button>
+              <Button size="lg" className="w-full" onClick={handleProcessService}><Wrench className="h-5 w-5 mr-2" /> Proses & Cetak Nota</Button>
             </CardFooter>
           </Card>
         </div>
       </div>
+
+      {/* Receipt Dialog */}
+      <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Nota Service</DialogTitle></DialogHeader>
+          {lastTransaction && <ServiceReceipt ref={receiptRef} transaction={lastTransaction} />}
+          <DialogFooter className="sm:justify-between gap-2">
+            <Button type="button" variant="secondary" onClick={handleNewTransaction}><FilePlus2 className="mr-2 h-4 w-4" /> Transaksi Baru</Button>
+            <div className="flex gap-2">
+              <Button type="button" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Unduh</Button>
+              <Button type="button" onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Cetak</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
