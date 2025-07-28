@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Calendar } from "@/components/ui/calendar";
 import { PlusCircle, Search, Edit, Trash2, RefreshCw, PlusSquare, ChevronsUpDown, Check, Calendar as CalendarIcon } from "lucide-react";
 import Barcode from "@/components/Barcode";
@@ -207,17 +207,20 @@ const StockPage = () => {
                             <Command>
                               <CommandInput placeholder="Cari (nama, kode, barcode)..." />
                               <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
-                              <CommandGroup>
-                                {products.map((item) => (
-                                  <CommandItem key={item.id} value={`${item.name} ${item.id} ${item.barcode}`} onSelect={() => { setStockToAdd(prev => ({ ...prev, itemId: item.id })); setIsComboboxOpen(false); }}>
-                                    <Check className={cn("mr-2 h-4 w-4", stockToAdd.itemId === item.id ? "opacity-100" : "opacity-0")} />
-                                    <div>
-                                      <div className="font-medium">{item.name}</div>
-                                      <div className="text-xs text-muted-foreground">{item.id} | Stok: {item.stock}</div>
-                                    </div>
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
+                              <CommandList>
+                                <CommandGroup>
+                                  {products.map((item) => (
+                                    <CommandItem key={item.id} value={`${item.name} ${item.id} ${item.barcode}`} onSelect={() => { setStockToAdd(prev => ({ ...prev, itemId: item.id })); setIsComboboxOpen(false); }}>
+                                      <Check className={cn("mr-2 h-4 w-4", stockToAdd.itemId === item.id ? "opacity-100" : "opacity-0")} />
+                                      <div>
+                                        <div className="font-medium">{item.name}</div>
+                                        <div className="text-xs text-muted-foreground font-mono">{item.barcode}</div>
+                                        <div className="text-xs text-muted-foreground">Stok: {item.stock}</div>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
                             </Command>
                           </PopoverContent>
                         </Popover>
@@ -365,7 +368,7 @@ const StockPage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Kode</TableHead>
+                  <TableHead>Barcode</TableHead>
                   <TableHead>Nama Barang</TableHead>
                   <TableHead>Kategori</TableHead>
                   <TableHead>Supplier</TableHead>
@@ -381,7 +384,10 @@ const StockPage = () => {
                 ) : filteredStock.length > 0 ? (
                   filteredStock.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.id}</TableCell>
+                      <TableCell className="font-mono">
+                        <div>{item.barcode}</div>
+                        <div className="text-xs text-muted-foreground">{item.id}</div>
+                      </TableCell>
                       <TableCell>{item.name}</TableCell>
                       <TableCell>{item.category}</TableCell>
                       <TableCell>{suppliers.find(s => s.id === item.supplierId)?.name || '-'}</TableCell>
