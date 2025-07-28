@@ -88,6 +88,8 @@ export const installmentsDB = {
             notify();
         }
     },
+    
+    subscribe,
 };
 
 // --- React Hook for easy data access ---
