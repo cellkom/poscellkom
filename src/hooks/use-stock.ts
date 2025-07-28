@@ -17,7 +17,7 @@ export interface Product {
   entryDate: string;
 }
 
-// Interface ini merepresentasikan skema di database (snake_case)
+// Interface ini merepresentasikan skema di database (snake_case, dengan pengecualian)
 interface DbProduct {
   id: string;
   created_at: string;
@@ -29,7 +29,7 @@ interface DbProduct {
   reseller_price: number;
   barcode: string;
   supplier_id: string | null;
-  entry_date: string;
+  entryDate: string; // Disesuaikan dengan nama kolom di DB
 }
 
 // Fungsi untuk mengubah format dari database ke format aplikasi
@@ -44,12 +44,12 @@ const fromDbProduct = (dbProduct: DbProduct): Product => ({
   resellerPrice: dbProduct.reseller_price,
   barcode: dbProduct.barcode,
   supplierId: dbProduct.supplier_id,
-  entryDate: dbProduct.entry_date,
+  entryDate: dbProduct.entryDate, // Membaca dari kolom 'entryDate'
 });
 
 // Fungsi untuk mengubah format dari aplikasi ke format database
-const toDbProduct = (product: Partial<Omit<Product, 'id' | 'createdAt'>>): Partial<Omit<DbProduct, 'id' | 'created_at'>> => {
-  const dbProduct: Partial<Omit<DbProduct, 'id' | 'created_at'>> = {};
+const toDbProduct = (product: Partial<Omit<Product, 'id' | 'createdAt'>>) => {
+  const dbProduct: Partial<DbProduct> = {};
   if (product.name !== undefined) dbProduct.name = product.name;
   if (product.category !== undefined) dbProduct.category = product.category;
   if (product.stock !== undefined) dbProduct.stock = product.stock;
@@ -58,7 +58,7 @@ const toDbProduct = (product: Partial<Omit<Product, 'id' | 'createdAt'>>): Parti
   if (product.resellerPrice !== undefined) dbProduct.reseller_price = product.resellerPrice;
   if (product.barcode !== undefined) dbProduct.barcode = product.barcode;
   if (product.supplierId !== undefined) dbProduct.supplier_id = product.supplierId;
-  if (product.entryDate !== undefined) dbProduct.entry_date = product.entryDate;
+  if (product.entryDate !== undefined) dbProduct.entryDate = product.entryDate; // Mengirim ke kolom 'entryDate'
   return dbProduct;
 };
 
