@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { showSuccess, showError } from "@/utils/toast";
 import { DollarSign, History } from "lucide-react";
+import { formatServiceId } from "@/lib/utils";
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
@@ -73,7 +74,7 @@ const InstallmentPage = () => {
               <TableBody>
                 {activeInstallments.map((inst) => (
                   <TableRow key={inst.id}>
-                    <TableCell className="font-medium">{inst.id}</TableCell>
+                    <TableCell className="font-medium">{inst.type === 'Servis' ? formatServiceId(inst.id) : inst.id}</TableCell>
                     <TableCell>{inst.customerName}</TableCell>
                     <TableCell>{formatCurrency(inst.totalAmount)}</TableCell>
                     <TableCell className="font-semibold text-red-600">{formatCurrency(inst.remainingAmount)}</TableCell>
@@ -106,7 +107,7 @@ const InstallmentPage = () => {
           </DialogHeader>
           {selectedInstallment && (
             <div className="space-y-4 py-4">
-              <div>No. Transaksi: <span className="font-semibold">{selectedInstallment.id}</span></div>
+              <div>No. Transaksi: <span className="font-semibold">{selectedInstallment.type === 'Servis' ? formatServiceId(selectedInstallment.id) : selectedInstallment.id}</span></div>
               <div>Pelanggan: <span className="font-semibold">{selectedInstallment.customerName}</span></div>
               <div>Sisa Tagihan: <span className="font-semibold text-red-600">{formatCurrency(selectedInstallment.remainingAmount)}</span></div>
               <div className="space-y-2">
@@ -136,7 +137,7 @@ const InstallmentPage = () => {
           </DialogHeader>
           {selectedInstallment && (
             <div>
-              <div className="mb-4">No. Transaksi: <span className="font-semibold">{selectedInstallment.id}</span></div>
+              <div className="mb-4">No. Transaksi: <span className="font-semibold">{selectedInstallment.type === 'Servis' ? formatServiceId(selectedInstallment.id) : selectedInstallment.id}</span></div>
               <Table>
                 <TableHeader>
                   <TableRow>

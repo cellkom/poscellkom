@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarIcon, Printer, Download, FilePlus2, PlusCircle, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn, formatServiceId } from "@/lib/utils";
 import { showSuccess, showError } from "@/utils/toast";
 import { toPng } from 'html-to-image';
 import ServiceMasukReceipt from "@/components/ServiceMasukReceipt";
@@ -278,7 +278,7 @@ const ServiceMasukPage = () => {
               ) : serviceEntries.length > 0 ? (
                 serviceEntries.map((entry) => (
                   <TableRow key={entry.id}>
-                    <TableCell className="font-mono">{String(entry.id).substring(0, 8)}...</TableCell>
+                    <TableCell className="font-mono">{formatServiceId(entry.id)}</TableCell>
                     <TableCell>{format(new Date(entry.date), "dd/MM/yyyy")}</TableCell>
                     <TableCell>{entry.customerName}</TableCell>
                     <TableCell>{entry.device_type}</TableCell>

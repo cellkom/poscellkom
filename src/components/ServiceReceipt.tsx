@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import Barcode from '@/components/Barcode';
+import { formatServiceId } from '@/lib/utils';
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
@@ -42,7 +43,7 @@ const ServiceReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }
       </div>
 
       <div className="border-b border-dashed border-black my-2 py-1 text-xs">
-        <div className="flex justify-between"><span>No: {id}</span><span>{format(date, 'dd/MM/yy HH:mm')}</span></div>
+        <div className="flex justify-between"><span>No: {formatServiceId(id)}</span><span>{format(date, 'dd/MM/yy HH:mm')}</span></div>
         <div className="flex justify-between"><span>Kasir: admin</span><span>Pelanggan: {customerName}</span></div>
       </div>
       
