@@ -101,22 +101,29 @@ const ServicePage = () => {
       showError("Harap pilih service yang sedang berjalan dari daftar.");
       return;
     }
-    if (serviceFee <= 0 && usedParts.length === 0) {
+
+    // Allow processing with no cost only if status is Gagal/Cancel
+    if (status !== 'Gagal/Cancel' && serviceFee <= 0 && usedParts.length === 0) {
         showError("Harap masukkan biaya service atau tambahkan sparepart.");
         return;
     }
 
+    // Update the status in our mock DB
     serviceEntriesDB.update(selectedServiceId, { status });
 
-    const newStockData = [...stockData];
-    usedParts.forEach(part => {
-      const itemIndex = newStockData.findIndex(stockItem => stockItem.id === part.id);
-      if (itemIndex !== -1) {
-        newStockData[itemIndex].stock -= part.quantity;
-      }
-    });
-    setStockData(newStockData);
+    // Only deduct stock if the service was successful (not canceled)
+    if (status !== 'Gagal/Cancel') {
+        const newStockData = [...stockData];
+        usedParts.forEach(part => {
+          const itemIndex = newStockData.findIndex(stockItem => stockItem.id === part.id);
+          if (itemIndex !== -1) {
+            newStockData[itemIndex].stock -= part.quantity;
+          }
+        });
+        setStockData(newStockData);
+    }
 
+    // Reset the form for the next transaction
     setUsedParts([]);
     setSelectedCustomer('');
     setServiceDescription('');
