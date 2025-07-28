@@ -83,8 +83,8 @@ const LoginPage = () => {
         {/* Footer */}
         <div className="text-center space-y-3 pt-4 border-t">
             <div className="flex justify-center gap-4 text-xs text-gray-500">
-                <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-green-500" /> Sistem Aman</span>
-                <span className="flex items-center gap-1.5"><LifeBuoy className="h-4 w-4 text-blue-500" /> 24/7 Support</span>
+                <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-green-500" /></span>
+                <span className="flex items-center gap-1.5"><LifeBuoy className="h-4 w-4 text-blue-500" /></span>
             </div>
             <p className="text-xs text-gray-400">&copy; {new Date().getFullYear()} CELLKOM - management system</p>
         </div>
