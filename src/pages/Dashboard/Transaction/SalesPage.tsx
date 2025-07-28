@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { toPng } from 'html-to-image';
 import Receipt from "@/components/Receipt";
+import { installmentsDB } from "@/data/installments";
 
 // --- Mock Data ---
 const initialStockData = [
@@ -137,6 +138,20 @@ const SalesPage = () => {
       change: paymentDetails.change,
       remainingAmount: paymentDetails.remainingAmount,
     };
+
+    // Add to installments if not fully paid
+    if (transaction.remainingAmount > 0) {
+      installmentsDB.add({
+        id: transaction.id,
+        type: 'Penjualan',
+        customerName: transaction.customerName,
+        transactionDate: transaction.date,
+        totalAmount: transaction.summary.totalSale,
+        initialPayment: transaction.paymentAmount,
+        details: cart.map(item => `${item.name} (x${item.quantity})`).join(', '),
+      });
+    }
+
     setLastTransaction(transaction);
     setIsReceiptDialogOpen(true);
     showSuccess("Transaksi berhasil diproses!");
