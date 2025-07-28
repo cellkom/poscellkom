@@ -7,6 +7,7 @@ export interface ServiceEntry {
   created_at: string; // Added for Supabase
   date: string; // Stored as ISO string in DB
   customer_id: string; // Renamed to match DB convention
+  kasir_id: string; // Added kasir_id
   category: string;
   device_type: string; // Renamed to match DB convention
   damage_type: string; // Renamed to match DB convention
@@ -78,12 +79,13 @@ export const useServiceEntries = () => {
     };
   }, []);
 
-  const addServiceEntry = async (newEntryData: Omit<ServiceEntry, 'id' | 'created_at' | 'status'>) => {
+  const addServiceEntry = async (newEntryData: Omit<ServiceEntry, 'id' | 'created_at' | 'status'> & { kasir_id: string }) => {
     const { data, error } = await supabase
       .from('service_entries')
       .insert({
         date: newEntryData.date,
         customer_id: newEntryData.customer_id,
+        kasir_id: newEntryData.kasir_id, // Include kasir_id here
         category: newEntryData.category,
         device_type: newEntryData.device_type,
         damage_type: newEntryData.damage_type,
@@ -108,6 +110,7 @@ export const useServiceEntries = () => {
       .update({
         date: updatedFields.date,
         customer_id: updatedFields.customer_id,
+        kasir_id: updatedFields.kasir_id, // Include kasir_id here
         category: updatedFields.category,
         device_type: updatedFields.device_type,
         damage_type: updatedFields.damage_type,

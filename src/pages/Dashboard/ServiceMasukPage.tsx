@@ -15,9 +15,10 @@ import { cn } from "@/lib/utils";
 import { showSuccess, showError } from "@/utils/toast";
 import { toPng } from 'html-to-image';
 import ServiceMasukReceipt from "@/components/ServiceMasukReceipt";
-import { useServiceEntries } from "@/hooks/use-service-entries"; // Updated import
+import { useServiceEntries } from "@/hooks/use-service-entries";
 import { useCustomers } from "@/hooks/use-customers";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 
 // Type Definitions for form data (local state)
 interface ServiceEntryFormData {
@@ -54,7 +55,9 @@ const newCustomerInitialState = { name: '', phone: '', address: '' };
 
 const ServiceMasukPage = () => {
   const { customers } = useCustomers();
-  const { addServiceEntry } = useServiceEntries(); // Use addServiceEntry from hook
+  const { addServiceEntry } = useServiceEntries();
+  const { user } = useAuth(); // Get the current user from AuthContext
+
   const [formData, setFormData] = useState(initialState);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [lastEntry, setLastEntry] = useState<ReceiptServiceEntry | null>(null);
@@ -104,6 +107,10 @@ const ServiceMasukPage = () => {
       showError("Harap lengkapi semua field yang wajib diisi.");
       return;
     }
+    if (!user?.id) { // Ensure user is logged in
+      showError("Anda harus login untuk menambah service masuk.");
+      return;
+    }
 
     const selectedCustomerData = customers.find(c => c.id === formData.customerId);
     if (!selectedCustomerData) {
@@ -114,6 +121,7 @@ const ServiceMasukPage = () => {
     const newEntry = await addServiceEntry({
       date: formData.date.toISOString(), // Convert Date object to ISO string for Supabase
       customer_id: formData.customerId, // Use customer_id for Supabase
+      kasir_id: user.id, // Pass the current user's ID as kasir_id
       category: formData.category,
       device_type: formData.deviceType,
       damage_type: formData.damageType,
