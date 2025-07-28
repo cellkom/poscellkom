@@ -10,7 +10,7 @@ import { useServiceHistory } from "@/hooks/use-service-history";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { id } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
-import { cn, formatServiceId } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { ArrowLeft, Calendar as CalendarIcon, Printer, Wrench, DollarSign, TrendingUp } from "lucide-react";
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
@@ -127,7 +127,7 @@ const ServiceReportPage = () => {
                 {filteredServices.length > 0 ? filteredServices.map((service) => (
                   <TableRow key={service.id}>
                     <TableCell>{format(service.date, "dd/MM/yy")}</TableCell>
-                    <TableCell className="font-mono">{formatServiceId(service.id)}</TableCell>
+                    <TableCell className="font-mono">{service.id}</TableCell>
                     <TableCell>{service.customerName}</TableCell>
                     <TableCell>{service.description}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(service.total)}</TableCell>

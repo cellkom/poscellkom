@@ -1,7 +1,6 @@
 import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import Barcode from '@/components/Barcode';
-import { formatServiceId } from '@/lib/utils';
 
 interface ServiceEntry {
   id: string;
@@ -31,7 +30,7 @@ const ServiceMasukReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ entry },
       </div>
 
       <div className="my-2 py-1 text-xs space-y-1">
-        <div className="flex justify-between"><span>No. Service:</span> <span>{formatServiceId(entry.id)}</span></div>
+        <div className="flex justify-between"><span>No. Service:</span> <span>{entry.id}</span></div>
         <div className="flex justify-between"><span>Tanggal:</span> <span>{format(entry.date, 'dd/MM/yy HH:mm')}</span></div>
       </div>
 

@@ -19,7 +19,6 @@ import { installmentsDB } from "@/data/installments";
 import { serviceHistoryDB } from "@/data/serviceHistory";
 import { useStock, Product } from "@/hooks/use-stock";
 import { useCustomers } from "@/hooks/use-customers";
-import { formatServiceId } from "@/lib/utils";
 
 // --- Type Definitions ---
 type UsedPart = Product & { quantity: number };
@@ -235,7 +234,7 @@ const ServicePage = () => {
                   {pendingServices.length > 0 ? (
                     pendingServices.map(s => (
                       <SelectItem key={s.id} value={s.id}>
-                        {formatServiceId(s.id)} - {s.customerName} ({s.device_type})
+                        {s.id} - {s.customerName} ({s.device_type})
                       </SelectItem>
                     ))
                   ) : (
