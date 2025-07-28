@@ -8,6 +8,7 @@ interface ServiceEntry {
   customerName: string;
   customerPhone: string;
   category: string;
+  deviceType: string;
   damageType: string;
   description: string;
 }
@@ -42,6 +43,7 @@ const ServiceMasukReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ entry },
       <div className="border-t border-dashed border-black my-2 py-2 text-xs space-y-1">
         <p className="font-bold">INFORMASI PERANGKAT:</p>
         <div>Kategori: {entry.category}</div>
+        <div>Tipe: {entry.deviceType}</div>
         <div>Kerusakan: {entry.damageType}</div>
         <div>Deskripsi: {entry.description}</div>
       </div>

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Calendar as CalendarIcon, Printer, Download, FilePlus2 } from "lucide-react";
+import { Calendar as CalendarIcon, Printer, Download, FilePlus2, PlusCircle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { showSuccess, showError } from "@/utils/toast";
@@ -17,7 +17,7 @@ import { toPng } from 'html-to-image';
 import ServiceMasukReceipt from "@/components/ServiceMasukReceipt";
 
 // Mock Data
-const customers = [
+const initialCustomers = [
   { id: 'CUS001', name: 'Pelanggan Umum', phone: '-' },
   { id: 'CUS002', name: 'Budi Santoso', phone: '081234567890' },
   { id: 'CUS003', name: 'Ani Wijaya', phone: '081209876543' },
@@ -31,6 +31,7 @@ interface ServiceEntry {
   customerName: string;
   customerPhone: string;
   category: string;
+  deviceType: string;
   damageType: string;
   description: string;
 }
@@ -39,24 +40,52 @@ const initialState = {
   date: new Date(),
   customerId: '',
   category: '',
+  deviceType: '',
   damageType: '',
   description: '',
 };
 
+const newCustomerInitialState = { name: '', phone: '' };
+
 const ServiceMasukPage = () => {
+  const [customers, setCustomers] = useState(initialCustomers);
   const [formData, setFormData] = useState(initialState);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [lastEntry, setLastEntry] = useState<ServiceEntry | null>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+  const [newCustomer, setNewCustomer] = useState(newCustomerInitialState);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleNewCustomerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewCustomer(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleNewCustomerSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomer.name) {
+      showError("Nama pelanggan tidak boleh kosong.");
+      return;
+    }
+    const newId = `CUS${(customers.length + 1).toString().padStart(3, '0')}`;
+    const newCustomerData = { ...newCustomer, id: newId };
+    
+    setCustomers(prev => [...prev, newCustomerData]);
+    handleInputChange('customerId', newId);
+    
+    showSuccess("Pelanggan baru berhasil ditambahkan!");
+    setIsAddCustomerOpen(false);
+    setNewCustomer(newCustomerInitialState);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.customerId || !formData.category || !formData.damageType) {
-      showError("Harap lengkapi data pelanggan, kategori, dan jenis kerusakan.");
+    if (!formData.customerId || !formData.category || !formData.damageType || !formData.deviceType) {
+      showError("Harap lengkapi semua field yang wajib diisi.");
       return;
     }
 
@@ -71,7 +100,7 @@ const ServiceMasukPage = () => {
     setLastEntry(newEntry);
     setIsReceiptOpen(true);
     showSuccess("Data service masuk berhasil disimpan.");
-    setFormData(initialState); // Reset form
+    setFormData(initialState);
   };
 
   const handlePrint = () => window.print();
@@ -93,7 +122,7 @@ const ServiceMasukPage = () => {
       <form onSubmit={handleSubmit}>
         <Card className="max-w-3xl mx-auto">
           <CardHeader>
-            <CardTitle>Form Penerimaan Service</CardTitle>
+            <CardTitle>Masukan Data Service</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -113,23 +142,34 @@ const ServiceMasukPage = () => {
               </div>
               <div>
                 <Label htmlFor="customer">Pelanggan</Label>
-                <Select value={formData.customerId} onValueChange={(value) => handleInputChange('customerId', value)}>
-                  <SelectTrigger id="customer"><SelectValue placeholder="Pilih Pelanggan" /></SelectTrigger>
-                  <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name} - {c.phone}</SelectItem>)}</SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select value={formData.customerId} onValueChange={(value) => handleInputChange('customerId', value)}>
+                    <SelectTrigger id="customer"><SelectValue placeholder="Pilih Pelanggan" /></SelectTrigger>
+                    <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name} - {c.phone}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <Button type="button" variant="outline" onClick={() => setIsAddCustomerOpen(true)}>
+                    <PlusCircle className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
-            <div>
-              <Label htmlFor="category">Kategori Service</Label>
-              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                <SelectTrigger id="category"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Handphone">Handphone</SelectItem>
-                  <SelectItem value="Komputer/Laptop">Komputer/Laptop</SelectItem>
-                  <SelectItem value="Printer">Printer</SelectItem>
-                  <SelectItem value="Lainnya">Lainnya</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="category">Kategori Service</Label>
+                <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                  <SelectTrigger id="category"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Handphone">Handphone</SelectItem>
+                    <SelectItem value="Komputer/Laptop">Komputer/Laptop</SelectItem>
+                    <SelectItem value="Printer">Printer</SelectItem>
+                    <SelectItem value="Lainnya">Lainnya</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="deviceType">Tipe Perangkat</Label>
+                <Input id="deviceType" placeholder="Contoh: iPhone 13 Pro, Laptop Acer Aspire 5" value={formData.deviceType} onChange={(e) => handleInputChange('deviceType', e.target.value)} />
+              </div>
             </div>
             <div>
               <Label htmlFor="damageType">Jenis Kerusakan</Label>
@@ -146,6 +186,32 @@ const ServiceMasukPage = () => {
         </Card>
       </form>
 
+      {/* Add Customer Dialog */}
+      <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Tambah Pelanggan Baru</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleNewCustomerSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">Nama</Label>
+                <Input id="name" name="name" className="col-span-3" value={newCustomer.name} onChange={handleNewCustomerChange} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="phone" className="text-right">Telepon</Label>
+                <Input id="phone" name="phone" className="col-span-3" value={newCustomer.phone} onChange={handleNewCustomerChange} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="secondary" onClick={() => setIsAddCustomerOpen(false)}>Batal</Button>
+              <Button type="submit">Simpan</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Receipt Dialog */}
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Tanda Terima Service</DialogTitle></DialogHeader>
