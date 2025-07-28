@@ -27,7 +27,7 @@ interface ReceiptProps {
 const ServiceReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }, ref) => {
   if (!transaction) return null;
 
-  const { id, date, customerName, description, usedParts, serviceFee, total } = transaction;
+  const { id, date, customerName, description, usedParts, total } = transaction;
 
   return (
     <div ref={ref} id="receipt-print-area" className="bg-white text-black p-4 font-mono max-w-sm mx-auto border rounded-lg">
@@ -48,24 +48,20 @@ const ServiceReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }
         <p>{description}</p>
       </div>
 
-      <table className="w-full text-xs">
-        <thead>
-          <tr><th colSpan={4} className="text-left font-normal border-b border-dashed border-black pb-1">Rincian Biaya:</th></tr>
-        </thead>
-        <tbody>
-          {serviceFee > 0 && (
-            <tr>
-              <td colSpan={3} className="text-left">Jasa Service</td>
-              <td className="text-right">{formatCurrency(serviceFee)}</td>
-            </tr>
-          )}
-          {usedParts.map((part, index) => (
-            <tr key={index}>
-              <td colSpan={4} className="text-left">{part.name} ({part.quantity}x)</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {usedParts.length > 0 && (
+        <table className="w-full text-xs my-2">
+          <thead>
+            <tr><th colSpan={4} className="text-left font-normal border-b border-dashed border-black pb-1">Sparepart Digunakan:</th></tr>
+          </thead>
+          <tbody>
+            {usedParts.map((part, index) => (
+              <tr key={index}>
+                <td colSpan={4} className="text-left">{part.name} ({part.quantity}x)</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       <div className="border-t border-dashed border-black my-2 pt-2 text-sm">
         <div className="flex justify-between font-bold">
