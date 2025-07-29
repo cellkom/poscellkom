@@ -46,6 +46,7 @@ const LoginPage = () => {
             supabaseClient={supabase}
             providers={[]}
             view="sign_in"
+            showLinks={false}
             localization={{
               variables: {
                 sign_in: {
@@ -55,12 +56,6 @@ const LoginPage = () => {
                   email_input_placeholder: 'Email Anda',
                   password_input_placeholder: 'Password Anda',
                   loading_button_label: 'Memproses...',
-                },
-                forgotten_password: {
-                    link_text: 'Lupa password?',
-                    email_label: 'Alamat Email',
-                    button_label: 'Kirim Instruksi Reset',
-                    email_input_placeholder: 'Alamat email Anda',
                 },
               },
             }}
