@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { PlusCircle, Wrench, Trash2, Minus, Plus, ClipboardList, Printer, Download, FilePlus2, Banknote, Loader2 } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
-import { useServiceEntries, ServiceEntryWithCustomer } from "@/hooks/use-service-entries"; // Updated import
+import { useServiceEntries, ServiceEntryWithCustomer } from "@/hooks/use-service-entries";
 import ServiceReceipt from "@/components/ServiceReceipt";
 import { toPng } from 'html-to-image';
 import { useStock, Product } from "@/hooks/use-stock";
@@ -43,7 +43,6 @@ const ServicePage = () => {
   const { serviceEntries, updateServiceEntry } = useServiceEntries();
   const { user } = useAuth();
   const [usedParts, setUsedParts] = useState<UsedPart[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState('');
   const [serviceDescription, setServiceDescription] = useState('');
   const [serviceFee, setServiceFee] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('tunai');
@@ -96,6 +95,8 @@ const ServicePage = () => {
     }
   };
 
+  const selectedServiceEntry = useMemo(() => serviceEntries.find(e => e.id === selectedServiceId), [selectedServiceId, serviceEntries]);
+
   const summary = useMemo(() => {
     const sparepartCost = usedParts.reduce((sum, item) => item.retailPrice * item.quantity + sum, 0);
     const total = serviceFee + sparepartCost;
@@ -115,12 +116,11 @@ const ServicePage = () => {
     const service = serviceEntries.find(s => s.id === serviceId);
     if (service) {
         setSelectedServiceId(service.id);
-        setSelectedCustomer(service.customer_id); // Use customer_id from DB
         setServiceDescription(`${service.damage_type} - ${service.description}`);
         setUsedParts([]);
         setServiceFee(0);
         setPaymentMethod('tunai');
-        setStatus(service.status); // Set initial status from DB
+        setStatus(service.status);
     }
   };
 
@@ -134,7 +134,6 @@ const ServicePage = () => {
       return;
     }
 
-    const selectedServiceEntry = serviceEntries.find(e => e.id === selectedServiceId);
     if (!selectedServiceEntry) {
       showError("Entri service tidak ditemukan.");
       return;
@@ -160,7 +159,6 @@ const ServicePage = () => {
     };
 
     try {
-      // 1. Upsert Service Transaction
       const transactionPayload = {
         service_entry_id: selectedServiceId,
         customer_id: selectedServiceEntry.customer_id,
@@ -184,12 +182,11 @@ const ServicePage = () => {
 
       if (upsertError) throw upsertError;
 
-      // 2. Manage Service Parts & Stock
       const serviceTransactionId = dbTransaction.id;
       const { data: oldParts, error: fetchOldPartsError } = await supabase.from('service_parts_used').select('product_id, quantity').eq('transaction_id', serviceTransactionId);
       if (fetchOldPartsError) throw fetchOldPartsError;
 
-      for (const part of (oldParts || [])) { await updateStockQuantity(part.product_id, part.quantity); } // Return old stock
+      for (const part of (oldParts || [])) { await updateStockQuantity(part.product_id, part.quantity); }
       const { error: deleteError } = await supabase.from('service_parts_used').delete().eq('transaction_id', serviceTransactionId);
       if (deleteError) throw deleteError;
 
@@ -197,10 +194,9 @@ const ServicePage = () => {
         const serviceItemsForDb = usedParts.map(item => ({ transaction_id: serviceTransactionId, product_id: item.id, quantity: item.quantity, sale_price: item.retailPrice }));
         const { error: itemsError } = await supabase.from('service_parts_used').insert(serviceItemsForDb);
         if (itemsError) throw itemsError;
-        for (const part of usedParts) { await updateStockQuantity(part.id, -part.quantity); } // Decrease new stock
+        for (const part of usedParts) { await updateStockQuantity(part.id, -part.quantity); }
       }
 
-      // 3. Manage Installments
       const { data: existingInstallment } = await supabase.from('installments').select('id').eq('transaction_id_display', `SVC-${transaction.id}`).maybeSingle();
       if (transaction.remainingAmount > 0 && selectedServiceEntry.customer_id) {
         const installmentPayload = {
@@ -219,12 +215,10 @@ const ServicePage = () => {
         await supabase.from('installments').delete().eq('id', existingInstallment.id);
       }
 
-      // 4. Update Service Entry Status
       await updateServiceEntry(selectedServiceId, { status });
 
       showSuccess("Transaksi service berhasil diproses!");
       
-      // 5. Finalize UI
       setLastTransaction(transaction);
       setIsReceiptOpen(true);
 
@@ -238,7 +232,6 @@ const ServicePage = () => {
 
   const handleNewTransaction = () => {
     setUsedParts([]);
-    setSelectedCustomer('');
     setServiceDescription('');
     setServiceFee(0);
     setPaymentMethod('tunai');
@@ -267,7 +260,7 @@ const ServicePage = () => {
     if (isReceiptOpen && lastTransaction) {
       const timer = setTimeout(() => {
         handlePrint();
-      }, 500); // Delay to allow receipt to render
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [isReceiptOpen, lastTransaction, handlePrint]);
@@ -300,42 +293,19 @@ const ServicePage = () => {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Transaksi Service</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Detail Service</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="customer">Customer</Label>
-                <Select value={selectedCustomer} onValueChange={setSelectedCustomer} disabled={!!selectedServiceId}>
-                  <SelectTrigger id="customer"><SelectValue placeholder="Pilih Customer" /></SelectTrigger>
-                  <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name} - {c.phone}</SelectItem>)}</SelectContent>
-                </Select>
+                <Input id="customer" value={selectedServiceEntry?.customerName || 'Pilih service terlebih dahulu'} disabled />
               </div>
               <div>
                 <Label htmlFor="description">Deskripsi Service</Label>
-                <Textarea id="description" placeholder="Deskripsi akan terisi otomatis jika memilih service dari daftar di atas" value={serviceDescription} onChange={(e) => setServiceDescription(e.target.value)} disabled={!!selectedServiceId} />
+                <Textarea id="description" placeholder="Deskripsi akan terisi otomatis jika memilih service dari daftar di atas" value={serviceDescription} onChange={(e) => setServiceDescription(e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="serviceFee">Biaya Service</Label>
+                <Label htmlFor="serviceFee">Biaya Jasa Service</Label>
                 <Input id="serviceFee" type="number" placeholder="0" value={serviceFee || ''} onChange={(e) => setServiceFee(Number(e.target.value))} />
-              </div>
-              <div>
-                <Label htmlFor="status">Status Service</Label>
-                <Select value={status} onValueChange={(value: ServiceStatus) => setStatus(value)}>
-                  <SelectTrigger id="status"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Proses">Proses</SelectItem>
-                    <SelectItem value="Selesai">Selesai</SelectItem>
-                    <SelectItem value="Sudah Diambil">Sudah Diambil</SelectItem>
-                    <SelectItem value="Gagal/Cancel">Gagal/Cancel</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Metode Pembayaran</Label>
-                <RadioGroup value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)} className="flex items-center gap-4 mt-2">
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="tunai" id="tunai" /><Label htmlFor="tunai">Tunai</Label></div>
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="cicilan" id="cicilan" /><Label htmlFor="cicilan">Cicilan</Label></div>
-                </RadioGroup>
               </div>
             </CardContent>
           </Card>
@@ -395,8 +365,59 @@ const ServicePage = () => {
           </Card>
         </div>
         <div className="space-y-6">
+          <Card className="bg-slate-900 text-slate-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 border-b border-slate-700 pb-4">
+                <Wrench className="h-5 w-5" />
+                Info Transaksi
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-400">No. Service:</span>
+                <span className="font-medium font-mono">{selectedServiceId ? `SVC-${selectedServiceId}` : '-'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Sparepart:</span>
+                <span className="font-medium">{usedParts.length} jenis</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Kasir:</span>
+                <span className="font-medium">{user?.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Customer:</span>
+                <span className="font-medium">{selectedServiceEntry?.customerName || '-'}</span>
+              </div>
+            </CardContent>
+          </Card>
           <Card>
-            <CardHeader><CardTitle>Ringkasan</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Pembayaran & Status</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Metode Pembayaran</Label>
+                <RadioGroup value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)} className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="tunai" id="tunai" /><Label htmlFor="tunai">Tunai</Label></div>
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="cicilan" id="cicilan" /><Label htmlFor="cicilan">Cicilan</Label></div>
+                </RadioGroup>
+              </div>
+              <div>
+                <Label htmlFor="status">Status Service</Label>
+                <Select value={status} onValueChange={(value: ServiceStatus) => setStatus(value)}>
+                  <SelectTrigger id="status"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Proses">Proses</SelectItem>
+                    <SelectItem value="Selesai">Selesai</SelectItem>
+                    <SelectItem value="Sudah Diambil">Sudah Diambil</SelectItem>
+                    <SelectItem value="Gagal/Cancel">Gagal/Cancel</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Total Biaya</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between"><span>Biaya Service:</span> <span className="font-medium">{formatCurrency(serviceFee)}</span></div>
               <div className="flex justify-between"><span>Biaya Sparepart:</span> <span className="font-medium">{formatCurrency(summary.sparepartCost)}</span></div>
@@ -438,7 +459,6 @@ const ServicePage = () => {
         </div>
       </div>
 
-      {/* Receipt Dialog */}
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Nota Service</DialogTitle></DialogHeader>
