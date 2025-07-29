@@ -130,8 +130,8 @@ const ServicePage = () => {
       return;
     }
     if (status !== 'Gagal/Cancel' && serviceFee <= 0 && usedParts.length === 0) {
-        showError("Harap masukkan biaya service atau tambahkan sparepart.");
-        return;
+      showError("Harap masukkan biaya service atau tambahkan sparepart.");
+      return;
     }
 
     const selectedServiceEntry = serviceEntries.find(e => e.id === selectedServiceId);
@@ -157,96 +157,90 @@ const ServicePage = () => {
       remainingAmount: paymentDetails.remainingAmount,
     };
 
-    // --- Supabase Integration ---
     try {
-      const { data: dbTransaction, error: transactionError } = await supabase
+      // 1. Upsert Service Transaction
+      const { data: existingTransaction, error: checkError } = await supabase
         .from('service_transactions')
-        .insert({
-          service_entry_id: selectedServiceId,
-          customer_id: selectedServiceEntry.customer_id,
-          customer_name_cache: selectedServiceEntry.customerName,
-          description: transaction.description,
-          service_fee: transaction.serviceFee,
-          total_parts_cost: summary.sparepartCost,
-          total_amount: transaction.total,
-          paid_amount: transaction.paymentAmount,
-          change_amount: transaction.change,
-          remaining_amount: transaction.remainingAmount,
-          payment_method: paymentMethod,
-          kasir_id: user.id,
-        })
-        .select()
-        .single();
+        .select('id')
+        .eq('service_entry_id', selectedServiceId)
+        .maybeSingle();
+      if (checkError) throw new Error(`Gagal memeriksa transaksi: ${checkError.message}`);
 
-      if (transactionError) throw transactionError;
+      const transactionPayload = {
+        service_entry_id: selectedServiceId,
+        customer_id: selectedServiceEntry.customer_id,
+        customer_name_cache: selectedServiceEntry.customerName,
+        description: transaction.description,
+        service_fee: transaction.serviceFee,
+        total_parts_cost: summary.sparepartCost,
+        total_amount: transaction.total,
+        paid_amount: transaction.paymentAmount,
+        change_amount: transaction.change,
+        remaining_amount: transaction.remainingAmount,
+        payment_method: paymentMethod,
+        kasir_id: user.id,
+      };
+
+      let dbTransaction;
+      if (existingTransaction) {
+        const { data, error } = await supabase.from('service_transactions').update(transactionPayload).eq('id', existingTransaction.id).select().single();
+        if (error) throw error;
+        dbTransaction = data;
+      } else {
+        const { data, error } = await supabase.from('service_transactions').insert(transactionPayload).select().single();
+        if (error) throw error;
+        dbTransaction = data;
+      }
+
+      // 2. Manage Service Parts & Stock
+      const serviceTransactionId = dbTransaction.id;
+      const { data: oldParts, error: fetchOldPartsError } = await supabase.from('service_parts_used').select('product_id, quantity').eq('transaction_id', serviceTransactionId);
+      if (fetchOldPartsError) throw fetchOldPartsError;
+
+      for (const part of (oldParts || [])) { await updateStockQuantity(part.product_id, part.quantity); } // Return old stock
+      const { error: deleteError } = await supabase.from('service_parts_used').delete().eq('transaction_id', serviceTransactionId);
+      if (deleteError) throw deleteError;
 
       if (usedParts.length > 0) {
-        const serviceItemsForDb = usedParts.map(item => ({
-          transaction_id: dbTransaction.id,
-          product_id: item.id,
-          quantity: item.quantity,
-          buy_price_at_sale: item.buyPrice,
-          sale_price_at_sale: item.retailPrice,
-        }));
-
-        const { error: itemsError } = await supabase
-          .from('service_transaction_items')
-          .insert(serviceItemsForDb);
-
+        const serviceItemsForDb = usedParts.map(item => ({ transaction_id: serviceTransactionId, product_id: item.id, quantity: item.quantity, sale_price: item.retailPrice }));
+        const { error: itemsError } = await supabase.from('service_parts_used').insert(serviceItemsForDb);
         if (itemsError) throw itemsError;
+        for (const part of usedParts) { await updateStockQuantity(part.id, -part.quantity); } // Decrease new stock
       }
 
+      // 3. Manage Installments
+      const { data: existingInstallment } = await supabase.from('installments').select('id').eq('transaction_id_display', transaction.id).maybeSingle();
       if (transaction.remainingAmount > 0 && selectedServiceEntry.customer_id) {
-        const { error: installmentError } = await supabase
-          .from('installments')
-          .insert({
-            transaction_id_display: transaction.id,
-            transaction_type: 'Servis',
-            customer_id: selectedServiceEntry.customer_id,
-            customer_name_cache: selectedServiceEntry.customerName,
-            total_amount: transaction.total,
-            paid_amount: transaction.paymentAmount,
-            remaining_amount: transaction.remainingAmount,
-            status: 'Belum Lunas',
-            details: transaction.description,
-            kasir_id: user.id,
-          });
-        if (installmentError) throw installmentError;
+        const installmentPayload = {
+          transaction_id_display: transaction.id, transaction_type: 'Servis' as const, customer_id: selectedServiceEntry.customer_id,
+          customer_name_cache: selectedServiceEntry.customerName, total_amount: transaction.total, paid_amount: transaction.paymentAmount,
+          remaining_amount: transaction.remainingAmount, status: 'Belum Lunas' as const, details: transaction.description, kasir_id: user.id,
+        };
+        if (existingInstallment) {
+          const { error } = await supabase.from('installments').update(installmentPayload).eq('id', existingInstallment.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('installments').insert(installmentPayload);
+          if (error) throw error;
+        }
+      } else if (existingInstallment) {
+        await supabase.from('installments').delete().eq('id', existingInstallment.id);
       }
+
+      // 4. Update Service Entry Status
+      await updateServiceEntry(selectedServiceId, { status });
+
+      showSuccess("Transaksi service berhasil diproses!");
       
-      showSuccess("Transaksi service berhasil diproses dan disimpan ke database!");
+      // 5. Finalize UI
+      serviceHistoryDB.add({ ...transaction, usedParts: usedParts.map(p => ({ id: p.id, name: p.name, quantity: p.quantity, buyPrice: p.buyPrice, retailPrice: p.retailPrice })) });
+      setLastTransaction(transaction);
+      setIsReceiptOpen(true);
 
     } catch (error: any) {
       console.error("Supabase error:", error);
-      const message = error?.message || (typeof error === 'object' && error !== null ? JSON.stringify(error) : String(error)) || "Terjadi kesalahan yang tidak diketahui.";
-      showError(`Gagal menyimpan ke database: ${message}`);
+      showError(`Gagal menyimpan ke database: ${error.message}`);
       return;
-    }
-    // --- End Supabase Integration ---
-
-    // Keep local data for now to prevent breaking reports
-    serviceHistoryDB.add({
-      ...transaction,
-      usedParts: usedParts.map(p => ({
-        id: p.id,
-        name: p.name,
-        quantity: p.quantity,
-        buyPrice: p.buyPrice,
-        retailPrice: p.retailPrice,
-      })),
-    });
-    
-    setLastTransaction(transaction);
-    setIsReceiptOpen(true);
-    
-    // Update status in Supabase
-    await updateServiceEntry(selectedServiceId, { status });
-
-    if (status !== 'Gagal/Cancel') {
-        // Update stock in Supabase for used parts
-        for (const part of usedParts) {
-            await updateStockQuantity(part.id, -part.quantity); // Decrease stock
-        }
     }
   };
 
