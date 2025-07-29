@@ -16,8 +16,8 @@ import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
@@ -33,8 +33,8 @@ function App() {
           <Route path="/dashboard/reports/installments" element={<PrivateRoute><InstallmentReportPage /></PrivateRoute>} />
           <Route path="/dashboard/reports/services-in-progress" element={<PrivateRoute><ServicesInProgressPage /></PrivateRoute>} />
         </Routes>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
