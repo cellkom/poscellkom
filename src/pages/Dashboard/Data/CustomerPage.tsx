@@ -60,10 +60,14 @@ const CustomerPage = () => {
   };
 
   const handleDelete = async (customerId: string) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus pelanggan ini?")) {
+    if (window.confirm("Apakah Anda yakin ingin menghapus pelanggan ini? Aksi ini tidak dapat dibatalkan.")) {
       const { error } = await supabase.from('customers').delete().eq('id', customerId);
       if (error) {
-        showError(`Gagal menghapus: ${error.message}`);
+        if (error.message.includes('violates foreign key constraint')) {
+            showError("Gagal menghapus: Pelanggan ini memiliki riwayat transaksi (penjualan/servis) dan tidak dapat dihapus.");
+        } else {
+            showError(`Gagal menghapus: ${error.message}`);
+        }
       } else {
         showSuccess("Pelanggan berhasil dihapus.");
       }
