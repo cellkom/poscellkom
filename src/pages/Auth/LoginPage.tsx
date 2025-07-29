@@ -4,7 +4,7 @@ import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Wrench, ShoppingCart, ShieldCheck, LifeBuoy } from 'lucide-react';
+import { Wrench, ShoppingCart, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import logoSrc from '/logo.png';
 
@@ -82,7 +82,6 @@ const LoginPage = () => {
         <div className="text-center space-y-3 pt-4 border-t">
             <div className="flex justify-center gap-4 text-xs text-gray-500">
                 <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-primary" /> Sistem Aman</span>
-                <span className="flex items-center gap-1.5"><LifeBuoy className="h-4 w-4 text-primary" /> 24/7 Support</span>
             </div>
             <p className="text-xs text-gray-400">&copy; {new Date().getFullYear()} CELLKOM - management system</p>
         </div>
