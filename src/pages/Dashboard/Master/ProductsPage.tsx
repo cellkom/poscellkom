@@ -23,7 +23,7 @@ const newItemInitialState = { name: '', category: '', stock: 0, buyPrice: 0, ret
 const newSupplierInitialState = { name: '', phone: '', address: '' };
 const addStockInitialState = { itemId: '', quantity: 0, entryDate: new Date(), supplierId: '' };
 
-const StockPage = () => {
+const ProductsPage = () => {
   const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct, updateStockQuantity } = useStock();
   const { suppliers } = useSuppliers();
   const [searchTerm, setSearchTerm] = useState("");
@@ -469,4 +469,4 @@ const StockPage = () => {
   );
 };
 
-export default StockPage;
+export default ProductsPage;

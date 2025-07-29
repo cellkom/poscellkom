@@ -11,7 +11,7 @@ import { useSuppliers, Supplier } from "@/hooks/use-suppliers";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
 
-const SupplierPage = () => {
+const SuppliersPage = () => {
   const { suppliers, loading } = useSuppliers();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -144,4 +144,4 @@ const SupplierPage = () => {
   );
 };
 
-export default SupplierPage;
+export default SuppliersPage;

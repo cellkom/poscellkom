@@ -16,7 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
-const InstallmentPage = () => {
+const InstallmentReportPage = () => {
   const { user } = useAuth();
   const { installments, loading, addPayment, getPaymentHistory } = useInstallments();
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
@@ -187,4 +187,4 @@ const InstallmentPage = () => {
   );
 };
 
-export default InstallmentPage;
+export default InstallmentReportPage;
