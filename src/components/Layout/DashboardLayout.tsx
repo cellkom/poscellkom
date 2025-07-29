@@ -34,10 +34,10 @@ const navItems = [
     subItems: [
         { name: "Pelanggan", icon: Users, path: "/dashboard/data/customers" },
         { name: "Supplier", icon: Truck, path: "/dashboard/data/suppliers" },
-        { name: "User", icon: Users, path: "/dashboard/users", adminOnly: true },
     ]
   },
   { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
+  { name: "Users", icon: Users, path: "/dashboard/users", adminOnly: true },
 ];
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
@@ -50,9 +50,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       if (item.adminOnly && profile?.role !== 'Admin') return null;
 
       if (item.subItems) {
-        const accessibleSubItems = item.subItems.filter(subItem => !subItem.adminOnly || profile?.role === 'Admin');
-        if (accessibleSubItems.length === 0) return null;
-
         return isMobileNav ? (
           <Collapsible key={item.name}>
             <CollapsibleTrigger asChild>
@@ -65,7 +62,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="pl-6 space-y-1 mt-1">
-              {accessibleSubItems.map(subItem => (
+              {item.subItems.map(subItem => (
                 <Button key={subItem.name} variant="ghost" asChild className="w-full justify-start text-primary-foreground hover:bg-black/10">
                   <Link to={subItem.path} className="flex items-center gap-2">
                     <subItem.icon className="h-4 w-4" />
@@ -85,7 +82,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              {accessibleSubItems.map(subItem => (
+              {item.subItems.map(subItem => (
                 <DropdownMenuItem key={subItem.name} asChild>
                   <Link to={subItem.path} className="flex items-center gap-2 cursor-pointer">
                     <subItem.icon className="h-4 w-4" />
