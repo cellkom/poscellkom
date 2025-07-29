@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -140,42 +141,50 @@ const DashboardPage = () => {
             ))
           ) : (
             <>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pendapatan Hari Ini</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{formatCurrency(summary.revenueToday)}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Transaksi Hari Ini</CardTitle>
-                  <Receipt className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{summary.transactionsToday} Transaksi</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Piutang</CardTitle>
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{formatCurrency(totalReceivables)}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Servis Dalam Proses</CardTitle>
-                  <Wrench className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{servicesInProgress} Servis</div>
-                </CardContent>
-              </Card>
+              <Link to="/dashboard/reports">
+                <Card className="hover:bg-muted/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Pendapatan Hari Ini</CardTitle>
+                    <DollarSign className="h-4 w-4 text-green-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{formatCurrency(summary.revenueToday)}</div>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/dashboard/transactions/sales">
+                <Card className="hover:bg-muted/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Transaksi Hari Ini</CardTitle>
+                    <Receipt className="h-4 w-4 text-blue-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{summary.transactionsToday} Transaksi</div>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/dashboard/installments">
+                <Card className="hover:bg-muted/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Piutang</CardTitle>
+                    <CreditCard className="h-4 w-4 text-orange-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{formatCurrency(totalReceivables)}</div>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/dashboard/services-in-progress">
+                <Card className="hover:bg-muted/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Servis Dalam Proses</CardTitle>
+                    <Wrench className="h-4 w-4 text-indigo-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{servicesInProgress} Servis</div>
+                  </CardContent>
+                </Card>
+              </Link>
             </>
           )}
         </div>
