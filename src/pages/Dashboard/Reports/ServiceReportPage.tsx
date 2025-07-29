@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -6,47 +6,97 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { useServiceHistory } from "@/hooks/use-service-history";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { id } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Calendar as CalendarIcon, Printer, Wrench, DollarSign, TrendingUp } from "lucide-react";
+import { ArrowLeft, Calendar as CalendarIcon, Printer, Wrench, DollarSign, TrendingUp, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
+interface ServicePartUsed {
+  quantity: number;
+  products: {
+    name: string;
+    buy_price: number;
+  };
+}
+
+interface ServiceTransaction {
+  id: string;
+  created_at: string;
+  service_entry_id: number;
+  customer_name_cache: string;
+  description: string;
+  total_amount: number;
+  service_parts_used: ServicePartUsed[];
+}
+
 const ServiceReportPage = () => {
-  const serviceHistory = useServiceHistory();
+  const [serviceData, setServiceData] = useState<ServiceTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 29),
     to: new Date(),
   });
   const printRef = useRef<HTMLDivElement>(null);
 
-  const filteredServices = useMemo(() => {
-    if (!dateRange?.from || !dateRange?.to) return serviceHistory;
-    const from = startOfDay(dateRange.from);
-    const to = endOfDay(dateRange.to);
-    return serviceHistory.filter(service => service.date >= from && service.date <= to);
-  }, [serviceHistory, dateRange]);
+  useEffect(() => {
+    const fetchServiceData = async () => {
+      if (!dateRange?.from || !dateRange?.to) return;
+      setLoading(true);
 
-  const calculateProfit = (service: typeof serviceHistory[0]) => {
-    const partsCost = service.usedParts.reduce((sum, part) => sum + (part.buyPrice * part.quantity), 0);
-    return service.total - partsCost;
+      const from = startOfDay(dateRange.from);
+      const to = endOfDay(dateRange.to);
+
+      const { data, error } = await supabase
+        .from('service_transactions')
+        .select(`
+          id,
+          created_at,
+          service_entry_id,
+          customer_name_cache,
+          description,
+          total_amount,
+          service_parts_used (
+            quantity,
+            products ( name, buy_price )
+          )
+        `)
+        .gte('created_at', from.toISOString())
+        .lte('created_at', to.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("Error fetching service data:", error);
+        setServiceData([]);
+      } else {
+        setServiceData(data as ServiceTransaction[]);
+      }
+      setLoading(false);
+    };
+
+    fetchServiceData();
+  }, [dateRange]);
+
+  const calculateProfit = (service: ServiceTransaction) => {
+    const partsCost = service.service_parts_used.reduce((sum, part) => {
+      return sum + (part.products.buy_price * part.quantity);
+    }, 0);
+    return service.total_amount - partsCost;
   };
 
   const summary = useMemo(() => {
-    return filteredServices.reduce((acc, service) => {
+    return serviceData.reduce((acc, service) => {
       acc.totalTransactions += 1;
-      acc.totalRevenue += service.total;
+      acc.totalRevenue += service.total_amount;
       acc.totalProfit += calculateProfit(service);
       return acc;
     }, { totalTransactions: 0, totalRevenue: 0, totalProfit: 0 });
-  }, [filteredServices]);
+  }, [serviceData]);
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => window.print();
 
   return (
     <DashboardLayout>
@@ -71,15 +121,7 @@ const ServiceReportPage = () => {
               <PopoverTrigger asChild>
                 <Button id="date" variant={"outline"} className={cn("w-[300px] justify-start text-left font-normal", !dateRange && "text-muted-foreground")}>
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange?.from ? (
-                    dateRange.to ? (
-                      <>{format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}</>
-                    ) : (
-                      format(dateRange.from, "LLL dd, y")
-                    )
-                  ) : (
-                    <span>Pilih tanggal</span>
-                  )}
+                  {dateRange?.from ? (dateRange.to ? (<>{format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}</>) : (format(dateRange.from, "LLL dd, y"))) : (<span>Pilih tanggal</span>)}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -93,49 +135,19 @@ const ServiceReportPage = () => {
           </CardContent>
         </Card>
 
-        {/* Summary Cards */}
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Service Selesai</CardTitle><Wrench className="h-4 w-4 text-muted-foreground" /></CardHeader>
-            <CardContent><div className="text-2xl font-bold">{summary.totalTransactions}</div><p className="text-xs text-muted-foreground">Transaksi Service</p></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Pendapatan</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground" /></CardHeader>
-            <CardContent><div className="text-2xl font-bold">{formatCurrency(summary.totalRevenue)}</div><p className="text-xs text-muted-foreground">Dari Jasa & Sparepart</p></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Laba</CardTitle><TrendingUp className="h-4 w-4 text-muted-foreground" /></CardHeader>
-            <CardContent><div className="text-2xl font-bold text-green-600">{formatCurrency(summary.totalProfit)}</div><p className="text-xs text-muted-foreground">Keuntungan Bersih</p></CardContent>
-          </Card>
+          <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Service Selesai</CardTitle><Wrench className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{summary.totalTransactions}</div><p className="text-xs text-muted-foreground">Transaksi Service</p></CardContent></Card>
+          <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Pendapatan</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(summary.totalRevenue)}</div><p className="text-xs text-muted-foreground">Dari Jasa & Sparepart</p></CardContent></Card>
+          <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Laba</CardTitle><TrendingUp className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold text-green-600">{formatCurrency(summary.totalProfit)}</div><p className="text-xs text-muted-foreground">Keuntungan Bersih</p></CardContent></Card>
         </div>
 
         <Card>
           <CardHeader><CardTitle>Detail Transaksi Service</CardTitle></CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead>No. Service</TableHead>
-                  <TableHead>Pelanggan</TableHead>
-                  <TableHead>Deskripsi</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Laba</TableHead>
-                </TableRow>
-              </TableHeader>
+              <TableHeader><TableRow><TableHead>Tanggal</TableHead><TableHead>No. Service</TableHead><TableHead>Pelanggan</TableHead><TableHead>Deskripsi</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-right">Laba</TableHead></TableRow></TableHeader>
               <TableBody>
-                {filteredServices.length > 0 ? filteredServices.map((service) => (
-                  <TableRow key={service.id}>
-                    <TableCell>{format(service.date, "dd/MM/yy")}</TableCell>
-                    <TableCell className="font-mono">{service.id}</TableCell>
-                    <TableCell>{service.customerName}</TableCell>
-                    <TableCell>{service.description}</TableCell>
-                    <TableCell className="text-right font-semibold">{formatCurrency(service.total)}</TableCell>
-                    <TableCell className="text-right text-green-600">{formatCurrency(calculateProfit(service))}</TableCell>
-                  </TableRow>
-                )) : (
-                  <TableRow><TableCell colSpan={6} className="text-center h-24">Tidak ada data untuk periode ini.</TableCell></TableRow>
-                )}
+                {loading ? (<TableRow><TableCell colSpan={6} className="text-center h-24"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>) : serviceData.length > 0 ? serviceData.map((service) => (<TableRow key={service.id}><TableCell>{format(new Date(service.created_at), "dd/MM/yy")}</TableCell><TableCell className="font-mono">{service.service_entry_id}</TableCell><TableCell>{service.customer_name_cache}</TableCell><TableCell>{service.description}</TableCell><TableCell className="text-right font-semibold">{formatCurrency(service.total_amount)}</TableCell><TableCell className="text-right text-green-600">{formatCurrency(calculateProfit(service))}</TableCell></TableRow>)) : (<TableRow><TableCell colSpan={6} className="text-center h-24">Tidak ada data untuk periode ini.</TableCell></TableRow>)}
               </TableBody>
             </Table>
           </CardContent>

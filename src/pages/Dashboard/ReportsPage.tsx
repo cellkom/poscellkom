@@ -1,41 +1,69 @@
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useSalesHistory } from "@/hooks/use-sales-history";
-import { useServiceHistory } from "@/hooks/use-service-history";
-import { useServiceEntries } from "@/hooks/use-service-entries"; // Updated import
+import { useServiceEntries } from "@/hooks/use-service-entries";
 import { useInstallments } from "@/hooks/use-installments";
-import { isToday } from "date-fns";
-import { Banknote, ShoppingCart, Wrench, Clock, BarChart3, Printer, Calendar as CalendarIcon, ArrowRight } from "lucide-react";
+import { startOfToday, endOfToday } from "date-fns";
+import { Banknote, ShoppingCart, Wrench, Clock, ArrowRight, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
 const ReportsPage = () => {
-  const salesHistory = useSalesHistory();
-  const serviceHistory = useServiceHistory();
-  const { serviceEntries } = useServiceEntries(); // Use from hook
+  const { serviceEntries } = useServiceEntries();
   const { installments } = useInstallments();
+  const [summaryToday, setSummaryToday] = useState({
+    totalRevenue: 0,
+    totalTransactions: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
-  const summaryToday = useMemo(() => {
-    const todaySales = salesHistory.filter(s => isToday(s.date));
-    const todayServices = serviceHistory.filter(s => isToday(s.date));
-    
-    const totalSales = todaySales.reduce((sum, s) => sum + s.summary.totalSale, 0);
-    const totalServiceRevenue = todayServices.reduce((sum, s) => sum + s.total, 0);
-    
-    const totalTransactions = todaySales.length + todayServices.length;
-    const servicesInProgress = serviceEntries.filter(e => e.status === 'Pending' || e.status === 'Proses').length;
-    const activeReceivables = installments.filter(i => i.status === 'Belum Lunas').reduce((sum, i) => sum + i.remaining_amount, 0);
+  useEffect(() => {
+    const fetchTodaySummary = async () => {
+      setLoading(true);
+      const todayStart = startOfToday().toISOString();
+      const todayEnd = endOfToday().toISOString();
 
-    return {
-      totalRevenue: totalSales + totalServiceRevenue,
-      totalTransactions,
-      servicesInProgress,
-      activeReceivables,
+      const { data: sales, error: salesError } = await supabase
+        .from('sales_transactions')
+        .select('total_amount')
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd);
+
+      const { data: services, error: servicesError } = await supabase
+        .from('service_transactions')
+        .select('total_amount')
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd);
+
+      if (salesError || servicesError) {
+        console.error("Error fetching today's summary:", salesError || servicesError);
+        setLoading(false);
+        return;
+      }
+
+      const totalSalesRevenue = sales.reduce((sum, s) => sum + s.total_amount, 0);
+      const totalServiceRevenue = services.reduce((sum, s) => sum + s.total_amount, 0);
+
+      setSummaryToday({
+        totalRevenue: totalSalesRevenue + totalServiceRevenue,
+        totalTransactions: sales.length + services.length,
+      });
+      setLoading(false);
     };
-  }, [salesHistory, serviceHistory, serviceEntries, installments]);
+
+    fetchTodaySummary();
+  }, []);
+
+  const servicesInProgress = useMemo(() => {
+    return serviceEntries.filter(e => e.status === 'Pending' || e.status === 'Proses').length;
+  }, [serviceEntries]);
+
+  const activeReceivables = useMemo(() => {
+    return installments.filter(i => i.status === 'Belum Lunas').reduce((sum, i) => sum + i.remaining_amount, 0);
+  }, [installments]);
 
   return (
     <DashboardLayout>
@@ -51,42 +79,50 @@ const ReportsPage = () => {
             <CardTitle>Ringkasan Hari Ini</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="bg-green-50 border-green-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-green-800">Total Penjualan</CardTitle>
-                <Banknote className="h-5 w-5 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-900">{formatCurrency(summaryToday.totalRevenue)}</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-blue-50 border-blue-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-blue-800">Transaksi</CardTitle>
-                <ShoppingCart className="h-5 w-5 text-blue-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-900">{summaryToday.totalTransactions}</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-purple-50 border-purple-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-purple-800">Service Proses</CardTitle>
-                <Wrench className="h-5 w-5 text-purple-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-purple-900">{summaryToday.servicesInProgress}</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-yellow-50 border-yellow-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-yellow-800">Piutang Aktif</CardTitle>
-                <Clock className="h-5 w-5 text-yellow-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-yellow-900">{formatCurrency(summaryToday.activeReceivables)}</div>
-              </CardContent>
-            </Card>
+            {loading ? (
+              <div className="col-span-full flex justify-center items-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <>
+                <Card className="bg-green-50 border-green-200">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-green-800">Total Penjualan</CardTitle>
+                    <Banknote className="h-5 w-5 text-green-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-900">{formatCurrency(summaryToday.totalRevenue)}</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-blue-800">Transaksi</CardTitle>
+                    <ShoppingCart className="h-5 w-5 text-blue-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-900">{summaryToday.totalTransactions}</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-purple-50 border-purple-200">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-purple-800">Service Proses</CardTitle>
+                    <Wrench className="h-5 w-5 text-purple-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-purple-900">{servicesInProgress}</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-yellow-50 border-yellow-200">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-yellow-800">Piutang Aktif</CardTitle>
+                    <Clock className="h-5 w-5 text-yellow-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-yellow-900">{formatCurrency(activeReceivables)}</div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </CardContent>
         </Card>
 
