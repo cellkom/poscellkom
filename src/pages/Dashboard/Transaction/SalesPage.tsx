@@ -168,7 +168,7 @@ const SalesPage = () => {
           customer_name_cache: transaction.customerName,
           subtotal: transaction.subtotal,
           discount: transaction.discount,
-          total: transaction.total,
+          total_amount: transaction.total,
           payment_amount: transaction.paymentAmount,
           change_amount: transaction.change,
           remaining_amount: transaction.remainingAmount,

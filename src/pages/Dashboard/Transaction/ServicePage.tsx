@@ -19,6 +19,8 @@ import { installmentsDB } from "@/data/installments";
 import { serviceHistoryDB } from "@/data/serviceHistory";
 import { useStock, Product } from "@/hooks/use-stock";
 import { useCustomers } from "@/hooks/use-customers";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 // --- Type Definitions ---
 type UsedPart = Product & { quantity: number };
@@ -40,7 +42,8 @@ type CompletedServiceTransaction = {
 const ServicePage = () => {
   const { products, updateStockQuantity } = useStock();
   const { customers } = useCustomers();
-  const { serviceEntries, updateServiceEntry } = useServiceEntries(); // Use from hook
+  const { serviceEntries, updateServiceEntry } = useServiceEntries();
+  const { user } = useAuth();
   const [usedParts, setUsedParts] = useState<UsedPart[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [serviceDescription, setServiceDescription] = useState('');
@@ -137,11 +140,15 @@ const ServicePage = () => {
       showError("Entri service tidak ditemukan.");
       return;
     }
+    if (!user) {
+      showError("Sesi pengguna tidak ditemukan. Silakan login ulang.");
+      return;
+    }
 
     const transaction: CompletedServiceTransaction = {
       id: selectedServiceId,
       date: new Date(),
-      customerName: selectedServiceEntry.customerName, // Use customerName from joined data
+      customerName: selectedServiceEntry.customerName,
       description: serviceDescription,
       usedParts: usedParts,
       serviceFee: serviceFee,
@@ -151,7 +158,72 @@ const ServicePage = () => {
       remainingAmount: paymentDetails.remainingAmount,
     };
 
-    // Add to service history
+    // --- Supabase Integration ---
+    try {
+      const { data: dbTransaction, error: transactionError } = await supabase
+        .from('service_transactions')
+        .insert({
+          service_entry_id: selectedServiceId,
+          customer_id: selectedServiceEntry.customer_id,
+          customer_name_cache: selectedServiceEntry.customerName,
+          description: transaction.description,
+          service_fee: transaction.serviceFee,
+          total_parts_cost: summary.sparepartCost,
+          total_amount: transaction.total,
+          payment_amount: transaction.paymentAmount,
+          change_amount: transaction.change,
+          remaining_amount: transaction.remainingAmount,
+          payment_method: paymentMethod,
+          kasir_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (transactionError) throw transactionError;
+
+      if (usedParts.length > 0) {
+        const serviceItemsForDb = usedParts.map(item => ({
+          transaction_id: dbTransaction.id,
+          product_id: item.id,
+          quantity: item.quantity,
+          buy_price_at_sale: item.buyPrice,
+          sale_price_at_sale: item.retailPrice,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('service_transaction_items')
+          .insert(serviceItemsForDb);
+
+        if (itemsError) throw itemsError;
+      }
+
+      if (transaction.remainingAmount > 0 && selectedServiceEntry.customer_id) {
+        const { error: installmentError } = await supabase
+          .from('installments')
+          .insert({
+            transaction_id_display: transaction.id,
+            transaction_type: 'Servis',
+            customer_id: selectedServiceEntry.customer_id,
+            total_amount: transaction.total,
+            paid_amount: transaction.paymentAmount,
+            remaining_amount: transaction.remainingAmount,
+            status: 'Belum Lunas',
+            details: transaction.description,
+            kasir_id: user.id,
+          });
+        if (installmentError) throw installmentError;
+      }
+      
+      showSuccess("Transaksi service berhasil diproses dan disimpan ke database!");
+
+    } catch (error: any) {
+      showError(`Gagal menyimpan ke database: ${error.message}`);
+      console.error("Supabase error:", error);
+      return;
+    }
+    // --- End Supabase Integration ---
+
+    // Keep local data for now to prevent breaking reports
     serviceHistoryDB.add({
       ...transaction,
       usedParts: usedParts.map(p => ({
@@ -187,7 +259,6 @@ const ServicePage = () => {
             await updateStockQuantity(part.id, -part.quantity); // Decrease stock
         }
     }
-    showSuccess("Transaksi service berhasil diproses!");
   };
 
   const handleNewTransaction = () => {
