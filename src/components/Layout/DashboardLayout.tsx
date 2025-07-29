@@ -37,7 +37,7 @@ const navItems = [
     ]
   },
   { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
-  { name: "Users", icon: Users, path: "/dashboard/users" },
+  { name: "Users", icon: Users, path: "/dashboard/users", adminOnly: true },
 ];
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
@@ -45,11 +45,34 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const location = useLocation();
   const { profile, signOut } = useAuth();
 
-  const renderNavLinks = () => (
-    <nav className="hidden md:flex items-center space-x-1">
-      {navItems.map((item) => {
-        if (item.name === "Users" && profile?.role !== 'Admin') return null;
-        return item.subItems ? (
+  const renderNavLinks = (isMobileNav = false) => {
+    const nav = navItems.map((item) => {
+      if (item.adminOnly && profile?.role !== 'Admin') return null;
+
+      if (item.subItems) {
+        return isMobileNav ? (
+          <Collapsible key={item.name}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-between text-primary-foreground hover:bg-black/10">
+                <div className="flex items-center gap-2">
+                  <item.icon className="h-4 w-4" />
+                  {item.name}
+                </div>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pl-6 space-y-1 mt-1">
+              {item.subItems.map(subItem => (
+                <Button key={subItem.name} variant="ghost" asChild className="w-full justify-start text-primary-foreground hover:bg-black/10">
+                  <Link to={subItem.path} className="flex items-center gap-2">
+                    <subItem.icon className="h-4 w-4" />
+                    {subItem.name}
+                  </Link>
+                </Button>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
+        ) : (
           <DropdownMenu key={item.name}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className={cn("text-primary-foreground hover:bg-black/10", location.pathname.startsWith(item.path) && "bg-black/20")}>
@@ -69,78 +92,45 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : (
-          <Button key={item.name} variant="ghost" asChild className={cn("text-primary-foreground hover:bg-black/10", location.pathname === item.path && "bg-black/20")}>
-            <Link to={item.path!} className="flex items-center gap-2">
-              <item.icon className="h-4 w-4" />
-              {item.name}
-            </Link>
-          </Button>
-        )
-      })}
-    </nav>
-  );
+        );
+      }
 
-  const renderMobileNav = () => (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-primary-foreground md:hidden">
-          <Menu className="h-6 w-6" />
+      return (
+        <Button key={item.name} variant="ghost" asChild className={cn("text-primary-foreground hover:bg-black/10", location.pathname === item.path && "bg-black/20", isMobileNav && "justify-start")}>
+          <Link to={item.path!} className="flex items-center gap-2">
+            <item.icon className="h-4 w-4" />
+            {item.name}
+          </Link>
         </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-64 bg-primary text-primary-foreground p-4">
-        <div className="mb-6">
-          <img src={logoSrc} alt="CELLKOM Logo" className="h-12 w-auto" />
-        </div>
-        <nav className="flex flex-col space-y-1">
-          {navItems.map((item) => {
-            if (item.name === "Users" && profile?.role !== 'Admin') return null;
-            return item.subItems ? (
-              <Collapsible key={item.name}>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between text-primary-foreground hover:bg-black/10">
-                    <div className="flex items-center gap-2">
-                      <item.icon className="h-4 w-4" />
-                      {item.name}
-                    </div>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="pl-6 space-y-1 mt-1">
-                  {item.subItems.map(subItem => (
-                    <Button key={subItem.name} variant="ghost" asChild className="w-full justify-start text-primary-foreground hover:bg-black/10">
-                      <Link to={subItem.path} className="flex items-center gap-2">
-                        <subItem.icon className="h-4 w-4" />
-                        {subItem.name}
-                      </Link>
-                    </Button>
-                  ))}
-                </CollapsibleContent>
-              </Collapsible>
-            ) : (
-              <Button key={item.name} variant="ghost" asChild className="justify-start text-primary-foreground hover:bg-black/10">
-                <Link to={item.path!} className="flex items-center gap-2">
-                  <item.icon className="h-4 w-4" />
-                  {item.name}
-                </Link>
-              </Button>
-            )
-          })}
-        </nav>
-      </SheetContent>
-    </Sheet>
-  );
+      );
+    });
+    return nav;
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-primary text-primary-foreground p-4 shadow-md flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {isMobile && renderMobileNav()}
+          {isMobile && (
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-primary-foreground md:hidden">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 bg-primary text-primary-foreground p-4">
+                <div className="mb-6">
+                  <img src={logoSrc} alt="CELLKOM Logo" className="h-12 w-auto" />
+                </div>
+                <nav className="flex flex-col space-y-1">{renderNavLinks(true)}</nav>
+              </SheetContent>
+            </Sheet>
+          )}
           <Link to="/dashboard">
             <img src={logoSrc} alt="CELLKOM Logo" className="h-10 w-auto" />
           </Link>
         </div>
-        {!isMobile && renderNavLinks()}
+        {!isMobile && <nav className="hidden md:flex items-center space-x-1">{renderNavLinks()}</nav>}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2 text-primary-foreground hover:bg-black/10">
