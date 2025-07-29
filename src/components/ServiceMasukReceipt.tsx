@@ -31,7 +31,7 @@ const ServiceMasukReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ entry },
       </div>
 
       <div className="my-2 py-1 text-xs space-y-1">
-        <div className="flex justify-between"><span>No. Service:</span> <span>{entry.id}</span></div>
+        <div className="flex justify-between"><span>No. Service:</span> <span>SVC-{entry.id}</span></div>
         <div className="flex justify-between"><span>Tanggal:</span> <span>{format(entry.date, 'dd/MM/yy HH:mm')}</span></div>
       </div>
 
@@ -54,7 +54,7 @@ const ServiceMasukReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ entry },
         <p>Kami tidak bertanggung jawab atas kehilangan struk.</p>
       </div>
       <div className="mt-2">
-        <Barcode value={entry.id} />
+        <Barcode value={`SVC-${entry.id}`} />
       </div>
     </div>
   );

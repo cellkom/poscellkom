@@ -43,7 +43,7 @@ const ServiceReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }
       </div>
 
       <div className="border-b border-dashed border-black my-2 py-1 text-xs">
-        <div className="flex justify-between"><span>No: {id}</span><span>{format(date, 'dd/MM/yy HH:mm')}</span></div>
+        <div className="flex justify-between"><span>No: SVC-{id}</span><span>{format(date, 'dd/MM/yy HH:mm')}</span></div>
         <div className="flex justify-between"><span>Kasir: admin</span><span>Pelanggan: {customerName}</span></div>
       </div>
       
@@ -95,7 +95,7 @@ const ServiceReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }
         <p>Garansi service berlaku 7 hari.</p>
       </div>
       <div className="mt-2">
-        <Barcode value={id} />
+        <Barcode value={`SVC-${id}`} />
       </div>
     </div>
   );

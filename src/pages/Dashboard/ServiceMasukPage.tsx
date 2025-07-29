@@ -278,7 +278,7 @@ const ServiceMasukPage = () => {
               ) : serviceEntries.length > 0 ? (
                 serviceEntries.map((entry) => (
                   <TableRow key={entry.id}>
-                    <TableCell className="font-mono">{String(entry.id).substring(0, 8)}...</TableCell>
+                    <TableCell className="font-mono">SVC-{entry.id}</TableCell>
                     <TableCell>{format(new Date(entry.date), "dd/MM/yyyy")}</TableCell>
                     <TableCell>{entry.customerName}</TableCell>
                     <TableCell>{entry.device_type}</TableCell>

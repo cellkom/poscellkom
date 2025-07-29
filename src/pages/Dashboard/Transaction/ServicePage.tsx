@@ -201,10 +201,10 @@ const ServicePage = () => {
       }
 
       // 3. Manage Installments
-      const { data: existingInstallment } = await supabase.from('installments').select('id').eq('transaction_id_display', transaction.id).maybeSingle();
+      const { data: existingInstallment } = await supabase.from('installments').select('id').eq('transaction_id_display', `SVC-${transaction.id}`).maybeSingle();
       if (transaction.remainingAmount > 0 && selectedServiceEntry.customer_id) {
         const installmentPayload = {
-          transaction_id_display: transaction.id, transaction_type: 'Servis' as const, customer_id: selectedServiceEntry.customer_id,
+          transaction_id_display: `SVC-${transaction.id}`, transaction_type: 'Servis' as const, customer_id: selectedServiceEntry.customer_id,
           customer_name_cache: selectedServiceEntry.customerName, total_amount: transaction.total, paid_amount: transaction.paymentAmount,
           remaining_amount: transaction.remainingAmount, status: 'Belum Lunas' as const, details: transaction.description, kasir_id: user.id,
         };
@@ -256,7 +256,7 @@ const ServicePage = () => {
     toPng(receiptRef.current, { cacheBust: true })
       .then((dataUrl) => {
         const link = document.createElement('a');
-        link.download = `nota-service-${lastTransaction?.id}.png`;
+        link.download = `nota-service-SVC-${lastTransaction?.id}.png`;
         link.href = dataUrl;
         link.click();
       })
@@ -289,7 +289,7 @@ const ServicePage = () => {
                   {pendingServices.length > 0 ? (
                     pendingServices.map(s => (
                       <SelectItem key={s.id} value={s.id}>
-                        {s.id} - {s.customerName} ({s.device_type})
+                        SVC-{s.id} - {s.customerName} ({s.device_type})
                       </SelectItem>
                     ))
                   ) : (

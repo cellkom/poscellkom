@@ -32,6 +32,7 @@ const getStatusBadgeVariant = (status: string) => {
 
 interface Activity {
     id: string;
+    transactionNumber: string;
     customer: string;
     type: 'Penjualan' | 'Servis';
     detail: string;
@@ -67,8 +68,8 @@ const DashboardPage = () => {
         const servicesTodayPromise = supabase.from('service_transactions').select('total_amount').gte('created_at', todayStart).lte('created_at', todayEnd);
 
         // Fetch recent activities
-        const recentSalesPromise = supabase.from('sales_transactions').select('id, created_at, customer_name_cache, total_amount, remaining_amount, sales_transaction_items(products(name))').order('created_at', { ascending: false }).limit(3);
-        const recentServicesPromise = supabase.from('service_transactions').select('id, created_at, customer_name_cache, total_amount, description, service_entries(status)').order('created_at', { ascending: false }).limit(3);
+        const recentSalesPromise = supabase.from('sales_transactions').select('id, created_at, transaction_id_display, customer_name_cache, total_amount, remaining_amount, sales_transaction_items(products(name))').order('created_at', { ascending: false }).limit(3);
+        const recentServicesPromise = supabase.from('service_transactions').select('id, service_entry_id, created_at, customer_name_cache, total_amount, description, service_entries(status)').order('created_at', { ascending: false }).limit(3);
 
         const [
             salesTodayResult,
@@ -87,7 +88,8 @@ const DashboardPage = () => {
 
         // Process activities
         const mappedSales = (recentSalesResult.data || []).map((s: any) => ({
-            id: `TRX-${s.id.substring(0, 6)}`,
+            id: s.id,
+            transactionNumber: s.transaction_id_display,
             customer: s.customer_name_cache || 'Umum',
             type: 'Penjualan' as const,
             detail: s.sales_transaction_items[0]?.products?.name ? `${s.sales_transaction_items[0].products.name}...` : 'Penjualan Barang',
@@ -97,7 +99,8 @@ const DashboardPage = () => {
         }));
 
         const mappedServices = (recentServicesResult.data || []).map((s: any) => ({
-            id: `SRV-${s.id}`,
+            id: s.id,
+            transactionNumber: `SVC-${s.service_entry_id}`,
             customer: s.customer_name_cache || 'N/A',
             type: 'Servis' as const,
             detail: s.description,
@@ -186,6 +189,7 @@ const DashboardPage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>No. Transaksi</TableHead>
                   <TableHead>Pelanggan</TableHead>
                   <TableHead>Jenis</TableHead>
                   <TableHead>Detail</TableHead>
@@ -195,10 +199,11 @@ const DashboardPage = () => {
               </TableHeader>
               <TableBody>
                 {pageLoading ? (
-                  <TableRow><TableCell colSpan={5} className="h-48 text-center">Memuat aktivitas terbaru...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="h-48 text-center">Memuat aktivitas terbaru...</TableCell></TableRow>
                 ) : activities.length > 0 ? (
                   activities.map((activity) => (
                     <TableRow key={activity.id}>
+                      <TableCell className="font-mono">{activity.transactionNumber}</TableCell>
                       <TableCell className="font-medium">{activity.customer}</TableCell>
                       <TableCell>
                         <Badge variant={activity.type === 'Penjualan' ? 'default' : 'secondary'}>
@@ -215,7 +220,7 @@ const DashboardPage = () => {
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow><TableCell colSpan={5} className="h-48 text-center">Tidak ada aktivitas terbaru.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="h-48 text-center">Tidak ada aktivitas terbaru.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
