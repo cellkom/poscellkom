@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -217,7 +217,7 @@ const ServicePage = () => {
       showSuccess("Transaksi service berhasil diproses dan disimpan ke database!");
 
     } catch (error: any) {
-      showError(`Gagal menyimpan ke database: ${error.message}`);
+      showError(`Gagal menyimpan ke database: ${error?.message || JSON.stringify(error)}`);
       console.error("Supabase error:", error);
       return;
     }
@@ -274,7 +274,7 @@ const ServicePage = () => {
     setIsReceiptOpen(false);
   };
 
-  const handlePrint = () => window.print();
+  const handlePrint = useCallback(() => window.print(), []);
 
   const handleDownload = useCallback(() => {
     if (receiptRef.current === null) return;
@@ -287,6 +287,15 @@ const ServicePage = () => {
       })
       .catch((err) => console.error('Gagal membuat gambar struk:', err));
   }, [receiptRef, lastTransaction]);
+
+  useEffect(() => {
+    if (isReceiptOpen && lastTransaction) {
+      const timer = setTimeout(() => {
+        handlePrint();
+      }, 500); // Delay to allow receipt to render
+      return () => clearTimeout(timer);
+    }
+  }, [isReceiptOpen, lastTransaction, handlePrint]);
 
   const pendingServices = useMemo(() => {
     return serviceEntries.filter(entry => entry.status === 'Pending' || entry.status === 'Proses');
