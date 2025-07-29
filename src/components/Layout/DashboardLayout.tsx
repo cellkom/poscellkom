@@ -7,7 +7,7 @@ import { Menu, Home, Package, Users, Building, ShoppingCart, Wrench, FileText, L
 import { useAuth } from '@/contexts/AuthContext';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState({ master: false, transaction: false, reports: false });
 
@@ -121,7 +121,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                 <p className="text-sm font-semibold">{user?.email}</p>
                 <p className="text-xs text-muted-foreground">Kasir</p>
               </div>
-              <Button variant="ghost" size="icon" onClick={logout}>
+              <Button variant="ghost" size="icon" onClick={signOut}>
                 <LogOut className="h-5 w-5" />
               </Button>
             </div>
