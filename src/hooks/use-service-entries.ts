@@ -47,7 +47,6 @@ export const useServiceEntries = () => {
       } else {
         const formattedData: ServiceEntryWithCustomer[] = data.map((entry: any) => ({
           ...entry,
-          id: String(entry.id), // Convert ID to string
           customerName: entry.customers?.name || 'N/A',
           customerPhone: entry.customers?.phone || 'N/A',
           date: entry.date, // Keep as string for consistency with DB
@@ -102,7 +101,7 @@ export const useServiceEntries = () => {
       return null;
     }
     showSuccess("Data service masuk berhasil disimpan!");
-    return data ? { ...data, id: String(data.id) } : null;
+    return data;
   };
 
   const updateServiceEntry = async (id: string, updatedFields: Partial<ServiceEntry>) => {
@@ -128,7 +127,7 @@ export const useServiceEntries = () => {
       return null;
     }
     showSuccess("Data service masuk berhasil diperbarui!");
-    return data ? { ...data, id: String(data.id) } : null;
+    return data;
   };
 
   return {
