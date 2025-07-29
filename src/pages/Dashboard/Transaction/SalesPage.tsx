@@ -15,7 +15,6 @@ import { useStock, Product } from "@/hooks/use-stock";
 import { useCustomers } from "@/hooks/use-customers";
 import SalesReceipt from "@/components/SalesReceipt";
 import { toPng } from 'html-to-image';
-import { salesHistoryDB } from "@/data/salesHistory";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -217,28 +216,6 @@ const SalesPage = () => {
       return;
     }
     // --- End Supabase Integration ---
-
-    // Keep local data for now to prevent breaking reports
-    salesHistoryDB.add({
-      id: transaction.id,
-      items: transaction.items.map(i => ({
-        id: i.id,
-        name: i.name,
-        quantity: i.quantity,
-        buyPrice: i.buyPrice,
-        salePrice: customerType === 'reseller' ? i.resellerPrice : i.retailPrice,
-      })),
-      summary: {
-        totalSale: transaction.total,
-        totalCost: summary.modal,
-        profit: summary.profit,
-      },
-      customerName: transaction.customerName,
-      paymentMethod: transaction.paymentMethod,
-      date: transaction.date,
-      paymentAmount: transaction.paymentAmount,
-      remainingAmount: transaction.remainingAmount,
-    });
     
     setLastTransaction(transaction);
     setIsReceiptOpen(true);

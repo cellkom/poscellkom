@@ -15,7 +15,6 @@ import { showSuccess, showError } from "@/utils/toast";
 import { useServiceEntries, ServiceEntryWithCustomer } from "@/hooks/use-service-entries"; // Updated import
 import ServiceReceipt from "@/components/ServiceReceipt";
 import { toPng } from 'html-to-image';
-import { serviceHistoryDB } from "@/data/serviceHistory";
 import { useStock, Product } from "@/hooks/use-stock";
 import { useCustomers } from "@/hooks/use-customers";
 import { supabase } from "@/integrations/supabase/client";
@@ -233,7 +232,6 @@ const ServicePage = () => {
       showSuccess("Transaksi service berhasil diproses!");
       
       // 5. Finalize UI
-      serviceHistoryDB.add({ ...transaction, usedParts: usedParts.map(p => ({ id: p.id, name: p.name, quantity: p.quantity, buyPrice: p.buyPrice, retailPrice: p.retailPrice })) });
       setLastTransaction(transaction);
       setIsReceiptOpen(true);
 
