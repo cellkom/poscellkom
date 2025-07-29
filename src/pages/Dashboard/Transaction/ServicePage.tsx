@@ -203,6 +203,7 @@ const ServicePage = () => {
             transaction_id_display: transaction.id,
             transaction_type: 'Servis',
             customer_id: selectedServiceEntry.customer_id,
+            customer_name_cache: selectedServiceEntry.customerName,
             total_amount: transaction.total,
             paid_amount: transaction.paymentAmount,
             remaining_amount: transaction.remainingAmount,

@@ -200,6 +200,7 @@ const SalesPage = () => {
             transaction_id_display: transaction.id,
             transaction_type: 'Penjualan',
             customer_id: selectedCustomerId,
+            customer_name_cache: transaction.customerName,
             total_amount: transaction.total,
             paid_amount: transaction.paymentAmount,
             remaining_amount: transaction.remainingAmount,
