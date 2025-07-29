@@ -3,15 +3,15 @@ import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Home, Package, Users, Building, ShoppingCart, Wrench, FileText, LogOut, ChevronDown, ChevronRight } from 'lucide-react';
+import { Menu, Home, Package, Users, ShoppingCart, Wrench, FileText, LogOut, ChevronDown, ChevronRight, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const location = useLocation();
-  const [openMenus, setOpenMenus] = useState({ master: false, transaction: false, reports: false });
+  const [openMenus, setOpenMenus] = useState({ master: false, transaction: false, reports: false, admin: false });
 
-  const toggleMenu = (menu: 'master' | 'transaction' | 'reports') => {
+  const toggleMenu = (menu: 'master' | 'transaction' | 'reports' | 'admin') => {
     setOpenMenus(prev => ({ ...prev, [menu]: !prev[menu] }));
   };
 
@@ -48,19 +48,27 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         { href: '/dashboard/reports/services-in-progress', label: 'Servis Dalam Proses' },
       ],
     },
-  ];
+    profile?.role === 'Admin' && {
+      label: 'Admin',
+      icon: Shield,
+      menuKey: 'admin',
+      subItems: [
+        { href: '/dashboard/users', label: 'Manajemen User' },
+      ],
+    },
+  ].filter(Boolean);
 
   const isActive = (href: string) => location.pathname === href;
 
   const renderNavLinks = (isMobile = false) => (
     <nav className={cn("grid items-start px-2 text-sm font-medium lg:px-4", isMobile ? "gap-2" : "gap-1")}>
       {navItems.map((item) =>
-        item.subItems ? (
+        item && item.subItems ? (
           <div key={item.label}>
             <Button
               variant="ghost"
               className="w-full justify-between"
-              onClick={() => toggleMenu(item.menuKey as 'master' | 'transaction' | 'reports')}
+              onClick={() => toggleMenu(item.menuKey as 'master' | 'transaction' | 'reports' | 'admin')}
             >
               <div className="flex items-center gap-3">
                 <item.icon className="h-4 w-4" />
@@ -86,7 +94,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             )}
           </div>
         ) : (
-          <Link
+          item && <Link
             key={item.href}
             to={item.href!}
             className={cn(
@@ -119,7 +127,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <p className="text-sm font-semibold">{user?.email}</p>
-                <p className="text-xs text-muted-foreground">Kasir</p>
+                <p className="text-xs text-muted-foreground">{profile?.role}</p>
               </div>
               <Button variant="ghost" size="icon" onClick={signOut}>
                 <LogOut className="h-5 w-5" />
