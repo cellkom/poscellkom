@@ -130,10 +130,41 @@ export const useServiceEntries = () => {
     return data;
   };
 
+  const deleteServiceEntry = async (id: string) => {
+    const { data: transaction, error: transactionError } = await supabase
+      .from('service_transactions')
+      .select('id')
+      .eq('service_entry_id', id)
+      .maybeSingle();
+
+    if (transactionError) {
+      showError(`Gagal memeriksa transaksi terkait: ${transactionError.message}`);
+      return false;
+    }
+
+    if (transaction) {
+      showError("Tidak dapat menghapus service ini karena sudah memiliki transaksi pembayaran.");
+      return false;
+    }
+
+    const { error } = await supabase
+      .from('service_entries')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      showError(`Gagal menghapus data service: ${error.message}`);
+      return false;
+    }
+    showSuccess("Data service berhasil dihapus.");
+    return true;
+  };
+
   return {
     serviceEntries,
     loading,
     addServiceEntry,
     updateServiceEntry,
+    deleteServiceEntry,
   };
 };
