@@ -217,7 +217,22 @@ const ServicePage = () => {
       showSuccess("Transaksi service berhasil diproses dan disimpan ke database!");
 
     } catch (error: any) {
-      showError(`Gagal menyimpan ke database: ${error?.message || JSON.stringify(error)}`);
+      let errorMessage = "Terjadi kesalahan yang tidak diketahui.";
+      if (error) {
+        if (typeof error.message === 'string') {
+          errorMessage = error.message;
+          if (typeof error.details === 'string') errorMessage += ` Detail: ${error.details}`;
+          if (typeof error.hint === 'string') errorMessage += ` Petunjuk: ${error.hint}`;
+        } else {
+          try {
+            const errorString = JSON.stringify(error);
+            errorMessage = errorString === '{}' ? "Objek error kosong, periksa log konsol." : errorString;
+          } catch (e) {
+            errorMessage = "Gagal mengubah error menjadi string.";
+          }
+        }
+      }
+      showError(`Gagal menyimpan ke database: ${errorMessage}`);
       console.error("Supabase error:", error);
       return;
     }
