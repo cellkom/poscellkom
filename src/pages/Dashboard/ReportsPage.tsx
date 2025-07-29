@@ -16,7 +16,7 @@ const ReportsPage = () => {
   const salesHistory = useSalesHistory();
   const serviceHistory = useServiceHistory();
   const { serviceEntries } = useServiceEntries(); // Use from hook
-  const installments = useInstallments();
+  const { installments } = useInstallments();
 
   const summaryToday = useMemo(() => {
     const todaySales = salesHistory.filter(s => isToday(s.date));
@@ -27,7 +27,7 @@ const ReportsPage = () => {
     
     const totalTransactions = todaySales.length + todayServices.length;
     const servicesInProgress = serviceEntries.filter(e => e.status === 'Pending' || e.status === 'Proses').length;
-    const activeReceivables = installments.filter(i => i.status === 'Belum Lunas').reduce((sum, i) => sum + i.remainingAmount, 0);
+    const activeReceivables = installments.filter(i => i.status === 'Belum Lunas').reduce((sum, i) => sum + i.remaining_amount, 0);
 
     return {
       totalRevenue: totalSales + totalServiceRevenue,
