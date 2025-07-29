@@ -16,7 +16,6 @@ import { useCustomers } from "@/hooks/use-customers";
 import SalesReceipt from "@/components/SalesReceipt";
 import { toPng } from 'html-to-image';
 import { salesHistoryDB } from "@/data/salesHistory";
-import { installmentsDB } from "@/data/installments";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -239,18 +238,6 @@ const SalesPage = () => {
       paymentAmount: transaction.paymentAmount,
       remainingAmount: transaction.remainingAmount,
     });
-
-    if (paymentDetails.remainingAmount > 0) {
-      installmentsDB.add({
-        id: transaction.id,
-        type: 'Penjualan',
-        customerName: transaction.customerName,
-        transactionDate: transaction.date,
-        totalAmount: transaction.total,
-        initialPayment: transaction.paymentAmount,
-        details: `${transaction.items.length} item`,
-      });
-    }
     
     setLastTransaction(transaction);
     setIsReceiptOpen(true);

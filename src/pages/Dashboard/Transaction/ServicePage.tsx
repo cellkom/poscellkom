@@ -15,7 +15,6 @@ import { showSuccess, showError } from "@/utils/toast";
 import { useServiceEntries, ServiceEntryWithCustomer } from "@/hooks/use-service-entries"; // Updated import
 import ServiceReceipt from "@/components/ServiceReceipt";
 import { toPng } from 'html-to-image';
-import { installmentsDB } from "@/data/installments";
 import { serviceHistoryDB } from "@/data/serviceHistory";
 import { useStock, Product } from "@/hooks/use-stock";
 import { useCustomers } from "@/hooks/use-customers";
@@ -235,18 +234,6 @@ const ServicePage = () => {
         retailPrice: p.retailPrice,
       })),
     });
-
-    if (paymentDetails.remainingAmount > 0) {
-      installmentsDB.add({
-        id: transaction.id,
-        type: 'Servis',
-        customerName: transaction.customerName,
-        transactionDate: transaction.date,
-        totalAmount: transaction.total,
-        initialPayment: transaction.paymentAmount,
-        details: transaction.description,
-      });
-    }
     
     setLastTransaction(transaction);
     setIsReceiptOpen(true);
