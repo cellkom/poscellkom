@@ -90,7 +90,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </SheetTrigger>
       <SheetContent side="left" className="w-64 bg-primary text-primary-foreground p-4">
         <div className="mb-6">
-          <img src={logoSrc} alt="CELLKOM Logo" className="h-10 w-auto" />
+          <img src={logoSrc} alt="CELLKOM Logo" className="h-12 w-auto" />
         </div>
         <nav className="flex flex-col space-y-1">
           {navItems.map((item) => {
@@ -137,7 +137,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div className="flex items-center gap-4">
           {isMobile && renderMobileNav()}
           <Link to="/dashboard">
-            <img src={logoSrc} alt="CELLKOM Logo" className="h-8 w-auto" />
+            <img src={logoSrc} alt="CELLKOM Logo" className="h-10 w-auto" />
           </Link>
         </div>
         {!isMobile && renderNavLinks()}

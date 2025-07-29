@@ -36,7 +36,7 @@ const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(({ transactio
   return (
     <div ref={ref} id="receipt-print-area" className="bg-white text-black p-4 font-mono max-w-sm mx-auto border rounded-lg">
       <div className="text-center">
-        <img src={logoSrc} alt="CELLKOM Logo" className="h-12 w-auto mx-auto mb-2" />
+        <img src={logoSrc} alt="CELLKOM Logo" className="h-16 w-auto mx-auto mb-2" />
         <p className="text-xs">Service & Toko Handphone</p>
         <p className="text-xs">Jl. Merdeka No. 123, Kota Anda</p>
         <p className="text-xs">Telp: 0812-3456-7890</p>

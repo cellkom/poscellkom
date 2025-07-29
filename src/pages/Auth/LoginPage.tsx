@@ -32,7 +32,7 @@ const LoginPage = () => {
         
         {/* Header */}
         <div className="text-center space-y-4">
-          <img src={logoSrc} alt="CELLKOM Logo" className="h-20 w-auto mx-auto" />
+          <img src={logoSrc} alt="CELLKOM Logo" className="h-28 w-auto mx-auto" />
           <p className="text-gray-500">Pusat Service HP dan Komputer</p>
           <div className="flex justify-center gap-2">
             <Badge variant="secondary"><Wrench className="h-3 w-3 mr-1" /> Service</Badge>
