@@ -152,7 +152,7 @@ const DashboardPage = () => {
                   </CardContent>
                 </Card>
               </Link>
-              <Link to="/dashboard/transactions/sales">
+              <Link to="/dashboard/reports/today">
                 <Card className="hover:bg-muted/50 transition-colors">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Transaksi Hari Ini</CardTitle>
@@ -163,7 +163,7 @@ const DashboardPage = () => {
                   </CardContent>
                 </Card>
               </Link>
-              <Link to="/dashboard/installments">
+              <Link to="/dashboard/transaction/installments">
                 <Card className="hover:bg-muted/50 transition-colors">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Piutang</CardTitle>

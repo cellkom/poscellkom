@@ -15,6 +15,7 @@ import SupplierPage from './pages/Dashboard/Data/SupplierPage';
 import ReportsPage from './pages/Dashboard/ReportsPage';
 import SalesReportPage from './pages/Dashboard/Reports/SalesReportPage';
 import ServiceReportPage from './pages/Dashboard/Reports/ServiceReportPage';
+import TodayReportPage from './pages/Dashboard/Reports/TodayReportPage';
 import UsersPage from './pages/Dashboard/UsersPage';
 import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
 import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
@@ -41,6 +42,7 @@ function App() {
             <Route path="/dashboard/reports" element={<ReportsPage />} />
             <Route path="/dashboard/reports/sales" element={<SalesReportPage />} />
             <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
+            <Route path="/dashboard/reports/today" element={<TodayReportPage />} />
             <Route path="/dashboard/services-in-progress" element={<ServicesInProgressPage />} />
             
             <Route element={<AdminRoute />}>
