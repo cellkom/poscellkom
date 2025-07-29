@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { PlusCircle, Wrench, Trash2, Minus, Plus, ClipboardList, Printer, Download, FilePlus2, Banknote } from "lucide-react";
+import { PlusCircle, Wrench, Trash2, Minus, Plus, ClipboardList, Printer, Download, FilePlus2, Banknote, Loader2 } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import { useServiceEntries, ServiceEntryWithCustomer } from "@/hooks/use-service-entries"; // Updated import
 import ServiceReceipt from "@/components/ServiceReceipt";
@@ -53,6 +53,7 @@ const ServicePage = () => {
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [lastTransaction, setLastTransaction] = useState<CompletedServiceTransaction | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
@@ -143,6 +144,8 @@ const ServicePage = () => {
       return;
     }
 
+    setIsProcessing(true);
+
     const transaction: CompletedServiceTransaction = {
       id: selectedServiceId,
       date: new Date(),
@@ -158,13 +161,6 @@ const ServicePage = () => {
 
     try {
       // 1. Upsert Service Transaction
-      const { data: existingTransaction, error: checkError } = await supabase
-        .from('service_transactions')
-        .select('id')
-        .eq('service_entry_id', selectedServiceId)
-        .maybeSingle();
-      if (checkError) throw new Error(`Gagal memeriksa transaksi: ${checkError.message}`);
-
       const transactionPayload = {
         service_entry_id: selectedServiceId,
         customer_id: selectedServiceEntry.customer_id,
@@ -180,16 +176,13 @@ const ServicePage = () => {
         kasir_id: user.id,
       };
 
-      let dbTransaction;
-      if (existingTransaction) {
-        const { data, error } = await supabase.from('service_transactions').update(transactionPayload).eq('id', existingTransaction.id).select().single();
-        if (error) throw error;
-        dbTransaction = data;
-      } else {
-        const { data, error } = await supabase.from('service_transactions').insert(transactionPayload).select().single();
-        if (error) throw error;
-        dbTransaction = data;
-      }
+      const { data: dbTransaction, error: upsertError } = await supabase
+        .from('service_transactions')
+        .upsert(transactionPayload, { onConflict: 'service_entry_id' })
+        .select()
+        .single();
+
+      if (upsertError) throw upsertError;
 
       // 2. Manage Service Parts & Stock
       const serviceTransactionId = dbTransaction.id;
@@ -238,7 +231,8 @@ const ServicePage = () => {
     } catch (error: any) {
       console.error("Supabase error:", error);
       showError(`Gagal menyimpan ke database: ${error.message}`);
-      return;
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -431,7 +425,14 @@ const ServicePage = () => {
               </div>
             </CardContent>
             <CardFooter>
-              <Button size="lg" className="w-full" onClick={handleProcessService} disabled={!selectedServiceId}><Banknote className="h-5 w-5 mr-2" /> Proses & Cetak Nota</Button>
+              <Button size="lg" className="w-full" onClick={handleProcessService} disabled={!selectedServiceId || isProcessing}>
+                {isProcessing ? (
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                ) : (
+                  <Banknote className="h-5 w-5 mr-2" />
+                )}
+                {isProcessing ? 'Memproses...' : 'Proses & Cetak Nota'}
+              </Button>
             </CardFooter>
           </Card>
         </div>
