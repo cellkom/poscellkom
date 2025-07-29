@@ -17,6 +17,8 @@ import SalesReceipt from "@/components/SalesReceipt";
 import { toPng } from 'html-to-image';
 import { salesHistoryDB } from "@/data/salesHistory";
 import { installmentsDB } from "@/data/installments";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 // --- Type Definitions ---
 type CartItem = Product & { quantity: number };
@@ -39,6 +41,7 @@ type CompletedTransaction = {
 const SalesPage = () => {
   const { products, updateStockQuantity } = useStock();
   const { customers, addCustomer } = useCustomers();
+  const { user } = useAuth();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerType, setCustomerType] = useState<CustomerType>('umum');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -136,6 +139,10 @@ const SalesPage = () => {
       showError("Jumlah bayar kurang dari total belanja.");
       return;
     }
+    if (!user) {
+      showError("Sesi pengguna tidak ditemukan. Silakan login ulang.");
+      return;
+    }
 
     const transaction: CompletedTransaction = {
       id: `TRX-${Date.now()}`,
@@ -151,7 +158,66 @@ const SalesPage = () => {
       paymentMethod: paymentMethod,
     };
 
-    // Add to sales history
+    // --- Supabase Integration ---
+    try {
+      const { data: dbTransaction, error: transactionError } = await supabase
+        .from('sales_transactions')
+        .insert({
+          transaction_id_display: transaction.id,
+          customer_id: selectedCustomerId,
+          customer_name_cache: transaction.customerName,
+          subtotal: transaction.subtotal,
+          discount: transaction.discount,
+          total: transaction.total,
+          payment_amount: transaction.paymentAmount,
+          change_amount: transaction.change,
+          remaining_amount: transaction.remainingAmount,
+          payment_method: transaction.paymentMethod,
+          kasir_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (transactionError) throw transactionError;
+
+      const saleItemsForDb = cart.map(item => ({
+        transaction_id: dbTransaction.id,
+        product_id: item.id,
+        quantity: item.quantity,
+        buy_price_at_sale: item.buyPrice,
+        sale_price_at_sale: customerType === 'reseller' ? item.resellerPrice : item.retailPrice,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('sales_transaction_items')
+        .insert(saleItemsForDb);
+
+      if (itemsError) throw itemsError;
+
+      if (transaction.remainingAmount > 0 && selectedCustomerId) {
+        const { error: installmentError } = await supabase
+          .from('installments')
+          .insert({
+            transaction_id_display: transaction.id,
+            transaction_type: 'Penjualan',
+            customer_id: selectedCustomerId,
+            total_amount: transaction.total,
+            paid_amount: transaction.paymentAmount,
+            remaining_amount: transaction.remainingAmount,
+            status: 'Belum Lunas',
+            details: `${transaction.items.length} item terjual.`,
+            kasir_id: user.id,
+          });
+        if (installmentError) throw installmentError;
+      }
+    } catch (error: any) {
+      showError(`Gagal menyimpan ke database: ${error.message}`);
+      console.error("Supabase error:", error);
+      return;
+    }
+    // --- End Supabase Integration ---
+
+    // Keep local data for now to prevent breaking reports
     salesHistoryDB.add({
       id: transaction.id,
       items: transaction.items.map(i => ({
@@ -188,11 +254,10 @@ const SalesPage = () => {
     setLastTransaction(transaction);
     setIsReceiptOpen(true);
     
-    // Update stock in Supabase
     for (const item of cart) {
-      await updateStockQuantity(item.id, -item.quantity); // Decrease stock
+      await updateStockQuantity(item.id, -item.quantity);
     }
-    showSuccess("Transaksi berhasil diproses!");
+    showSuccess("Transaksi berhasil diproses dan disimpan ke database!");
   };
 
   const handleNewTransaction = () => {
@@ -297,7 +362,7 @@ const SalesPage = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Kasir:</span>
-                <span className="font-medium">admin</span>
+                <span className="font-medium">{user?.email}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Customer:</span>
