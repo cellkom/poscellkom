@@ -5,7 +5,7 @@ import { DateRange } from "react-day-picker";
 import { addDays, format } from "date-fns";
 import { Calendar as CalendarIcon, Printer, Loader2 } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
-import { supabase } from "@/integrations/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
