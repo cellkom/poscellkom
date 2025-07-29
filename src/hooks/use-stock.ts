@@ -152,7 +152,11 @@ export const useStock = () => {
       .eq('id', id);
 
     if (error) {
-      showError(`Gagal menghapus produk: ${error.message}`);
+      if (error.message.includes('violates foreign key constraint')) {
+        showError("Gagal menghapus: Produk ini sudah digunakan dalam transaksi dan tidak dapat dihapus.");
+      } else {
+        showError(`Gagal menghapus produk: ${error.message}`);
+      }
       console.error(error);
       return false;
     }
