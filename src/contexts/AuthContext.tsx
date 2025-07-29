@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
 
 export interface Profile {
   id: string;
@@ -24,10 +25,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    // Navigation is now handled declaratively by PrivateRoute.
+    navigate('/login');
   };
 
   useEffect(() => {

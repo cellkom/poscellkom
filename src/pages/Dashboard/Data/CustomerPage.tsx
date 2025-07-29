@@ -11,7 +11,7 @@ import { useCustomers, Customer } from "@/hooks/use-customers";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
 
-const CustomersPage = () => {
+const CustomerPage = () => {
   const { customers, loading } = useCustomers();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -144,4 +144,4 @@ const CustomersPage = () => {
   );
 };
 
-export default CustomersPage;
+export default CustomerPage;

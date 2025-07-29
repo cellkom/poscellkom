@@ -54,7 +54,7 @@ const initialState: ServiceEntryFormData = {
 
 const newCustomerInitialState = { name: '', phone: '', address: '' };
 
-const ServiceEntryPage = () => {
+const ServiceMasukPage = () => {
   const { customers } = useCustomers();
   const { serviceEntries, loading, addServiceEntry } = useServiceEntries();
   const { user } = useAuth();
@@ -334,4 +334,4 @@ const ServiceEntryPage = () => {
   );
 };
 
-export default ServiceEntryPage;
+export default ServiceMasukPage;
