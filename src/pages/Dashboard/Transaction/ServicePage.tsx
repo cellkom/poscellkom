@@ -170,7 +170,7 @@ const ServicePage = () => {
           service_fee: transaction.serviceFee,
           total_parts_cost: summary.sparepartCost,
           total_amount: transaction.total,
-          payment_amount: transaction.paymentAmount,
+          paid_amount: transaction.paymentAmount,
           change_amount: transaction.change,
           remaining_amount: transaction.remainingAmount,
           payment_method: paymentMethod,
