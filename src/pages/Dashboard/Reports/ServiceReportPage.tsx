@@ -72,7 +72,7 @@ const ServiceReportPage = () => {
         console.error("Error fetching service data:", error);
         setServiceData([]);
       } else {
-        setServiceData(data as ServiceTransaction[]);
+        setServiceData(data as any);
       }
       setLoading(false);
     };

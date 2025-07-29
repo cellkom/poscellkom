@@ -71,7 +71,7 @@ const SalesReportPage = () => {
         console.error("Error fetching sales data:", error);
         setSalesData([]);
       } else {
-        setSalesData(data as SaleTransaction[]);
+        setSalesData(data as any);
       }
       setLoading(false);
     };

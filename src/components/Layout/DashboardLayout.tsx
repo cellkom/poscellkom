@@ -8,12 +8,31 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import logoSrc from '/logo.png';
+import type { ReactNode, ForwardRefExoticComponent, RefAttributes } from "react";
+import type { LucideProps } from "lucide-react";
 
 interface DashboardLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-const navItems = [
+type IconType = ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
+
+interface NavSubItem {
+    name: string;
+    icon: IconType;
+    path: string;
+    adminOnly?: boolean;
+}
+
+interface NavItem {
+    name: string;
+    icon: IconType;
+    path: string;
+    adminOnly?: boolean;
+    subItems?: NavSubItem[];
+}
+
+const navItems: NavItem[] = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { name: "Stok", icon: Package, path: "/dashboard/stock" },
   { name: "Service Masuk", icon: ClipboardPlus, path: "/dashboard/service-masuk" },
