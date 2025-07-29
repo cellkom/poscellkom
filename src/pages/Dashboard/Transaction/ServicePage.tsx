@@ -10,9 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { PlusCircle, Wrench, Trash2, Minus, Plus, ClipboardList, Printer, Download, FilePlus2, Banknote } from "lucide-react";
+import { PlusCircle, Wrench, Trash2, Minus, Plus, ClipboardList, Printer, Download, FilePlus2, Banknote, Tag, User } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
-import { useServiceEntries, ServiceEntryWithCustomer } from "@/hooks/use-service-entries"; // Updated import
+import { useServiceEntries } from "@/hooks/use-service-entries";
 import ServiceReceipt from "@/components/ServiceReceipt";
 import { toPng } from 'html-to-image';
 import { serviceHistoryDB } from "@/data/serviceHistory";
@@ -115,12 +115,12 @@ const ServicePage = () => {
     const service = serviceEntries.find(s => s.id === serviceId);
     if (service) {
         setSelectedServiceId(service.id);
-        setSelectedCustomer(service.customer_id); // Use customer_id from DB
-        setServiceDescription(`${service.damage_type} - ${service.description}`);
+        setSelectedCustomer(service.customer_id);
+        setServiceDescription(`${service.device_type} - ${service.damage_type} - ${service.description}`);
         setUsedParts([]);
         setServiceFee(0);
         setPaymentMethod('tunai');
-        setStatus(service.status); // Set initial status from DB
+        setStatus(service.status);
     }
   };
 
@@ -157,7 +157,6 @@ const ServicePage = () => {
       remainingAmount: paymentDetails.remainingAmount,
     };
 
-    // --- Supabase Integration ---
     try {
       const { data: dbTransaction, error: transactionError } = await supabase
         .from('service_transactions')
@@ -222,9 +221,7 @@ const ServicePage = () => {
       showError(`Gagal menyimpan ke database: ${message}`);
       return;
     }
-    // --- End Supabase Integration ---
 
-    // Keep local data for now to prevent breaking reports
     serviceHistoryDB.add({
       ...transaction,
       usedParts: usedParts.map(p => ({
@@ -239,13 +236,11 @@ const ServicePage = () => {
     setLastTransaction(transaction);
     setIsReceiptOpen(true);
     
-    // Update status in Supabase
     await updateServiceEntry(selectedServiceId, { status });
 
     if (status !== 'Gagal/Cancel') {
-        // Update stock in Supabase for used parts
         for (const part of usedParts) {
-            await updateStockQuantity(part.id, -part.quantity); // Decrease stock
+            await updateStockQuantity(part.id, -part.quantity);
         }
     }
   };
@@ -281,7 +276,7 @@ const ServicePage = () => {
     if (isReceiptOpen && lastTransaction) {
       const timer = setTimeout(() => {
         handlePrint();
-      }, 500); // Delay to allow receipt to render
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [isReceiptOpen, lastTransaction, handlePrint]);
@@ -289,6 +284,11 @@ const ServicePage = () => {
   const pendingServices = useMemo(() => {
     return serviceEntries.filter(entry => entry.status === 'Pending' || entry.status === 'Proses');
   }, [serviceEntries]);
+
+  const selectedCustomerName = useMemo(() => {
+    if (!selectedCustomer) return '...';
+    return customers.find(c => c.id === selectedCustomer)?.name || '...';
+  }, [selectedCustomer, customers]);
 
   return (
     <DashboardLayout>
@@ -303,7 +303,7 @@ const ServicePage = () => {
                   {pendingServices.length > 0 ? (
                     pendingServices.map(s => (
                       <SelectItem key={s.id} value={s.id}>
-                        {s.id} - {s.customerName} ({s.device_type})
+                        {s.id.substring(0, 8)}... - {s.customerName} ({s.device_type})
                       </SelectItem>
                     ))
                   ) : (
@@ -313,51 +313,12 @@ const ServicePage = () => {
               </Select>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader><CardTitle>Transaksi Service</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="customer">Customer</Label>
-                <Select value={selectedCustomer} onValueChange={setSelectedCustomer} disabled={!!selectedServiceId}>
-                  <SelectTrigger id="customer"><SelectValue placeholder="Pilih Customer" /></SelectTrigger>
-                  <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name} - {c.phone}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="description">Deskripsi Service</Label>
-                <Textarea id="description" placeholder="Deskripsi akan terisi otomatis jika memilih service dari daftar di atas" value={serviceDescription} onChange={(e) => setServiceDescription(e.target.value)} disabled={!!selectedServiceId} />
-              </div>
-              <div>
-                <Label htmlFor="serviceFee">Biaya Service</Label>
-                <Input id="serviceFee" type="number" placeholder="0" value={serviceFee || ''} onChange={(e) => setServiceFee(Number(e.target.value))} />
-              </div>
-              <div>
-                <Label htmlFor="status">Status Service</Label>
-                <Select value={status} onValueChange={(value: ServiceStatus) => setStatus(value)}>
-                  <SelectTrigger id="status"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Proses">Proses</SelectItem>
-                    <SelectItem value="Selesai">Selesai</SelectItem>
-                    <SelectItem value="Sudah Diambil">Sudah Diambil</SelectItem>
-                    <SelectItem value="Gagal/Cancel">Gagal/Cancel</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Metode Pembayaran</Label>
-                <RadioGroup value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)} className="flex items-center gap-4 mt-2">
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="tunai" id="tunai" /><Label htmlFor="tunai">Tunai</Label></div>
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="cicilan" id="cicilan" /><Label htmlFor="cicilan">Cicilan</Label></div>
-                </RadioGroup>
-              </div>
-            </CardContent>
-          </Card>
+          
           <Card>
             <CardHeader className="flex flex-row justify-between items-center">
               <CardTitle>Sparepart yang Digunakan</CardTitle>
               <Dialog open={isItemDialogOpen} onOpenChange={setIsItemDialogOpen}>
-                <DialogTrigger asChild><Button variant="outline"><PlusCircle className="h-4 w-4 mr-2" /> Tambah Sparepart</Button></DialogTrigger>
+                <DialogTrigger asChild><Button variant="outline" disabled={!selectedServiceId}><PlusCircle className="h-4 w-4 mr-2" /> Tambah Sparepart</Button></DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader><DialogTitle>Pilih Sparepart</DialogTitle></DialogHeader>
                   <Command>
@@ -410,9 +371,50 @@ const ServicePage = () => {
         </div>
         <div className="space-y-6">
           <Card>
-            <CardHeader><CardTitle>Ringkasan</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Info & Pembayaran</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Kasir</Label>
+                <Input value={user?.email || ''} disabled />
+              </div>
+              <div>
+                <Label>Customer</Label>
+                <Input value={selectedCustomerName} disabled />
+              </div>
+              <div>
+                <Label htmlFor="description">Deskripsi Service</Label>
+                <Textarea id="description" value={serviceDescription} onChange={(e) => setServiceDescription(e.target.value)} disabled={!!selectedServiceId} />
+              </div>
+              <div>
+                <Label htmlFor="serviceFee">Biaya Jasa Service</Label>
+                <Input id="serviceFee" type="number" placeholder="0" value={serviceFee || ''} onChange={(e) => setServiceFee(Number(e.target.value))} />
+              </div>
+              <div>
+                <Label htmlFor="status">Status Service</Label>
+                <Select value={status} onValueChange={(value: ServiceStatus) => setStatus(value)}>
+                  <SelectTrigger id="status"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Proses">Proses</SelectItem>
+                    <SelectItem value="Selesai">Selesai</SelectItem>
+                    <SelectItem value="Sudah Diambil">Sudah Diambil</SelectItem>
+                    <SelectItem value="Gagal/Cancel">Gagal/Cancel</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Metode Pembayaran</Label>
+                <RadioGroup value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)} className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="tunai" id="tunai" /><Label htmlFor="tunai">Tunai</Label></div>
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="cicilan" id="cicilan" /><Label htmlFor="cicilan">Cicilan</Label></div>
+                </RadioGroup>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Ringkasan Biaya</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex justify-between"><span>Biaya Service:</span> <span className="font-medium">{formatCurrency(serviceFee)}</span></div>
+              <div className="flex justify-between"><span>Biaya Jasa:</span> <span className="font-medium">{formatCurrency(serviceFee)}</span></div>
               <div className="flex justify-between"><span>Biaya Sparepart:</span> <span className="font-medium">{formatCurrency(summary.sparepartCost)}</span></div>
               <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2"><span>Total:</span> <span>{formatCurrency(summary.total)}</span></div>
               <div className="flex justify-between text-sm text-muted-foreground"><span>Modal Sparepart:</span> <span>{formatCurrency(summary.sparepartModal)}</span></div>
