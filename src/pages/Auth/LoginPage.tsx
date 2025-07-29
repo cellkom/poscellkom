@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Wrench, ShoppingCart, ShieldCheck, LifeBuoy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import logoSrc from '/favicon.ico';
+import logoSrc from '/logo.png';
 
 const LoginPage = () => {
   const { session, loading } = useAuth();
@@ -32,8 +32,7 @@ const LoginPage = () => {
         
         {/* Header */}
         <div className="text-center space-y-4">
-          <img src={logoSrc} alt="CELLKOM Logo" className="h-20 w-20 mx-auto" />
-          <h1 className="text-3xl font-bold text-gray-800">CELLKOM</h1>
+          <img src={logoSrc} alt="CELLKOM Logo" className="h-20 w-auto mx-auto" />
           <p className="text-gray-500">Pusat Service HP dan Komputer</p>
           <div className="flex justify-center gap-2">
             <Badge variant="secondary"><Wrench className="h-3 w-3 mr-1" /> Service</Badge>

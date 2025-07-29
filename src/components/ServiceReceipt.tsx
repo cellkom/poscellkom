@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import Barcode from '@/components/Barcode';
+import logoSrc from '/logo.png';
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
@@ -35,7 +36,7 @@ const ServiceReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }
   return (
     <div ref={ref} id="receipt-print-area" className="bg-white text-black p-4 font-mono max-w-sm mx-auto border rounded-lg">
       <div className="text-center">
-        <h2 className="text-xl font-bold">CELLKOM</h2>
+        <img src={logoSrc} alt="CELLKOM Logo" className="h-12 w-auto mx-auto mb-2" />
         <p className="text-xs">Jl. Merdeka No. 123, Kota Anda</p>
         <p className="text-xs">Telp: 0812-3456-7890</p>
         <h3 className="font-bold text-lg mt-2 border-y border-dashed border-black py-1">NOTA SERVICE</h3>

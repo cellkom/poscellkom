@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import logoSrc from '/logo.png';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -88,7 +89,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-64 bg-primary text-primary-foreground p-4">
-        <div className="text-2xl font-bold mb-6">CELLKOM</div>
+        <div className="mb-6">
+          <img src={logoSrc} alt="CELLKOM Logo" className="h-10 w-auto" />
+        </div>
         <nav className="flex flex-col space-y-1">
           {navItems.map((item) => {
             if (item.name === "Users" && profile?.role !== 'Admin') return null;
@@ -133,7 +136,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <header className="bg-primary text-primary-foreground p-4 shadow-md flex items-center justify-between">
         <div className="flex items-center gap-4">
           {isMobile && renderMobileNav()}
-          <Link to="/dashboard" className="text-2xl font-bold">CELLKOM</Link>
+          <Link to="/dashboard">
+            <img src={logoSrc} alt="CELLKOM Logo" className="h-8 w-auto" />
+          </Link>
         </div>
         {!isMobile && renderNavLinks()}
         <DropdownMenu>
