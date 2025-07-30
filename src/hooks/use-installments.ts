@@ -7,7 +7,7 @@ export interface Installment {
   id: string; // This is the installment's UUID from the DB
   created_at: string;
   transaction_id_display: string;
-  transaction_type: 'Penjualan' | 'Servis';
+  transaction_type: 'Penjualan' | 'Servis' | 'Lainnya';
   customer_id: string;
   customer_name_cache: string; // Fetched via join or stored on creation
   total_amount: number;
@@ -135,5 +135,44 @@ export const useInstallments = () => {
     return data || [];
   };
 
-  return { installments, loading, addPayment, getPaymentHistory };
+  const addManualInstallment = async (
+    customerId: string,
+    customerName: string,
+    totalAmount: number,
+    details: string,
+    kasirId: string
+  ) => {
+    if (!customerId || totalAmount <= 0 || !kasirId) {
+      showError("Data tidak lengkap. Pastikan pelanggan dan jumlah cicilan valid.");
+      return false;
+    }
+
+    const transaction_id_display = `CICIL-${Date.now()}`;
+
+    const { error } = await supabase
+      .from('installments')
+      .insert({
+        transaction_id_display,
+        transaction_type: 'Lainnya',
+        customer_id: customerId,
+        customer_name_cache: customerName,
+        total_amount: totalAmount,
+        paid_amount: 0,
+        remaining_amount: totalAmount,
+        status: 'Belum Lunas',
+        details: details,
+        kasir_id: kasirId,
+      });
+
+    if (error) {
+      showError(`Gagal menambah cicilan: ${error.message}`);
+      return false;
+    }
+
+    showSuccess("Cicilan baru berhasil ditambahkan.");
+    fetchInstallments(); // Refresh data
+    return true;
+  };
+
+  return { installments, loading, addPayment, getPaymentHistory, addManualInstallment };
 };

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,7 +12,7 @@ import { useInstallments, Installment, InstallmentPayment } from "@/hooks/use-in
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { showSuccess, showError } from "@/utils/toast";
-import { DollarSign, History, Loader2 } from "lucide-react";
+import { DollarSign, History, Loader2, PlusCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
@@ -67,9 +68,17 @@ const InstallmentPage = () => {
   return (
     <DashboardLayout>
       <Card>
-        <CardHeader>
-          <CardTitle>Manajemen Cicilan (Piutang)</CardTitle>
-          <p className="text-muted-foreground">Kelola tagihan pelanggan yang belum lunas.</p>
+        <CardHeader className="flex flex-row justify-between items-center">
+          <div>
+            <CardTitle>Manajemen Cicilan (Piutang)</CardTitle>
+            <p className="text-muted-foreground">Kelola tagihan pelanggan yang belum lunas.</p>
+          </div>
+          <Button asChild>
+            <Link to="/dashboard/transaction/add-installment">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Tambah Cicilan
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent>
           {loading ? (

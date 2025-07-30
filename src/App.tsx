@@ -10,6 +10,7 @@ import StockPage from './pages/Dashboard/StockPage';
 import SalesPage from './pages/Dashboard/Transaction/SalesPage';
 import ServicePage from './pages/Dashboard/Transaction/ServicePage';
 import InstallmentPage from './pages/Dashboard/Transaction/InstallmentPage';
+import AddInstallmentPage from './pages/Dashboard/Transaction/AddInstallmentPage';
 import CustomerPage from './pages/Dashboard/Data/CustomerPage';
 import SupplierPage from './pages/Dashboard/Data/SupplierPage';
 import ReportsPage from './pages/Dashboard/ReportsPage';
@@ -37,6 +38,7 @@ function App() {
             <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
             <Route path="/dashboard/transaction/service" element={<ServicePage />} />
             <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
+            <Route path="/dashboard/transaction/add-installment" element={<AddInstallmentPage />} />
             <Route path="/dashboard/data/customers" element={<CustomerPage />} />
             <Route path="/dashboard/data/suppliers" element={<SupplierPage />} />
             <Route path="/dashboard/reports" element={<ReportsPage />} />
