@@ -25,8 +25,9 @@ const ServiceMasukReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ entry },
     <div ref={ref} id="receipt-print-area" className="bg-white text-black p-4 font-mono max-w-sm mx-auto border rounded-lg">
       <div className="text-center">
         <img src={logoSrc} alt="CELLKOM Logo" className="h-16 w-auto mx-auto mb-2" />
-        <p className="text-xs">Jl. Merdeka No. 123, Kota Anda</p>
-        <p className="text-xs">Telp: 0812-3456-7890</p>
+        <p className="text-xs font-semibold">Pusat Service Hp dan Komputer</p>
+        <p className="text-xs">Jorong Kampung Baru, Muaro Paiti, Kec. Kapur IX</p>
+        <p className="text-xs">Telp: 082285959441</p>
         <h3 className="font-bold text-lg mt-2 border-y border-dashed border-black py-1">TANDA TERIMA SERVICE</h3>
       </div>
 
