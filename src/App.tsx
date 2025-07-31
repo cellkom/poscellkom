@@ -6,6 +6,7 @@ import { Toaster } from './components/ui/sonner';
 import { ThemeProvider } from './components/ThemeProvider';
 
 import LoginPage from './pages/Auth/LoginPage';
+import PublicPage from './pages/PublicPage'; // Import halaman publik baru
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import StockPage from './pages/Dashboard/StockPage';
 import SalesPage from './pages/Dashboard/Transaction/SalesPage';
@@ -31,6 +32,7 @@ function App() {
           <Toaster richColors position="top-center" />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/public" element={<PublicPage />} /> {/* Rute publik baru */}
             
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
