@@ -1,193 +1,140 @@
-import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, LayoutDashboard, Package, ShoppingCart, Database, FileText, Users, UserCircle, Receipt, Wrench, CreditCard, ChevronDown, ClipboardPlus, Truck } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
-import logoSrc from '/logo.png';
-import type { ReactNode, ForwardRefExoticComponent, RefAttributes } from "react";
-import type { LucideProps } from "lucide-react";
-import { ThemeToggle } from "../ThemeToggle";
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import {
+  Home,
+  Package,
+  Users,
+  Settings,
+  LogOut,
+  UserCircle,
+  ChevronDown,
+  Menu,
+  DollarSign,
+  Wrench,
+  ArrowLeftRight,
+  FileText,
+  Warehouse,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useSession } from '@/contexts/SessionContext';
+import { supabase } from '@/integrations/supabase';
+import { useProfile } from '@/hooks/useProfile';
+import { useAppSettings } from '@/hooks/useAppSettings';
+import NavLink from './NavLink';
 
-interface DashboardLayoutProps {
-  children: ReactNode;
-}
-
-type IconType = ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
-
-interface NavSubItem {
-    name: string;
-    icon: IconType;
-    path: string;
-    adminOnly?: boolean;
-}
-
-interface NavItem {
-    name: string;
-    icon: IconType;
-    path: string;
-    adminOnly?: boolean;
-    subItems?: NavSubItem[];
-}
-
-const navItems: NavItem[] = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { name: "Stok", icon: Package, path: "/dashboard/stock" },
-  { name: "Service Masuk", icon: ClipboardPlus, path: "/dashboard/service-masuk" },
-  { 
-    name: "Transaksi", 
-    icon: Receipt,
-    path: "/dashboard/transaction", // Base path for active state
-    subItems: [
-        { name: "Penjualan", icon: ShoppingCart, path: "/dashboard/transaction/sales" },
-        { name: "Jasa Service", icon: Wrench, path: "/dashboard/transaction/service" },
-        { name: "Kelola Cicilan", icon: CreditCard, path: "/dashboard/transaction/installments" },
-    ]
-  },
-  { 
-    name: "Data", 
-    icon: Database, 
-    path: "/dashboard/data",
-    subItems: [
-        { name: "Pelanggan", icon: Users, path: "/dashboard/data/customers" },
-        { name: "Supplier", icon: Truck, path: "/dashboard/data/suppliers" },
-        { name: "Users", icon: Users, path: "/dashboard/users", adminOnly: true },
-    ]
-  },
-  { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
+const navItems = [
+  { href: '/', icon: Home, label: 'Dashboard' },
+  { href: '/products', icon: Package, label: 'Produk' },
+  { href: '/customers', icon: Users, label: 'Pelanggan' },
+  { href: '/suppliers', icon: Warehouse, label: 'Supplier' },
+  { href: '/sales', icon: DollarSign, label: 'Penjualan' },
+  { href: '/services', icon: Wrench, label: 'Servis' },
+  { href: '/installments', icon: FileText, label: 'Piutang' },
+  { href: '/transactions', icon: ArrowLeftRight, label: 'Transaksi' },
 ];
 
-const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const isMobile = useIsMobile();
+const adminNavItems = [{ href: '/settings', icon: Settings, label: 'Pengaturan' }];
+
+export function DashboardLayout() {
+  const { session, loading: sessionLoading } = useSession();
+  const { profile, loading: profileLoading } = useProfile(session?.user?.id);
+  const { settings, loading: settingsLoading } = useAppSettings();
   const location = useLocation();
-  const { profile, signOut } = useAuth();
 
-  const renderNavLinks = (isMobileNav = false) => {
-    const nav = navItems.map((item) => {
-      if (item.adminOnly && profile?.role !== 'Admin') return null;
-
-      if (item.subItems) {
-        const visibleSubItems = item.subItems.filter(sub => !sub.adminOnly || profile?.role === 'Admin');
-        if (visibleSubItems.length === 0) return null;
-
-        return isMobileNav ? (
-          <Collapsible key={item.name}>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between hover:bg-background/20">
-                <div className="flex items-center gap-2">
-                  <item.icon className="h-4 w-4" />
-                  {item.name}
-                </div>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pl-6 space-y-1 mt-1">
-              {visibleSubItems.map(subItem => (
-                <Button key={subItem.name} variant="ghost" asChild className="w-full justify-start hover:bg-background/20">
-                  <Link to={subItem.path} className="flex items-center gap-2">
-                    <subItem.icon className="h-4 w-4" />
-                    {subItem.name}
-                  </Link>
-                </Button>
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
-        ) : (
-          <DropdownMenu key={item.name}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className={cn("hover:bg-primary-foreground/10", location.pathname.startsWith(item.path) && "bg-primary-foreground/10")}>
-                <item.icon className="h-4 w-4 mr-2" />
-                {item.name}
-                <ChevronDown className="h-4 w-4 ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {visibleSubItems.map(subItem => (
-                <DropdownMenuItem key={subItem.name} asChild>
-                  <Link to={subItem.path} className="flex items-center gap-2 cursor-pointer">
-                    <subItem.icon className="h-4 w-4" />
-                    {subItem.name}
-                  </Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      }
-
-      return (
-        <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname === item.path && "bg-primary-foreground/10", isMobileNav && "justify-start")}>
-          <Link to={item.path!} className="flex items-center gap-2">
-            <item.icon className="h-4 w-4" />
-            {item.name}
-          </Link>
-        </Button>
-      );
-    });
-    return nav;
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
   };
 
+  const isLoading = sessionLoading || profileLoading || settingsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  const allNavItems = profile?.role === 'Admin' ? [...navItems, ...adminNavItems] : navItems;
+
   return (
-    <div className="min-h-screen w-full">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
-            {isMobile && (
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu className="h-6 w-6" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-64 p-4">
-                  <div className="mb-6">
-                    <img src={logoSrc} alt="CELLKOM Logo" className="h-12 w-auto" />
-                  </div>
-                  <nav className="flex flex-col space-y-1">{renderNavLinks(true)}</nav>
-                </SheetContent>
-              </Sheet>
-            )}
-            <Link to="/dashboard">
-              <img src={logoSrc} alt="CELLKOM Logo" className="h-10 w-auto" />
+    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+      <div className="hidden border-r bg-muted/40 md:block">
+        <div className="flex h-full max-h-screen flex-col gap-2">
+          <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+            <Link to="/" className="flex items-center gap-2 font-semibold">
+              <Package className="h-6 w-6" />
+              <span className="">{settings?.nama_toko || 'Toko Anda'}</span>
             </Link>
           </div>
-          {!isMobile && <nav className="hidden md:flex items-center space-x-1">{renderNavLinks()}</nav>}
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <UserCircle className="h-6 w-6" />
-                  <span className="hidden md:inline">{profile?.full_name || 'User'}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{profile?.role}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut} className="cursor-pointer">
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="flex-1">
+            <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+              {allNavItems.map((item) => (
+                <NavLink key={item.href} to={item.href} icon={item.icon} label={item.label} />
+              ))}
+            </nav>
           </div>
         </div>
-      </header>
-      <main className="flex-grow container mx-auto p-4 md:p-6">
-        {children}
-      </main>
+      </div>
+      <div className="flex flex-col">
+        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle navigation menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="flex flex-col">
+              <nav className="grid gap-2 text-lg font-medium">
+                <Link to="/" className="flex items-center gap-2 text-lg font-semibold mb-4">
+                  <Package className="h-6 w-6" />
+                  <span className="">{settings?.nama_toko || 'Toko Anda'}</span>
+                </Link>
+                {allNavItems.map((item) => (
+                  <NavLink key={item.href} to={item.href} icon={item.icon} label={item.label} isMobile />
+                ))}
+              </nav>
+            </SheetContent>
+          </Sheet>
+          <div className="w-full flex-1">
+            <h1 className="text-lg font-semibold">
+              {allNavItems.find((item) => item.href === location.pathname)?.label || 'Dashboard'}
+            </h1>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" className="rounded-full flex items-center gap-2 px-3">
+                <UserCircle className="h-6 w-6" />
+                <span className="hidden md:inline">{session?.user?.email || 'User'}</span>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <p>Signed in as</p>
+                <p className="font-normal text-sm text-muted-foreground truncate">{session?.user?.email}</p>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </header>
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
-};
-
-export default DashboardLayout;
+}
