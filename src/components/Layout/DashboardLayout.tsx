@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/providers/AuthProvider';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Bell,
   CircleUser,
@@ -14,8 +14,7 @@ import {
   CreditCard,
   Settings as SettingsIcon,
 } from 'lucide-react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Badge } from '../ui/badge';
+import { Link, NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { Button } from '../ui/button';
 import {
   Card,
@@ -35,7 +34,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const signOut = async () => {
@@ -44,16 +43,16 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   };
 
   const navItems = [
-    { to: '/', icon: Home, label: 'Dashboard', adminOnly: false },
-    { to: '/transaksi', icon: ShoppingCart, label: 'Transaksi', adminOnly: false },
-    { to: '/produk', icon: Package, label: 'Produk', adminOnly: false },
-    { to: '/pelanggan', icon: Users, label: 'Pelanggan', adminOnly: false },
-    { to: '/supplier', icon: Users, label: 'Supplier', adminOnly: false },
-    { to: '/service', icon: Wrench, label: 'Service', adminOnly: false },
-    { to: '/hutang', icon: CreditCard, label: 'Hutang', adminOnly: false },
-    { to: '/laporan', icon: LineChart, label: 'Laporan', adminOnly: false },
-    { to: '/manajemen-user', icon: Users, label: 'Manajemen User', adminOnly: true },
-    { to: '/settings', icon: SettingsIcon, label: 'Settings', adminOnly: true },
+    { to: '/dashboard', icon: Home, label: 'Dashboard', adminOnly: false },
+    { to: '/dashboard/transaction', icon: ShoppingCart, label: 'Transaksi', adminOnly: false },
+    { to: '/dashboard/stock', icon: Package, label: 'Produk', adminOnly: false },
+    { to: '/dashboard/customers', icon: Users, label: 'Pelanggan', adminOnly: false },
+    { to: '/dashboard/suppliers', icon: Users, label: 'Supplier', adminOnly: false },
+    { to: '/dashboard/service', icon: Wrench, label: 'Service', adminOnly: false },
+    { to: '/dashboard/transaction/installments', icon: CreditCard, label: 'Cicilan', adminOnly: false },
+    { to: '/dashboard/reports', icon: LineChart, label: 'Laporan', adminOnly: false },
+    { to: '/dashboard/users', icon: Users, label: 'Manajemen User', adminOnly: true },
+    { to: '/dashboard/settings', icon: SettingsIcon, label: 'Settings', adminOnly: true },
   ];
 
   const filteredNavItems = navItems.filter(item => !item.adminOnly || profile?.role === 'Admin');
@@ -70,7 +69,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-            <Link to="/" className="flex items-center gap-2 font-semibold">
+            <Link to="/dashboard" className="flex items-center gap-2 font-semibold">
               <Package2 className="h-6 w-6" />
               <span className="">CK Cell</span>
             </Link>
@@ -85,7 +84,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  end
+                  end={item.to === '/dashboard'}
                   className={({ isActive }) => isActive ? activeLinkClass : inactiveLinkClass}
                 >
                   <item.icon className="h-4 w-4" />
@@ -127,17 +126,17 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <SheetContent side="left" className="flex flex-col">
               <nav className="grid gap-2 text-lg font-medium">
                 <Link
-                  to="#"
-                  className="flex items-center gap-2 text-lg font-semibold"
+                  to="/dashboard"
+                  className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
                   <Package2 className="h-6 w-6" />
-                  <span className="sr-only">CK Cell</span>
+                  <span className="">CK Cell</span>
                 </Link>
                 {filteredNavItems.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
-                    end
+                    end={item.to === '/dashboard'}
                     className={({ isActive }) => isActive ? 'flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground' : 'mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground'}
                   >
                     <item.icon className="h-5 w-5" />
@@ -177,7 +176,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               <DropdownMenuSeparator />
               <DropdownMenuItem>Profile</DropdownMenuItem>
               {profile?.role === 'Admin' && (
-                <Link to="/settings">
+                <Link to="/dashboard/settings">
                   <DropdownMenuItem className="cursor-pointer">
                     Settings
                   </DropdownMenuItem>
