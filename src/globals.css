@@ -13,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 262.1 83.3% 57.8%; /* Slightly more vibrant purple */
+    --primary: 0 84.2% 60.2%; /* Red to match logo */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -30,7 +30,7 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 262.1 83.3% 57.8%;
+    --ring: 0 84.2% 60.2%; /* Red to match logo */
 
     --radius: 0.5rem;
 
@@ -54,7 +54,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 262.1 83.3% 57.8%;
+    --primary: 0 84.2% 60.2%; /* Red to match logo */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -71,7 +71,7 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 262.1 83.3% 57.8%;
+    --ring: 0 84.2% 60.2%; /* Red to match logo */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -91,11 +91,11 @@
   body {
     @apply bg-background text-foreground;
     background-color: hsl(var(--background));
-    background-image: radial-gradient(ellipse 80% 80% at 50% -20%,rgba(120,119,198,0.3),hsla(0,0%,100%,0));
+    background-image: radial-gradient(ellipse 80% 80% at 50% -20%,rgba(225, 120, 120, 0.15),hsla(0,0%,100%,0));
   }
 
   .dark body {
-    background-image: radial-gradient(ellipse 80% 80% at 50% -20%,rgba(120,119,198,0.3),rgba(255,255,255,0));
+    background-image: radial-gradient(ellipse 80% 80% at 50% -20%,rgba(225, 120, 120, 0.15),rgba(255,255,255,0));
   }
 }
 

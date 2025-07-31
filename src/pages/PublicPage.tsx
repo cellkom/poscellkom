@@ -68,7 +68,7 @@ const PublicPage = () => {
         {/* Hero Section */}
         <section className="py-20 md:py-32 text-center">
           <div className="container px-4 md:px-6">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-500 to-pink-500">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-primary to-orange-400">
               Solusi Total untuk Gadget & Komputer Anda
             </h1>
             <p className="max-w-3xl mx-auto text-lg text-muted-foreground mb-8">
