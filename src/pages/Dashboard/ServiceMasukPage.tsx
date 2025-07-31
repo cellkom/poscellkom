@@ -10,7 +10,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarIcon, Printer, Download, FilePlus2, PlusCircle, Eye, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -216,16 +215,8 @@ const ServiceMasukPage = () => {
       .catch((err) => console.error('Gagal membuat gambar struk:', err));
   }, [receiptRef, lastEntry]);
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'Selesai': return 'default';
-      case 'Sudah Diambil': return 'default';
-      case 'Proses': return 'secondary';
-      case 'Gagal/Cancel': return 'destructive';
-      case 'Pending':
-      default:
-        return 'outline';
-    }
+  const handleStatusChange = async (entryId: string, newStatus: ServiceEntryWithCustomer['status']) => {
+    await updateServiceEntry(entryId, { status: newStatus });
   };
 
   return (
@@ -243,7 +234,7 @@ const ServiceMasukPage = () => {
                 <TableHead>Tanggal</TableHead>
                 <TableHead>Pelanggan</TableHead>
                 <TableHead>Perangkat</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Info Service</TableHead>
                 <TableHead className="text-center">Aksi</TableHead>
               </TableRow>
             </TableHeader>
@@ -257,7 +248,23 @@ const ServiceMasukPage = () => {
                     <TableCell>{format(new Date(entry.date), "dd/MM/yyyy")}</TableCell>
                     <TableCell>{entry.customerName}</TableCell>
                     <TableCell>{entry.device_type}</TableCell>
-                    <TableCell><Badge variant={getStatusBadgeVariant(entry.status)}>{entry.status}</Badge></TableCell>
+                    <TableCell>
+                      <Select
+                        value={entry.status}
+                        onValueChange={(value: 'Pending' | 'Proses' | 'Selesai' | 'Gagal/Cancel' | 'Sudah Diambil') => handleStatusChange(entry.id, value)}
+                      >
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Ubah Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Pending">Pending</SelectItem>
+                          <SelectItem value="Proses">Service Masih Dalam Proses</SelectItem>
+                          <SelectItem value="Selesai">Service Selesai</SelectItem>
+                          <SelectItem value="Gagal/Cancel">Service Gagal/Cancel</SelectItem>
+                          <SelectItem value="Sudah Diambil">Sudah Diambil</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center gap-2">
                         <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleViewReceipt(entry)}>
