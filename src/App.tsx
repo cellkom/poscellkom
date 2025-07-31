@@ -1,64 +1,56 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import AdminRoute from './components/AdminRoute';
-import { Toaster } from './components/ui/sonner';
-import { ThemeProvider } from './components/ThemeProvider';
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import AuthProvider from '@/providers/AuthProvider';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import DashboardLayout from './components/Layout/DashboardLayout';
+import Index from './pages/Index';
+import Laporan from './pages/Laporan';
+import Login from './pages/Login';
+import ManajemenUser from './pages/ManajemenUser';
+import Pelanggan from './pages/Pelanggan';
+import Produk from './pages/Produk';
+import Service from './pages/Service';
+import Supplier from './pages/Supplier';
+import Transaksi from './pages/Transaksi';
+import Hutang from './pages/Hutang';
+import Settings from './pages/Settings';
 
-import LoginPage from './pages/Auth/LoginPage';
-import DashboardPage from './pages/Dashboard/DashboardPage';
-import StockPage from './pages/Dashboard/StockPage';
-import SalesPage from './pages/Dashboard/Transaction/SalesPage';
-import ServicePage from './pages/Dashboard/Transaction/ServicePage';
-import InstallmentPage from './pages/Dashboard/Transaction/InstallmentPage';
-import AddInstallmentPage from './pages/Dashboard/Transaction/AddInstallmentPage';
-import CustomerPage from './pages/Dashboard/Data/CustomerPage';
-import SupplierPage from './pages/Dashboard/Data/SupplierPage';
-import ReportsPage from './pages/Dashboard/ReportsPage';
-import SalesReportPage from './pages/Dashboard/Reports/SalesReportPage';
-import ServiceReportPage from './pages/Dashboard/Reports/ServiceReportPage';
-import TodayReportPage from './pages/Dashboard/Reports/TodayReportPage';
-import UsersPage from './pages/Dashboard/UsersPage';
-import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
-import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
-import NotFound from './pages/NotFound';
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <BrowserRouter>
-        <AuthProvider>
-          <Toaster richColors position="top-center" />
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/dashboard/stock" element={<StockPage />} />
-              <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
-              <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
-              <Route path="/dashboard/transaction/service" element={<ServicePage />} />
-              <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
-              <Route path="/dashboard/transaction/add-installment" element={<AddInstallmentPage />} />
-              <Route path="/dashboard/data/customers" element={<CustomerPage />} />
-              <Route path="/dashboard/data/suppliers" element={<SupplierPage />} />
-              <Route path="/dashboard/reports" element={<ReportsPage />} />
-              <Route path="/dashboard/reports/sales" element={<SalesReportPage />} />
-              <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
-              <Route path="/dashboard/reports/today" element={<TodayReportPage />} />
-              <Route path="/dashboard/services-in-progress" element={<ServicesInProgressPage />} />
-              
-              <Route element={<AdminRoute />}>
-                <Route path="/dashboard/users" element={<UsersPage />} />
-              </Route>
-            </Route>
-
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+    <Router>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/*"
+                element={
+                  <DashboardLayout>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/transaksi" element={<Transaksi />} />
+                      <Route path="/produk" element={<Produk />} />
+                      <Route path="/pelanggan" element={<Pelanggan />} />
+                      <Route path="/supplier" element={<Supplier />} />
+                      <Route path="/service" element={<Service />} />
+                      <Route path="/laporan" element={<Laporan />} />
+                      <Route path="/manajemen-user" element={<ManajemenUser />} />
+                      <Route path="/hutang" element={<Hutang />} />
+                      <Route path="/settings" element={<Settings />} />
+                    </Routes>
+                  </DashboardLayout>
+                }
+              />
+            </Routes>
+          </AuthProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </Router>
   );
 }
 
