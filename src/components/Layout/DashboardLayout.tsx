@@ -147,7 +147,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                     <Link to="/dashboard" className="flex items-center gap-3">
                       <img src={logoSrc} alt="CELLKOM Logo" className="h-12 w-auto" />
                       <div>
-                        <h1 className="text-lg font-bold text-primary">CELLKOM</h1>
+                        <h1 className="text-lg font-bold text-primary font-poppins">CELLKOM</h1>
                         <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
                       </div>
                     </Link>
@@ -159,7 +159,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <Link to="/dashboard" className="flex items-center gap-3">
               <img src={logoSrc} alt="CELLKOM Logo" className="h-10 w-auto" />
               <div className="hidden md:block">
-                <h1 className="text-lg font-bold text-primary">CELLKOM</h1>
+                <h1 className="text-lg font-bold text-primary font-poppins">CELLKOM</h1>
                 <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
               </div>
             </Link>
