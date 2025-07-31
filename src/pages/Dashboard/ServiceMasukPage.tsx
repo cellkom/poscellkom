@@ -11,14 +11,14 @@ import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarIcon, Printer, Download, FilePlus2, PlusCircle, Eye, Edit, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Printer, Download, FilePlus2, PlusCircle, Eye, Edit, Trash2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { showSuccess, showError } from "@/utils/toast";
 import { toPng } from 'html-to-image';
 import ServiceMasukReceipt from "@/components/ServiceMasukReceipt";
-import { useServiceEntries, ServiceEntryWithCustomer } from "@/hooks/use-service-entries";
+import { useServiceEntries, ServiceEntry, ServiceEntryWithCustomer } from "@/hooks/use-service-entries";
 import { useCustomers } from "@/hooks/use-customers";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -67,6 +67,7 @@ const ServiceMasukPage = () => {
   const receiptRef = useRef<HTMLDivElement>(null);
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
   const [newCustomer, setNewCustomer] = useState(newCustomerInitialState);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -228,6 +229,12 @@ const ServiceMasukPage = () => {
     }
   };
 
+  const handleStatusChange = async (entryId: string, newStatus: ServiceEntry['status']) => {
+    setUpdatingStatusId(entryId);
+    await updateServiceEntry(entryId, { status: newStatus });
+    setUpdatingStatusId(null);
+  };
+
   return (
     <DashboardLayout>
       <Card>
@@ -243,13 +250,14 @@ const ServiceMasukPage = () => {
                 <TableHead>Tanggal</TableHead>
                 <TableHead>Pelanggan</TableHead>
                 <TableHead>Perangkat</TableHead>
+                <TableHead>Info Service</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-center">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center h-24">Memuat data...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center h-24">Memuat data...</TableCell></TableRow>
               ) : serviceEntries.length > 0 ? (
                 serviceEntries.map((entry) => (
                   <TableRow key={entry.id}>
@@ -257,6 +265,27 @@ const ServiceMasukPage = () => {
                     <TableCell>{format(new Date(entry.date), "dd/MM/yyyy")}</TableCell>
                     <TableCell>{entry.customerName}</TableCell>
                     <TableCell>{entry.device_type}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Select
+                          value={entry.status}
+                          onValueChange={(newStatus: ServiceEntry['status']) => handleStatusChange(entry.id, newStatus)}
+                          disabled={updatingStatusId === entry.id}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Ubah Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Proses">Service Dalam Proses</SelectItem>
+                            <SelectItem value="Selesai">Service Selesai</SelectItem>
+                            <SelectItem value="Sudah Diambil">Sudah Diambil</SelectItem>
+                            <SelectItem value="Gagal/Cancel">Gagal/Cancel</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {updatingStatusId === entry.id && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+                      </div>
+                    </TableCell>
                     <TableCell><Badge variant={getStatusBadgeVariant(entry.status)}>{entry.status}</Badge></TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center gap-2">
@@ -278,7 +307,7 @@ const ServiceMasukPage = () => {
                   </TableRow>
                 ))
               ) : (
-                <TableRow><TableCell colSpan={6} className="text-center h-24">Belum ada data service masuk.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center h-24">Belum ada data service masuk.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
