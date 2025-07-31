@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -9,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { ShoppingCart, Tag, Trash2, Minus, Plus, UserPlus, Banknote, Printer, Download, FilePlus2 } from "lucide-react";
+import { ShoppingCart, Tag, Trash2, Minus, Plus, UserPlus, Banknote, Printer, Download, FilePlus2, PlusCircle } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import { useStock, Product } from "@/hooks/use-stock";
 import { useCustomers } from "@/hooks/use-customers";
@@ -274,7 +275,17 @@ const SalesPage = () => {
                   <Command>
                     <CommandInput placeholder="Cari nama, kode, atau barcode..." />
                     <CommandList>
-                      <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
+                      <CommandEmpty>
+                        <div className="text-center py-4">
+                          <p className="text-sm text-muted-foreground">Barang tidak ditemukan.</p>
+                          <Button variant="link" asChild className="mt-2">
+                            <Link to="/dashboard/stock">
+                              <PlusCircle className="mr-2 h-4 w-4" />
+                              Tambah Barang Baru di Halaman Stok
+                            </Link>
+                          </Button>
+                        </div>
+                      </CommandEmpty>
                       <CommandGroup>
                         {products.filter(item => item.stock > 0).map(item => (
                           <CommandItem key={item.id} value={`${item.name} ${item.id} ${item.barcode}`} onSelect={() => handleAddToCart(item)} className="flex justify-between items-center cursor-pointer">
