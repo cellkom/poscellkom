@@ -54,21 +54,6 @@ const initialState: ServiceEntryFormData = {
 
 const newCustomerInitialState = { name: '', phone: '', address: '' };
 
-const getStatusBadgeVariant = (status: ServiceEntryWithCustomer['status']): "default" | "secondary" | "destructive" | "outline" => {
-    switch (status) {
-      case 'Selesai':
-      case 'Sudah Diambil':
-        return 'default';
-      case 'Proses':
-        return 'secondary';
-      case 'Gagal/Cancel':
-        return 'destructive';
-      case 'Pending':
-      default:
-        return 'outline';
-    }
-  };
-
 const ServiceMasukPage = () => {
   const { customers } = useCustomers();
   const { serviceEntries, loading, addServiceEntry, updateServiceEntry, deleteServiceEntry } = useServiceEntries();
@@ -231,8 +216,16 @@ const ServiceMasukPage = () => {
       .catch((err) => console.error('Gagal membuat gambar struk:', err));
   }, [receiptRef, lastEntry]);
 
-  const handleStatusChange = async (entryId: string, newStatus: ServiceEntryWithCustomer['status']) => {
-    await updateServiceEntry(entryId, { status: newStatus });
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'Selesai': return 'default';
+      case 'Sudah Diambil': return 'default';
+      case 'Proses': return 'secondary';
+      case 'Gagal/Cancel': return 'destructive';
+      case 'Pending':
+      default:
+        return 'outline';
+    }
   };
 
   return (
@@ -264,40 +257,7 @@ const ServiceMasukPage = () => {
                     <TableCell>{format(new Date(entry.date), "dd/MM/yyyy")}</TableCell>
                     <TableCell>{entry.customerName}</TableCell>
                     <TableCell>{entry.device_type}</TableCell>
-                    <TableCell>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Badge variant={getStatusBadgeVariant(entry.status)} className="cursor-pointer hover:opacity-80 transition-opacity">
-                            {entry.status}
-                          </Badge>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-56">
-                          <div className="grid gap-4">
-                            <div className="space-y-2">
-                              <h4 className="font-medium leading-none">Ubah Status</h4>
-                              <p className="text-sm text-muted-foreground">
-                                Pilih status baru untuk service ini.
-                              </p>
-                            </div>
-                            <Select
-                              value={entry.status}
-                              onValueChange={(value: 'Pending' | 'Proses' | 'Selesai' | 'Gagal/Cancel' | 'Sudah Diambil') => handleStatusChange(entry.id, value)}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Pilih Status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Pending">Pending</SelectItem>
-                                <SelectItem value="Proses">Service Masih Dalam Proses</SelectItem>
-                                <SelectItem value="Selesai">Service Selesai</SelectItem>
-                                <SelectItem value="Gagal/Cancel">Service Gagal/Cancel</SelectItem>
-                                <SelectItem value="Sudah Diambil">Sudah Diambil</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    </TableCell>
+                    <TableCell><Badge variant={getStatusBadgeVariant(entry.status)}>{entry.status}</Badge></TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center gap-2">
                         <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleViewReceipt(entry)}>
