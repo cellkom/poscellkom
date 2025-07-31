@@ -46,7 +46,7 @@ export const AddCustomerDialog = ({ open, onOpenChange, onCustomerAdded }: AddCu
       return;
     }
     setIsSubmitting(true);
-    const newCustomer = await addCustomer(name, phone, address);
+    const newCustomer = await addCustomer({ name, phone: phone || null, address: address || null });
     setIsSubmitting(false);
     if (newCustomer) {
       onCustomerAdded(newCustomer);

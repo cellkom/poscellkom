@@ -69,6 +69,7 @@ export const useCustomers = () => {
             console.error(error);
             return null;
         }
+        showSuccess("Pelanggan baru berhasil ditambahkan!");
         return data;
     };
 

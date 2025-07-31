@@ -119,14 +119,21 @@ const SalesPage = () => {
 
   const handleCustomerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCustomer.name || !newCustomer.phone) {
-      showError("Nama dan nomor telepon wajib diisi.");
+    if (!newCustomer.name) {
+      showError("Nama pelanggan wajib diisi.");
       return;
     }
-    await addCustomer(newCustomer);
-    showSuccess("Customer baru berhasil ditambahkan!");
-    setNewCustomer({ name: '', phone: '', address: '' });
-    setIsCustomerDialogOpen(false);
+    const added = await addCustomer({
+      name: newCustomer.name,
+      phone: newCustomer.phone || null,
+      address: newCustomer.address || null,
+    });
+
+    if (added) {
+      setSelectedCustomerId(added.id);
+      setNewCustomer({ name: '', phone: '', address: '' });
+      setIsCustomerDialogOpen(false);
+    }
   };
 
   const handleProcessTransaction = async () => {
