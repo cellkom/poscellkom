@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import { Toaster } from './components/ui/sonner';
+import { ThemeProvider } from './components/ThemeProvider';
 
 import LoginPage from './pages/Auth/LoginPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
@@ -24,38 +25,40 @@ import NotFound from './pages/NotFound';
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Toaster richColors position="top-center" />
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          
-          <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/dashboard/stock" element={<StockPage />} />
-            <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
-            <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
-            <Route path="/dashboard/transaction/service" element={<ServicePage />} />
-            <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
-            <Route path="/dashboard/transaction/add-installment" element={<AddInstallmentPage />} />
-            <Route path="/dashboard/data/customers" element={<CustomerPage />} />
-            <Route path="/dashboard/data/suppliers" element={<SupplierPage />} />
-            <Route path="/dashboard/reports" element={<ReportsPage />} />
-            <Route path="/dashboard/reports/sales" element={<SalesReportPage />} />
-            <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
-            <Route path="/dashboard/reports/today" element={<TodayReportPage />} />
-            <Route path="/dashboard/services-in-progress" element={<ServicesInProgressPage />} />
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <BrowserRouter>
+        <AuthProvider>
+          <Toaster richColors position="top-center" />
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
             
-            <Route element={<AdminRoute />}>
-              <Route path="/dashboard/users" element={<UsersPage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/dashboard/stock" element={<StockPage />} />
+              <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
+              <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
+              <Route path="/dashboard/transaction/service" element={<ServicePage />} />
+              <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
+              <Route path="/dashboard/transaction/add-installment" element={<AddInstallmentPage />} />
+              <Route path="/dashboard/data/customers" element={<CustomerPage />} />
+              <Route path="/dashboard/data/suppliers" element={<SupplierPage />} />
+              <Route path="/dashboard/reports" element={<ReportsPage />} />
+              <Route path="/dashboard/reports/sales" element={<SalesReportPage />} />
+              <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
+              <Route path="/dashboard/reports/today" element={<TodayReportPage />} />
+              <Route path="/dashboard/services-in-progress" element={<ServicesInProgressPage />} />
+              
+              <Route element={<AdminRoute />}>
+                <Route path="/dashboard/users" element={<UsersPage />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

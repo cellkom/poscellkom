@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, Wrench, Receipt, CreditCard } from "lucide-react";
+import { DollarSign, Wrench, Receipt, CreditCard, ShoppingCart, Activity } from "lucide-react";
 import { useServiceEntries } from "@/hooks/use-service-entries";
 import { useInstallments } from "@/hooks/use-installments";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +31,7 @@ const getStatusBadgeVariant = (status: string) => {
     }
 };
 
-interface Activity {
+interface ActivityItem {
     id: string;
     transactionNumber: string;
     customer: string;
@@ -47,7 +47,7 @@ const DashboardPage = () => {
   const { installments, loading: installmentsLoading } = useInstallments();
   
   const [summary, setSummary] = useState({ revenueToday: 0, transactionsToday: 0 });
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const servicesInProgress = useMemo(() => {
@@ -141,8 +141,8 @@ const DashboardPage = () => {
             ))
           ) : (
             <>
-              <Link to="/dashboard/reports">
-                <Card className="hover:bg-muted/50 transition-colors">
+              <Link to="/dashboard/reports/today">
+                <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Pendapatan Hari Ini</CardTitle>
                     <DollarSign className="h-4 w-4 text-green-500" />
@@ -153,7 +153,7 @@ const DashboardPage = () => {
                 </Card>
               </Link>
               <Link to="/dashboard/reports/today">
-                <Card className="hover:bg-muted/50 transition-colors">
+                <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Transaksi Hari Ini</CardTitle>
                     <Receipt className="h-4 w-4 text-blue-500" />
@@ -164,7 +164,7 @@ const DashboardPage = () => {
                 </Card>
               </Link>
               <Link to="/dashboard/transaction/installments">
-                <Card className="hover:bg-muted/50 transition-colors">
+                <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Piutang</CardTitle>
                     <CreditCard className="h-4 w-4 text-orange-500" />
@@ -175,7 +175,7 @@ const DashboardPage = () => {
                 </Card>
               </Link>
               <Link to="/dashboard/services-in-progress">
-                <Card className="hover:bg-muted/50 transition-colors">
+                <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Servis Dalam Proses</CardTitle>
                     <Wrench className="h-4 w-4 text-indigo-500" />
@@ -192,7 +192,7 @@ const DashboardPage = () => {
         {/* Recent Activities Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Aktivitas Terbaru</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Activity className="h-5 w-5" />Aktivitas Terbaru</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -215,7 +215,8 @@ const DashboardPage = () => {
                       <TableCell className="font-mono">{activity.transactionNumber}</TableCell>
                       <TableCell className="font-medium">{activity.customer}</TableCell>
                       <TableCell>
-                        <Badge variant={activity.type === 'Penjualan' ? 'default' : 'secondary'}>
+                        <Badge variant={activity.type === 'Penjualan' ? 'default' : 'secondary'} className="flex items-center gap-1 w-fit">
+                          {activity.type === 'Penjualan' ? <ShoppingCart className="h-3 w-3" /> : <Wrench className="h-3 w-3" />}
                           {activity.type}
                         </Badge>
                       </TableCell>
