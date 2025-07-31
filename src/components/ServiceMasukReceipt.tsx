@@ -54,6 +54,9 @@ const ServiceMasukReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ entry },
         <p className="font-bold">Simpan struk ini sebagai bukti pengambilan barang.</p>
         <p>Kami tidak bertanggung jawab atas kehilangan struk.</p>
       </div>
+      <div className="text-center text-xs mt-4 font-semibold">
+        <p>Kami tidak bertanggung jawab atas kerusakan dan kehilangan barang yang tidak di ambil stelah 1 bulan semenjak service diinformasikan selesai.</p>
+      </div>
       <div className="mt-2">
         <Barcode value={`SVC-${entry.id}`} />
       </div>
