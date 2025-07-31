@@ -3,16 +3,17 @@ import {
   Home,
   Package,
   Users,
-  Settings,
   LogOut,
   UserCircle,
   ChevronDown,
   Menu,
   DollarSign,
   Wrench,
-  ArrowLeftRight,
   FileText,
   Warehouse,
+  ClipboardList,
+  BarChart3,
+  UserCog,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,38 +25,36 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { useSession } from '@/contexts/SessionContext';
-import { supabase } from '@/integrations/supabase';
-import { useProfile } from '@/hooks/useProfile';
-import { useAppSettings } from '@/hooks/useAppSettings';
+import { useAuth } from '@/contexts/AuthContext';
 import NavLink from './NavLink';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import logoSrc from '/logo.png';
 
-const navItems = [
-  { href: '/', icon: Home, label: 'Dashboard' },
-  { href: '/products', icon: Package, label: 'Produk' },
-  { href: '/customers', icon: Users, label: 'Pelanggan' },
-  { href: '/suppliers', icon: Warehouse, label: 'Supplier' },
-  { href: '/sales', icon: DollarSign, label: 'Penjualan' },
-  { href: '/services', icon: Wrench, label: 'Servis' },
-  { href: '/installments', icon: FileText, label: 'Piutang' },
-  { href: '/transactions', icon: ArrowLeftRight, label: 'Transaksi' },
+const kasirNavItems = [
+  { href: '/dashboard', icon: Home, label: 'Dasbor' },
+  { href: '/dashboard/transaction/sales', icon: DollarSign, label: 'Kasir Penjualan' },
+  { href: '/dashboard/transaction/service', icon: Wrench, label: 'Kasir Service' },
+  { href: '/dashboard/service-masuk', icon: ClipboardList, label: 'Service Masuk' },
+  { href: '/dashboard/transaction/installments', icon: FileText, label: 'Piutang' },
 ];
 
-const adminNavItems = [{ href: '/settings', icon: Settings, label: 'Pengaturan' }];
+const adminNavItems = [
+  { href: '/dashboard/stock', icon: Package, label: 'Manajemen Stok' },
+  { href: '/dashboard/data/customers', icon: Users, label: 'Data Pelanggan' },
+  { href: '/dashboard/data/suppliers', icon: Warehouse, label: 'Data Supplier' },
+  { href: '/dashboard/reports', icon: BarChart3, label: 'Laporan' },
+  { href: '/dashboard/users', icon: UserCog, label: 'Manajemen User' },
+];
 
 export function DashboardLayout() {
-  const { session, loading: sessionLoading } = useSession();
-  const { profile, loading: profileLoading } = useProfile(session?.user?.id);
-  const { settings, loading: settingsLoading } = useAppSettings();
+  const { user, profile, loading, signOut } = useAuth();
   const location = useLocation();
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    signOut();
   };
 
-  const isLoading = sessionLoading || profileLoading || settingsLoading;
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-lg">Loading...</div>
@@ -63,29 +62,46 @@ export function DashboardLayout() {
     );
   }
 
-  const allNavItems = profile?.role === 'Admin' ? [...navItems, ...adminNavItems] : navItems;
+  const navItems = profile?.role === 'Admin' ? [...kasirNavItems, ...adminNavItems] : kasirNavItems;
+  
+  const getPageTitle = () => {
+    const allNavItems = [...kasirNavItems, ...adminNavItems];
+    if (location.pathname === '/dashboard') return 'Dasbor';
+    
+    const matchingRoutes = allNavItems.filter(item => location.pathname.startsWith(item.href) && item.href !== '/dashboard');
+    if (matchingRoutes.length > 0) {
+      const bestMatch = matchingRoutes.reduce((a, b) => a.href.length > b.href.length ? a : b);
+      return bestMatch.label;
+    }
+    
+    return 'Halaman';
+  };
+
+  const SideNav = () => (
+    <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+      {navItems.map((item) => (
+        <NavLink key={item.href} to={item.href} icon={item.icon} label={item.label} />
+      ))}
+    </nav>
+  );
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <div className="hidden border-r bg-muted/40 md:block">
+      <div className="hidden border-r bg-background md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-            <Link to="/" className="flex items-center gap-2 font-semibold">
-              <Package className="h-6 w-6" />
-              <span className="">{settings?.nama_toko || 'Toko Anda'}</span>
+            <Link to="/dashboard" className="flex items-center gap-2 font-semibold">
+              <img src={logoSrc} alt="Logo" className="h-8 w-auto" />
+              <span className="">CELLKOM</span>
             </Link>
           </div>
-          <div className="flex-1">
-            <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-              {allNavItems.map((item) => (
-                <NavLink key={item.href} to={item.href} icon={item.icon} label={item.label} />
-              ))}
-            </nav>
+          <div className="flex-1 overflow-auto py-2">
+            <SideNav />
           </div>
         </div>
       </div>
       <div className="flex flex-col">
-        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+        <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -95,33 +111,32 @@ export function DashboardLayout() {
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
               <nav className="grid gap-2 text-lg font-medium">
-                <Link to="/" className="flex items-center gap-2 text-lg font-semibold mb-4">
-                  <Package className="h-6 w-6" />
-                  <span className="">{settings?.nama_toko || 'Toko Anda'}</span>
+                <Link to="/dashboard" className="flex items-center gap-2 text-lg font-semibold mb-4">
+                  <img src={logoSrc} alt="Logo" className="h-8 w-auto" />
+                  <span className="">CELLKOM</span>
                 </Link>
-                {allNavItems.map((item) => (
+                {navItems.map((item) => (
                   <NavLink key={item.href} to={item.href} icon={item.icon} label={item.label} isMobile />
                 ))}
               </nav>
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">
-            <h1 className="text-lg font-semibold">
-              {allNavItems.find((item) => item.href === location.pathname)?.label || 'Dashboard'}
-            </h1>
+            <h1 className="text-lg font-semibold">{getPageTitle()}</h1>
           </div>
+          <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" className="rounded-full flex items-center gap-2 px-3">
                 <UserCircle className="h-6 w-6" />
-                <span className="hidden md:inline">{session?.user?.email || 'User'}</span>
+                <span className="hidden md:inline">{profile?.full_name || user?.email}</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
-                <p>Signed in as</p>
-                <p className="font-normal text-sm text-muted-foreground truncate">{session?.user?.email}</p>
+                <p>{profile?.full_name}</p>
+                <p className="font-normal text-sm text-muted-foreground truncate">{user?.email}</p>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
