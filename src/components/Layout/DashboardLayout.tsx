@@ -46,7 +46,7 @@ const adminNavItems = [
   { href: '/dashboard/users', icon: UserCog, label: 'Manajemen User' },
 ];
 
-export function DashboardLayout() {
+export default function DashboardLayout() {
   const { user, profile, loading, signOut } = useAuth();
   const location = useLocation();
 
