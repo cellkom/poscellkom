@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import Barcode from '@/components/Barcode';
-import logoSrc from '/logo.png?inline';
+import logoSrc from '/logo.png';
 
 interface ServiceEntry {
   id: string;

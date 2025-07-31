@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import Barcode from '@/components/Barcode';
-import logoSrc from '/logo.png?inline';
+import logoSrc from '/logo.png';
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
