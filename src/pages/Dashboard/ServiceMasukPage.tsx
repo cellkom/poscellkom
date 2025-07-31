@@ -270,7 +270,7 @@ const ServiceMasukPage = () => {
                         <Select
                           value={entry.status}
                           onValueChange={(newStatus: ServiceEntry['status']) => handleStatusChange(entry.id, newStatus)}
-                          disabled={updatingStatusId === entry.id}
+                          disabled={updatingStatusId === entry.id || entry.status !== 'Pending'}
                         >
                           <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Ubah Status" />
