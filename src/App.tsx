@@ -9,6 +9,7 @@ import LoginPage from './pages/Auth/LoginPage';
 import PublicPage from './pages/PublicPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import StockPage from './pages/Dashboard/StockPage';
+import StorePage from './pages/Dashboard/StorePage';
 import SalesPage from './pages/Dashboard/Transaction/SalesPage';
 import ServicePage from './pages/Dashboard/Transaction/ServicePage';
 import InstallmentPage from './pages/Dashboard/Transaction/InstallmentPage';
@@ -36,6 +37,7 @@ function App() {
             
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/dashboard/store" element={<StorePage />} />
               <Route path="/dashboard/stock" element={<StockPage />} />
               <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
               <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
