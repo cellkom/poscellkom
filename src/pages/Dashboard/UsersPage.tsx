@@ -38,7 +38,7 @@ const UsersPage = () => {
   const fetchUsers = async () => {
     setLoading(true);
     const { data, error } = await supabase.functions.invoke('manage-users', {
-      method: 'GET',
+      body: { action: 'list' },
     });
     if (error) {
       showError(`Gagal memuat pengguna: ${error.message}`);
@@ -81,8 +81,7 @@ const UsersPage = () => {
     if (editingUser) {
       // Update user role
       const { error } = await supabase.functions.invoke('manage-users', {
-        method: 'PUT',
-        body: { id: editingUser.id, role: formData.role },
+        body: { action: 'update', payload: { id: editingUser.id, role: formData.role } },
       });
       if (error) {
         showError(`Gagal memperbarui peran: ${error.message}`);
@@ -98,8 +97,7 @@ const UsersPage = () => {
         return;
       }
       const { error } = await supabase.functions.invoke('manage-users', {
-        method: 'POST',
-        body: formData,
+        body: { action: 'create', payload: formData },
       });
       if (error) {
         showError(`Gagal menambah pengguna: ${error.message}`);
@@ -114,8 +112,7 @@ const UsersPage = () => {
   const handleDelete = async (userId: string) => {
     if (window.confirm("Apakah Anda yakin ingin menghapus pengguna ini?")) {
       const { error } = await supabase.functions.invoke('manage-users', {
-        method: 'DELETE',
-        body: { id: userId },
+        body: { action: 'delete', payload: { id: userId } },
       });
       if (error) {
         showError(`Gagal menghapus pengguna: ${error.message}`);
