@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, UserCircle, Instagram, Menu, Code } from "lucide-react";
+import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, UserCircle, Instagram, Menu, Code, Info, Newspaper, Phone } from "lucide-react";
 import logoSrc from '/logo.png';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -11,12 +11,12 @@ const PublicPage = () => {
   const isMobile = useIsMobile();
 
   const navLinks = [
-    { name: "Layanan", href: "#services" },
-    { name: "Toko", href: "#products" },
-    { name: "Tentang Kami", href: "#about" },
-    { name: "Layanan IT", href: "#it-services" },
-    { name: "Berita", href: "#news" },
-    { name: "Kontak", href: "#contact" },
+    { name: "Layanan", href: "#services", icon: Wrench },
+    { name: "Toko", href: "#products", icon: ShoppingCart },
+    { name: "Tentang Kami", href: "#about", icon: Info },
+    { name: "Layanan IT", href: "#it-services", icon: Code },
+    { name: "Berita", href: "#news", icon: Newspaper },
+    { name: "Kontak", href: "#contact", icon: Phone },
   ];
 
   const services = [
@@ -103,9 +103,14 @@ const PublicPage = () => {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right">
-                  <nav className="grid gap-6 text-lg font-medium mt-8">
-                    {navLinks.map(link => (
-                      <a key={link.name} href={link.href} className="text-muted-foreground hover:text-foreground">
+                  <nav className="grid gap-4 text-lg font-medium mt-8">
+                    {navLinks.map((link) => (
+                      <a
+                        key={link.name}
+                        href={link.href}
+                        className="flex items-center gap-4 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted"
+                      >
+                        <link.icon className="h-5 w-5" />
                         {link.name}
                       </a>
                     ))}
