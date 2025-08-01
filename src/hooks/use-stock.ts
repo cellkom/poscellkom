@@ -15,7 +15,6 @@ export interface Product {
   barcode: string;
   supplierId: string | null;
   entryDate: string;
-  imageUrl: string | null;
 }
 
 // Interface ini merepresentasikan skema di database (snake_case)
@@ -31,7 +30,6 @@ interface DbProduct {
   barcode: string;
   supplier_id: string | null;
   entry_date: string;
-  image_url: string | null;
 }
 
 // Fungsi untuk mengubah format dari database ke format aplikasi
@@ -47,7 +45,6 @@ const fromDbProduct = (dbProduct: DbProduct): Product => ({
   barcode: dbProduct.barcode,
   supplierId: dbProduct.supplier_id,
   entryDate: dbProduct.entry_date,
-  imageUrl: dbProduct.image_url,
 });
 
 // Fungsi untuk mengubah format dari aplikasi ke format database
@@ -62,7 +59,6 @@ const toDbProduct = (product: Partial<Omit<Product, 'id' | 'createdAt'>>) => {
   if (product.barcode !== undefined) dbProduct.barcode = product.barcode;
   if (product.supplierId !== undefined) dbProduct.supplier_id = product.supplierId;
   if (product.entryDate !== undefined) dbProduct.entry_date = product.entryDate;
-  if (product.imageUrl !== undefined) dbProduct.image_url = product.imageUrl;
   return dbProduct;
 };
 
@@ -150,8 +146,6 @@ export const useStock = () => {
   };
 
   const deleteProduct = async (id: string) => {
-    const productToDelete = products.find(p => p.id === id);
-
     const { error } = await supabase
       .from('products')
       .delete()
@@ -166,19 +160,6 @@ export const useStock = () => {
       console.error(error);
       return false;
     }
-
-    // If product deletion was successful, also delete the image from storage
-    if (productToDelete && productToDelete.imageUrl) {
-      try {
-        const imagePath = new URL(productToDelete.imageUrl).pathname.split('/product-images/')[1];
-        if (imagePath) {
-          await supabase.storage.from('product-images').remove([imagePath]);
-        }
-      } catch (e) {
-        console.error("Could not parse image URL or delete image from storage:", e);
-      }
-    }
-
     showSuccess("Produk berhasil dihapus!");
     return true;
   };

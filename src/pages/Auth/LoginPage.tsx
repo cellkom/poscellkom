@@ -5,7 +5,8 @@ import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/components/ThemeProvider';
-import { ShieldCheck } from 'lucide-react';
+import { ShoppingCart, ShieldCheck, Star } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import logoSrc from '/logo.png';
 
 const LoginPage = () => {
@@ -53,56 +54,54 @@ const LoginPage = () => {
         
         {/* Header */}
         <div className="text-center space-y-4">
-          <Link to="/" className="inline-block cursor-pointer group">
-            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-24 w-auto mx-auto transition-transform group-hover:scale-105" />
-            <h1 className="text-3xl font-bold text-primary font-poppins transition-colors group-hover:text-primary/90">Cellkom.Store</h1>
-          </Link>
-          <p className="text-gray-500 dark:text-gray-400 -mt-2">Sistem Manajemen Penjualan & Servis</p>
+          <img src={logoSrc} alt="Cellkom.Store Logo" className="h-24 w-auto mx-auto" />
+          <h1 className="text-3xl font-bold text-primary font-poppins">Cellkom.Store</h1>
+          <p className="text-gray-500 dark:text-gray-400 -mt-2">Pusat Service HP dan Komputer</p>
+          <div className="flex justify-center gap-2 pt-2">
+            <Link to="/member-login">
+              <Badge variant="secondary" className="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700">
+                <Star className="h-3 w-3 mr-1" /> Member
+              </Badge>
+            </Link>
+            <Badge variant="default"><ShoppingCart className="h-3 w-3 mr-1" /> Penjualan</Badge>
+          </div>
         </div>
 
         {/* Supabase Auth UI */}
         {!session ? (
-          <>
-            <p className="text-center text-sm text-muted-foreground">
-              Silakan masuk untuk melanjutkan.
-            </p>
-            <Auth
-              supabaseClient={supabase}
-              providers={[]}
-              view={'sign_in'}
-              showLinks={false}
-              theme={authTheme}
-              localization={{
-                variables: {
-                  sign_in: {
-                    email_label: 'Email',
-                    password_label: 'Password',
-                    button_label: 'Masuk ke Sistem',
-                    email_input_placeholder: 'Email Anda',
-                    password_input_placeholder: 'Password Anda',
-                    loading_button_label: 'Memproses...',
-                    invalid_login_credentials: 'Email atau password yang Anda masukkan salah. Silakan coba lagi.',
+          <Auth
+            supabaseClient={supabase}
+            providers={[]}
+            view="sign_in"
+            showLinks={false}
+            theme={authTheme}
+            localization={{
+              variables: {
+                sign_in: {
+                  email_label: 'Email',
+                  password_label: 'Password',
+                  button_label: 'Masuk ke Sistem',
+                  email_input_placeholder: 'Email Anda',
+                  password_input_placeholder: 'Password Anda',
+                  loading_button_label: 'Memproses...',
+                },
+              },
+            }}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: 'hsl(0 84.2% 60.2%)',
+                    brandAccent: 'hsl(0 74.2% 50.2%)',
                   },
                 },
-              }}
-              appearance={{
-                theme: ThemeSupa,
-                variables: {
-                  default: {
-                    colors: {
-                      brand: 'hsl(0 84.2% 60.2%)',
-                      brandAccent: 'hsl(0 74.2% 50.2%)',
-                    },
-                  },
-                },
-                className: {
-                  input: 'bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600',
-                  button: 'py-3 text-base',
-                  label: 'text-sm font-medium',
-                }
-              }}
-            />
-          </>
+              },
+              className: {
+                input: 'bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600',
+              }
+            }}
+          />
         ) : (
           <p className="text-center">Mengarahkan ke dasbor...</p>
         )}
