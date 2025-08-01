@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/components/ThemeProvider';
 import { ShoppingCart, ShieldCheck, Star } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import logoSrc from '/logo.png';
 
 const LoginPage = () => {
@@ -14,6 +14,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const [authTheme, setAuthTheme] = useState<'light' | 'dark'>('light');
+  const [authMode, setAuthMode] = useState<'staff' | 'member'>('staff'); // 'staff' for Penjualan
 
   useEffect(() => {
     if (session) {
@@ -57,47 +58,79 @@ const LoginPage = () => {
           <img src={logoSrc} alt="Cellkom.Store Logo" className="h-24 w-auto mx-auto" />
           <h1 className="text-3xl font-bold text-primary font-poppins">Cellkom.Store</h1>
           <p className="text-gray-500 dark:text-gray-400 -mt-2">Pusat Service HP dan Komputer</p>
-          <div className="flex justify-center gap-2 pt-2">
-            <Badge variant="secondary"><Star className="h-3 w-3 mr-1" /> Member</Badge>
-            <Badge variant="default"><ShoppingCart className="h-3 w-3 mr-1" /> Penjualan</Badge>
+          
+          {/* Auth Mode Toggle */}
+          <div className="grid grid-cols-2 gap-2 pt-2">
+            <Button 
+              variant={authMode === 'member' ? 'default' : 'outline'} 
+              onClick={() => setAuthMode('member')}
+              className="flex items-center gap-2"
+            >
+              <Star className="h-4 w-4" /> Member
+            </Button>
+            <Button 
+              variant={authMode === 'staff' ? 'default' : 'outline'} 
+              onClick={() => setAuthMode('staff')}
+              className="flex items-center gap-2"
+            >
+              <ShoppingCart className="h-4 w-4" /> Penjualan
+            </Button>
           </div>
         </div>
 
         {/* Supabase Auth UI */}
         {!session ? (
-          <Auth
-            supabaseClient={supabase}
-            providers={[]}
-            view="sign_in"
-            showLinks={false}
-            theme={authTheme}
-            localization={{
-              variables: {
-                sign_in: {
-                  email_label: 'Email',
-                  password_label: 'Password',
-                  button_label: 'Masuk ke Sistem',
-                  email_input_placeholder: 'Email Anda',
-                  password_input_placeholder: 'Password Anda',
-                  loading_button_label: 'Memproses...',
-                },
-              },
-            }}
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: 'hsl(0 84.2% 60.2%)',
-                    brandAccent: 'hsl(0 74.2% 50.2%)',
+          <>
+            <p className="text-center text-sm text-muted-foreground">
+              {authMode === 'member' ? 'Daftar atau masuk sebagai Member untuk memesan layanan.' : 'Silakan masuk untuk melanjutkan.'}
+            </p>
+            <Auth
+              supabaseClient={supabase}
+              providers={[]}
+              view={authMode === 'member' ? 'sign_up' : 'sign_in'}
+              showLinks={authMode === 'member'}
+              theme={authTheme}
+              localization={{
+                variables: {
+                  sign_in: {
+                    email_label: 'Email',
+                    password_label: 'Password',
+                    button_label: authMode === 'member' ? 'Masuk Akun Member' : 'Masuk ke Sistem',
+                    email_input_placeholder: 'Email Anda',
+                    password_input_placeholder: 'Password Anda',
+                    loading_button_label: 'Memproses...',
+                    link_text: 'Belum punya akun? Daftar',
+                  },
+                  sign_up: {
+                    email_label: 'Email',
+                    password_label: 'Password',
+                    button_label: 'Daftar Akun Member',
+                    email_input_placeholder: 'Email Anda',
+                    password_input_placeholder: 'Buat Password Kuat',
+                    loading_button_label: 'Memproses...',
+                    link_text: 'Sudah punya akun? Masuk',
+                    confirmation_text: 'Cek email Anda untuk link konfirmasi.'
                   },
                 },
-              },
-              className: {
-                input: 'bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600',
-              }
-            }}
-          />
+              }}
+              appearance={{
+                theme: ThemeSupa,
+                variables: {
+                  default: {
+                    colors: {
+                      brand: 'hsl(0 84.2% 60.2%)',
+                      brandAccent: 'hsl(0 74.2% 50.2%)',
+                    },
+                  },
+                },
+                className: {
+                  input: 'bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600',
+                  button: 'py-3 text-base',
+                  label: 'text-sm font-medium',
+                }
+              }}
+            />
+          </>
         ) : (
           <p className="text-center">Mengarahkan ke dasbor...</p>
         )}
