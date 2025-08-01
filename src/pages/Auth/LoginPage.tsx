@@ -18,9 +18,13 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (session) {
-      navigate('/dashboard');
+      if (authMode === 'staff') {
+        navigate('/dashboard');
+      } else {
+        navigate('/member/home');
+      }
     }
-  }, [session, navigate]);
+  }, [session, navigate, authMode]);
 
   useEffect(() => {
     const getEffectiveTheme = () => {
@@ -102,6 +106,7 @@ const LoginPage = () => {
                     password_input_placeholder: 'Password Anda',
                     loading_button_label: 'Memproses...',
                     link_text: 'Belum punya akun? Daftar',
+                    invalid_login_credentials: 'Email atau password yang Anda masukkan salah. Silakan coba lagi.',
                   },
                   sign_up: {
                     email_label: 'Email',
