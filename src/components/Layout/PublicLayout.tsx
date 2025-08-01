@@ -1,0 +1,134 @@
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { UserCircle, Instagram, Menu } from "lucide-react";
+import logoSrc from '/logo.png';
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { ReactNode } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+
+const PublicLayout = ({ children }: { children: ReactNode }) => {
+  const isMobile = useIsMobile();
+  const { session, signOut } = useAuth();
+
+  const navLinks = [
+    { name: "Layanan", href: "/#services" },
+    { name: "Toko", href: "/products" },
+    { name: "Tentang Kami", href: "/#about" },
+    { name: "Kontak", href: "/#contact" },
+  ];
+
+  return (
+    <div className="bg-background text-foreground flex flex-col min-h-screen">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
+          <Link to="/" className="flex items-center gap-3">
+            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-12 w-auto" />
+            <div className="hidden md:block">
+              <h1 className="text-xl font-bold font-poppins">
+                <span className="text-primary">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
+              </h1>
+              <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
+            </div>
+          </Link>
+          
+          <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
+            {navLinks.map(link => (
+              <Link key={link.name} to={link.href} className="text-muted-foreground transition-colors hover:text-primary">
+                {link.name}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {session ? (
+              <Button onClick={signOut} variant="ghost" size="sm">Logout</Button>
+            ) : (
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/login" aria-label="Halaman Login">
+                  <UserCircle className="h-6 w-6" />
+                  <span className="sr-only">Buka halaman login</span>
+                </Link>
+              </Button>
+            )}
+
+            {isMobile && (
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Buka menu navigasi</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right">
+                  <nav className="grid gap-6 text-lg font-medium mt-8">
+                    {navLinks.map(link => (
+                      <Link key={link.name} to={link.href} className="text-muted-foreground hover:text-foreground">
+                        {link.name}
+                      </Link>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-grow">{children}</main>
+
+      <footer id="contact" className="bg-background text-muted-foreground pt-16 pb-8 border-t">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="space-y-4">
+              <Link to="/" className="flex items-center gap-3">
+                <img src={logoSrc} alt="Cellkom.Store Logo" className="h-8 w-auto" />
+                <span className="text-xl font-bold font-poppins">
+                  <span className="text-foreground">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
+                </span>
+              </Link>
+              <p className="text-sm">
+                Pusat Servis HP dan Komputer Terpercaya. Cepat, Profesional, dan Bergaransi.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground">Navigasi</h3>
+              <ul className="space-y-2 text-sm">
+                <li><a href="/#services" className="hover:text-primary transition-colors">Layanan</a></li>
+                <li><Link to="/products" className="hover:text-primary transition-colors">Toko</Link></li>
+                <li><a href="/#about" className="hover:text-primary transition-colors">Tentang Kami</a></li>
+                <li><a href="/#news" className="hover:text-primary transition-colors">Berita</a></li>
+              </ul>
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground">Kontak</h3>
+              <address className="space-y-2 text-sm not-italic">
+                <p>Jorong Kampung Baru, Muaro Paiti, Kec. Kapur IX</p>
+                <p>Email: <a href="mailto:ckcellkom@gmail.com" className="hover:text-primary transition-colors">ckcellkom@gmail.com</a></p>
+                <p>Telepon: <a href="tel:082285959441" className="hover:text-primary transition-colors">082285959441</a></p>
+              </address>
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground">Ikuti Kami</h3>
+              <p className="text-sm">Dapatkan info terbaru dan promo menarik.</p>
+              <div className="flex space-x-4">
+                <a href="#" aria-label="Instagram" className="hover:text-primary transition-colors">
+                  <Instagram className="h-6 w-6" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-border mt-12">
+          <div className="container mx-auto px-4 md:px-6 py-4 text-center text-sm text-muted-foreground">
+            &copy; {new Date().getFullYear()} Cellkomtech. All Rights Reserved.
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default PublicLayout;

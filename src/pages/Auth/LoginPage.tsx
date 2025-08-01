@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,7 +58,11 @@ const LoginPage = () => {
           <h1 className="text-3xl font-bold text-primary font-poppins">Cellkom.Store</h1>
           <p className="text-gray-500 dark:text-gray-400 -mt-2">Pusat Service HP dan Komputer</p>
           <div className="flex justify-center gap-2 pt-2">
-            <Badge variant="secondary"><Star className="h-3 w-3 mr-1" /> Member</Badge>
+            <Link to="/member-login">
+              <Badge variant="secondary" className="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700">
+                <Star className="h-3 w-3 mr-1" /> Member
+              </Badge>
+            </Link>
             <Badge variant="default"><ShoppingCart className="h-3 w-3 mr-1" /> Penjualan</Badge>
           </div>
         </div>
