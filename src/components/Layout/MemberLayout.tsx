@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Home, ShoppingCart, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import logoSrc from '/logo.png';
 import { ThemeToggle } from "../ThemeToggle";
+import { Badge } from "@/components/ui/badge";
 
 interface MemberLayoutProps {
   children: React.ReactNode;
@@ -12,6 +14,7 @@ interface MemberLayoutProps {
 
 const MemberLayout = ({ children }: MemberLayoutProps) => {
   const { profile, signOut } = useAuth();
+  const { cartCount } = useCart();
 
   return (
     <div className="min-h-screen w-full bg-background">
@@ -40,6 +43,16 @@ const MemberLayout = ({ children }: MemberLayoutProps) => {
           </nav>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/member/cart" className="relative">
+                <ShoppingCart className="h-6 w-6" />
+                {cartCount > 0 && (
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                    {cartCount}
+                  </Badge>
+                )}
+              </Link>
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">

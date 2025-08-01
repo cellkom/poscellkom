@@ -84,7 +84,7 @@ const MemberHomePage = () => {
                                     </CardContent>
                                     <div className="p-4 pt-0">
                                         <Button asChild className="w-full" variant="outline">
-                                            <Link to={`/member/order/product-${product.id}`}>Beli Produk</Link>
+                                            <Link to={`/member/product/${product.id}`}>Lihat Detail</Link>
                                         </Button>
                                     </div>
                                 </Card>
