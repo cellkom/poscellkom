@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, UserCircle } from "lucide-react";
+import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, UserCircle, Instagram } from "lucide-react";
 import logoSrc from '/logo.png';
 
 const PublicPage = () => {
@@ -166,16 +166,62 @@ const PublicPage = () => {
             </div>
           </div>
         </section>
-
-        {/* Footer */}
-        <footer className="bg-background border-t">
-          <div className="container mx-auto py-8 px-4 md:px-6 text-center text-muted-foreground">
-            <img src={logoSrc} alt="CELLKOM Logo" className="h-12 w-auto mx-auto mb-4" />
-            <p>&copy; {new Date().getFullYear()} CELLKOM. All rights reserved.</p>
-            <p className="text-sm mt-2">Jorong Kampung Baru, Muaro Paiti, Kec. Kapur IX | Telp: 082285959441</p>
-          </div>
-        </footer>
       </main>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-slate-300">
+        <div className="container mx-auto px-4 md:px-6 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Column 1: Logo & About */}
+            <div className="space-y-4">
+              <Link to="/" className="flex items-center gap-3">
+                <img src={logoSrc} alt="CELLKOM Logo" className="h-8 w-auto" />
+                <span className="text-xl font-bold text-white font-poppins">CELLKOM</span>
+              </Link>
+              <p className="text-sm">
+                Pusat Servis HP dan Komputer Terpercaya. Cepat, Profesional, dan Bergaransi.
+              </p>
+            </div>
+
+            {/* Column 2: Navigasi */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Navigasi</h3>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#services" className="hover:text-primary transition-colors">Layanan</a></li>
+                <li><a href="#products" className="hover:text-primary transition-colors">Toko</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Tentang Kami</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Berita</a></li>
+              </ul>
+            </div>
+
+            {/* Column 3: Kontak */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Kontak</h3>
+              <address className="space-y-2 text-sm not-italic">
+                <p>Jorong Kampung Baru, Muaro Paiti, Kec. Kapur IX</p>
+                <p>Email: <a href="mailto:ckcellkom@gmail.com" className="hover:text-primary transition-colors">ckcellkom@gmail.com</a></p>
+                <p>Telepon: <a href="tel:082285959441" className="hover:text-primary transition-colors">082285959441</a></p>
+              </address>
+            </div>
+
+            {/* Column 4: Ikuti Kami */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Ikuti Kami</h3>
+              <p className="text-sm">Dapatkan info terbaru dan promo menarik.</p>
+              <div className="flex space-x-4">
+                <a href="#" aria-label="Instagram" className="hover:text-primary transition-colors">
+                  <Instagram className="h-6 w-6" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-slate-700">
+          <div className="container mx-auto px-4 md:px-6 py-4 text-center text-sm text-slate-400">
+            &copy; {new Date().getFullYear()} Cellkomtech. All Rights Reserved.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
