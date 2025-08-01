@@ -69,12 +69,6 @@ const PublicPage = () => {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link to="/" className="flex items-center gap-3">
             <img src={logoSrc} alt="Cellkom.Store Logo" className="h-12 w-auto" />
-            <div className="hidden md:block">
-              <h1 className="text-xl font-bold font-poppins">
-                <span className="text-primary">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
-              </h1>
-              <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
-            </div>
           </Link>
           
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
@@ -256,10 +250,7 @@ const PublicPage = () => {
             {/* Column 1: Logo & About */}
             <div className="space-y-4">
               <Link to="/" className="flex items-center gap-3">
-                <img src={logoSrc} alt="Cellkom.Store Logo" className="h-8 w-auto" />
-                <span className="text-xl font-bold font-poppins">
-                  <span className="text-foreground">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
-                </span>
+                <img src={logoSrc} alt="Cellkom.Store Logo" className="h-10 w-auto" />
               </Link>
               <p className="text-sm">
                 Pusat Servis HP dan Komputer Terpercaya. Cepat, Profesional, dan Bergaransi.
