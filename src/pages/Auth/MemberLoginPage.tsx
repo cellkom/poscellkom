@@ -5,7 +5,8 @@ import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/components/ThemeProvider';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Star, ShoppingCart } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import logoSrc from '/logo.png';
 
 const MemberLoginPage = () => {
@@ -31,16 +32,20 @@ const MemberLoginPage = () => {
   }, [theme]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4 relative">
-      <Link to="/" className="absolute top-4 left-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
-        <ArrowLeft className="h-4 w-4" />
-        Kembali ke Beranda
-      </Link>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6">
         <div className="text-center space-y-4">
-          <img src={logoSrc} alt="Cellkom.Store Logo" className="h-20 w-auto mx-auto" />
-          <h1 className="text-3xl font-bold text-primary font-poppins">Akun Member</h1>
-          <p className="text-gray-500 dark:text-gray-400 -mt-2">Daftar atau masuk untuk mulai berbelanja.</p>
+          <img src={logoSrc} alt="Cellkom.Store Logo" className="h-24 w-auto mx-auto" />
+          <h1 className="text-3xl font-bold text-primary font-poppins">Cellkom.Store</h1>
+          <p className="text-gray-500 dark:text-gray-400 -mt-2">Pusat Service HP dan Komputer</p>
+          <div className="flex justify-center gap-2 pt-2">
+            <Badge variant="default"><Star className="h-3 w-3 mr-1" /> Member</Badge>
+            <Link to="/login">
+              <Badge variant="secondary" className="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700">
+                <ShoppingCart className="h-3 w-3 mr-1" /> Penjualan
+              </Badge>
+            </Link>
+          </div>
         </div>
 
         <Auth
