@@ -1,10 +1,24 @@
-import PublicLayout from "@/components/Layout/PublicLayout";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, Code } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, UserCircle, Instagram, Menu, Code } from "lucide-react";
+import logoSrc from '/logo.png';
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const PublicPage = () => {
+  const isMobile = useIsMobile();
+
+  const navLinks = [
+    { name: "Layanan", href: "#services" },
+    { name: "Toko", href: "#products" },
+    { name: "Tentang Kami", href: "#about" },
+    { name: "Layanan IT", href: "#it-services" },
+    { name: "Berita", href: "#news" },
+    { name: "Kontak", href: "#contact" },
+  ];
+
   const services = [
     {
       icon: Smartphone,
@@ -49,7 +63,60 @@ const PublicPage = () => {
   ];
 
   return (
-    <PublicLayout>
+    <div className="bg-background text-foreground">
+      {/* Header */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
+          <Link to="/" className="flex items-center gap-3">
+            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-12 w-auto" />
+            <div className="hidden md:block">
+              <h1 className="text-xl font-bold font-poppins">
+                <span className="text-primary">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
+              </h1>
+              <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
+            </div>
+          </Link>
+          
+          <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
+            {navLinks.map(link => (
+              <a key={link.name} href={link.href} className="text-muted-foreground transition-colors hover:text-primary">
+                {link.name}
+              </a>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/login" aria-label="Halaman Login">
+                <UserCircle className="h-6 w-6" />
+                <span className="sr-only">Buka halaman login</span>
+              </Link>
+            </Button>
+
+            {isMobile && (
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Buka menu navigasi</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right">
+                  <nav className="grid gap-6 text-lg font-medium mt-8">
+                    {navLinks.map(link => (
+                      <a key={link.name} href={link.href} className="text-muted-foreground hover:text-foreground">
+                        {link.name}
+                      </a>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            )}
+          </div>
+        </div>
+      </header>
+
       <main>
         {/* Hero Section */}
         <section className="py-20 md:py-32 text-center">
@@ -65,7 +132,7 @@ const PublicPage = () => {
                 <a href="#services">Layanan Servis Kami <Wrench className="ml-2 h-5 w-5" /></a>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link to="/products">Lihat Produk Unggulan <ArrowRight className="ml-2 h-5 w-5" /></Link>
+                <a href="#products">Lihat Produk Unggulan <ArrowRight className="ml-2 h-5 w-5" /></a>
               </Button>
             </div>
           </div>
@@ -114,11 +181,6 @@ const PublicPage = () => {
                   </CardContent>
                 </Card>
               ))}
-            </div>
-            <div className="text-center mt-12">
-              <Button asChild size="lg">
-                <Link to="/products">Lihat Semua Produk <ArrowRight className="ml-2 h-5 w-5" /></Link>
-              </Button>
             </div>
           </div>
         </section>
@@ -178,7 +240,72 @@ const PublicPage = () => {
           </div>
         </section>
       </main>
-    </PublicLayout>
+
+      {/* Footer */}
+      <footer id="contact" className="bg-background text-muted-foreground pt-16 pb-8">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Segera Kunjungi Store Kami</h2>
+            <p className="mt-4 text-lg text-muted-foreground">Kami siap membantu Anda dengan layanan terbaik.</p>
+            <div className="mt-6 flex justify-center">
+              <div className="w-24 h-1 bg-primary rounded-full"></div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pt-8">
+            {/* Column 1: Logo & About */}
+            <div className="space-y-4">
+              <Link to="/" className="flex items-center gap-3">
+                <img src={logoSrc} alt="Cellkom.Store Logo" className="h-8 w-auto" />
+                <span className="text-xl font-bold font-poppins">
+                  <span className="text-foreground">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
+                </span>
+              </Link>
+              <p className="text-sm">
+                Pusat Servis HP dan Komputer Terpercaya. Cepat, Profesional, dan Bergaransi.
+              </p>
+            </div>
+
+            {/* Column 2: Navigasi */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground">Navigasi</h3>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#services" className="hover:text-primary transition-colors">Layanan</a></li>
+                <li><a href="#products" className="hover:text-primary transition-colors">Toko</a></li>
+                <li><a href="#about" className="hover:text-primary transition-colors">Tentang Kami</a></li>
+                <li><a href="#news" className="hover:text-primary transition-colors">Berita</a></li>
+              </ul>
+            </div>
+
+            {/* Column 3: Kontak */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground">Kontak</h3>
+              <address className="space-y-2 text-sm not-italic">
+                <p>Jorong Kampung Baru, Muaro Paiti, Kec. Kapur IX</p>
+                <p>Email: <a href="mailto:ckcellkom@gmail.com" className="hover:text-primary transition-colors">ckcellkom@gmail.com</a></p>
+                <p>Telepon: <a href="tel:082285959441" className="hover:text-primary transition-colors">082285959441</a></p>
+              </address>
+            </div>
+
+            {/* Column 4: Ikuti Kami */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground">Ikuti Kami</h3>
+              <p className="text-sm">Dapatkan info terbaru dan promo menarik.</p>
+              <div className="flex space-x-4">
+                <a href="#" aria-label="Instagram" className="hover:text-primary transition-colors">
+                  <Instagram className="h-6 w-6" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-border mt-12">
+          <div className="container mx-auto px-4 md:px-6 py-4 text-center text-sm text-muted-foreground">
+            &copy; {new Date().getFullYear()} Cellkomtech. All Rights Reserved.
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 };
 

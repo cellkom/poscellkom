@@ -6,9 +6,7 @@ import { Toaster } from './components/ui/sonner';
 import { ThemeProvider } from './components/ThemeProvider';
 
 import LoginPage from './pages/Auth/LoginPage';
-import MemberLoginPage from './pages/Auth/MemberLoginPage';
 import PublicPage from './pages/PublicPage';
-import ProductsPage from './pages/ProductsPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import StockPage from './pages/Dashboard/StockPage';
 import StorePage from './pages/Dashboard/StorePage';
@@ -36,8 +34,6 @@ function App() {
           <Routes>
             <Route path="/" element={<PublicPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/member-login" element={<MemberLoginPage />} />
-            <Route path="/products" element={<ProductsPage />} />
             
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<DashboardPage />} />
