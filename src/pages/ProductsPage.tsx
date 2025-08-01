@@ -1,24 +1,18 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import PublicLayout from "@/components/Layout/PublicLayout";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useStock, Product } from "@/hooks/use-stock";
-import { Loader2, Search, ShoppingCart } from "lucide-react";
+import { useStock } from "@/hooks/use-stock";
+import { Loader2, Search, ShoppingCart, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/contexts/CartContext";
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
 const ProductsPage = () => {
   const { products, loading } = useStock();
   const [searchTerm, setSearchTerm] = useState("");
-  const { session } = useAuth();
-  const { addToCart } = useCart();
-  const navigate = useNavigate();
 
   const filteredProducts = useMemo(() => {
     return products.filter(product =>
@@ -27,21 +21,10 @@ const ProductsPage = () => {
     );
   }, [products, searchTerm]);
 
-  const handleAddToCart = (product: Product) => {
-    if (!session) {
-      toast.error("Silakan login untuk menambahkan ke keranjang.", {
-        action: {
-          label: "Login",
-          onClick: () => navigate('/member-login'),
-        },
-      });
-      return;
-    }
-    if (product.stock > 0) {
-      addToCart(product);
-    } else {
-      toast.error("Stok produk ini habis.");
-    }
+  const handleOrderClick = () => {
+    toast.info("Fitur pemesanan akan segera hadir!", {
+      description: "Saat ini Anda dapat melihat produk. Fitur untuk memesan langsung dari sini sedang kami kembangkan.",
+    });
   };
 
   return (
@@ -91,8 +74,8 @@ const ProductsPage = () => {
                     </div>
                     <div className="pt-3">
                       <p className="text-xl font-bold text-primary">{formatCurrency(product.retailPrice)}</p>
-                      <Button className="w-full mt-3" disabled={product.stock <= 0} onClick={() => handleAddToCart(product)}>
-                        Tambah ke Keranjang <ShoppingCart className="ml-2 h-4 w-4" />
+                      <Button className="w-full mt-3" disabled={product.stock <= 0} onClick={handleOrderClick}>
+                        Pesan Sekarang <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </div>
                   </CardContent>

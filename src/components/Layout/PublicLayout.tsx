@@ -1,19 +1,16 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { UserCircle, Instagram, Menu, ShoppingCart } from "lucide-react";
+import { UserCircle, Instagram, Menu } from "lucide-react";
 import logoSrc from '/logo.png';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/contexts/CartContext";
-import { Badge } from "@/components/ui/badge";
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
   const { session, signOut } = useAuth();
-  const { cartCount } = useCart();
 
   const navLinks = [
     { name: "Layanan", href: "/#services" },
@@ -46,22 +43,11 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-6 w-6" />
-              {cartCount > 0 && (
-                <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center rounded-full p-0 text-xs">
-                  {cartCount}
-                </Badge>
-              )}
-              <span className="sr-only">Keranjang Belanja</span>
-            </Button>
-
             {session ? (
               <Button onClick={signOut} variant="ghost" size="sm">Logout</Button>
             ) : (
               <Button variant="ghost" size="icon" asChild>
-                <Link to="/member-login" aria-label="Halaman Login">
+                <Link to="/login" aria-label="Halaman Login">
                   <UserCircle className="h-6 w-6" />
                   <span className="sr-only">Buka halaman login</span>
                 </Link>

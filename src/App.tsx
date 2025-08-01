@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { CartProvider } from './contexts/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import { Toaster } from './components/ui/sonner';
@@ -33,39 +32,37 @@ function App() {
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <BrowserRouter>
         <AuthProvider>
-          <CartProvider>
-            <Toaster richColors position="top-center" />
-            <Routes>
-              <Route path="/" element={<PublicPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/member-login" element={<MemberLoginPage />} />
-              <Route path="/products" element={<ProductsPage />} />
+          <Toaster richColors position="top-center" />
+          <Routes>
+            <Route path="/" element={<PublicPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/member-login" element={<MemberLoginPage />} />
+            <Route path="/products" element={<ProductsPage />} />
+            
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/dashboard/store" element={<StorePage />} />
+              <Route path="/dashboard/stock" element={<StockPage />} />
+              <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
+              <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
+              <Route path="/dashboard/transaction/service" element={<ServicePage />} />
+              <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
+              <Route path="/dashboard/transaction/add-installment" element={<AddInstallmentPage />} />
+              <Route path="/dashboard/data/customers" element={<CustomerPage />} />
+              <Route path="/dashboard/data/suppliers" element={<SupplierPage />} />
+              <Route path="/dashboard/reports" element={<ReportsPage />} />
+              <Route path="/dashboard/reports/sales" element={<SalesReportPage />} />
+              <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
+              <Route path="/dashboard/reports/today" element={<TodayReportPage />} />
+              <Route path="/dashboard/services-in-progress" element={<ServicesInProgressPage />} />
               
-              <Route element={<ProtectedRoute />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/dashboard/store" element={<StorePage />} />
-                <Route path="/dashboard/stock" element={<StockPage />} />
-                <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
-                <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
-                <Route path="/dashboard/transaction/service" element={<ServicePage />} />
-                <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
-                <Route path="/dashboard/transaction/add-installment" element={<AddInstallmentPage />} />
-                <Route path="/dashboard/data/customers" element={<CustomerPage />} />
-                <Route path="/dashboard/data/suppliers" element={<SupplierPage />} />
-                <Route path="/dashboard/reports" element={<ReportsPage />} />
-                <Route path="/dashboard/reports/sales" element={<SalesReportPage />} />
-                <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
-                <Route path="/dashboard/reports/today" element={<TodayReportPage />} />
-                <Route path="/dashboard/services-in-progress" element={<ServicesInProgressPage />} />
-                
-                <Route element={<AdminRoute />}>
-                  <Route path="/dashboard/users" element={<UsersPage />} />
-                </Route>
+              <Route element={<AdminRoute />}>
+                <Route path="/dashboard/users" element={<UsersPage />} />
               </Route>
+            </Route>
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </CartProvider>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>
