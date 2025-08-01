@@ -16,7 +16,7 @@ async function isAdmin(supabaseClient: SupabaseClient): Promise<boolean> {
     }
 
     const { data: profile, error: profileError } = await supabaseClient
-      .from('profiles')
+      .from('users') // Changed from 'profiles'
       .select('role')
       .eq('id', user.id)
       .single();
@@ -79,7 +79,7 @@ serve(async (req) => {
 
         const userIds = users.map(u => u.id);
         const { data: profiles, error: profileError } = await adminSupabaseClient
-          .from('profiles')
+          .from('users') // Changed from 'profiles'
           .select('*')
           .in('id', userIds);
         if (profileError) throw profileError;
@@ -117,7 +117,7 @@ serve(async (req) => {
 
         if (role === 'Admin') {
           const { error: updateError } = await adminSupabaseClient
-            .from('profiles')
+            .from('users') // Changed from 'profiles'
             .update({ role: 'Admin' })
             .eq('id', data.user.id);
           if (updateError) throw updateError;
@@ -135,7 +135,7 @@ serve(async (req) => {
         }
 
         const { error } = await adminSupabaseClient
-          .from('profiles')
+          .from('users') // Changed from 'profiles'
           .update({ role })
           .eq('id', id);
         

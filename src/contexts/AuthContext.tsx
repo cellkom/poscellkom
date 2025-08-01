@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (session?.user) {
         const { data: userProfile, error: profileError } = await supabase
-          .from('profiles')
+          .from('users') // Changed from 'profiles'
           .select('*')
           .eq('id', session.user.id)
           .single();
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        supabase.from('profiles').select('*').eq('id', session.user.id).single().then(({ data }) => {
+        supabase.from('users').select('*').eq('id', session.user.id).single().then(({ data }) => { // Changed from 'profiles'
           setProfile(data);
         });
       } else {
