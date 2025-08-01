@@ -5,22 +5,21 @@ import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/components/ThemeProvider';
-import { ShieldCheck, User, Building } from 'lucide-react';
+import { ShoppingCart, ShieldCheck, Star } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import logoSrc from '/logo.png';
-import { Button } from '@/components/ui/button';
 
 const LoginPage = () => {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
   const { theme } = useTheme();
   const [authTheme, setAuthTheme] = useState<'light' | 'dark'>('light');
-  const [loginType, setLoginType] = useState<'member' | 'staff'>('member');
 
   useEffect(() => {
-    if (session && loginType === 'staff') {
+    if (session) {
       navigate('/dashboard');
     }
-  }, [session, navigate, loginType]);
+  }, [session, navigate]);
 
   useEffect(() => {
     const getEffectiveTheme = () => {
@@ -55,85 +54,56 @@ const LoginPage = () => {
         
         {/* Header */}
         <div className="text-center space-y-4">
-          <Link to="/" className="inline-block cursor-pointer group">
-            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-24 w-auto mx-auto transition-transform group-hover:scale-105" />
-            <h1 className="text-3xl font-bold text-primary font-poppins transition-colors group-hover:text-primary/90">Cellkom.Store</h1>
-          </Link>
-          <p className="text-gray-500 dark:text-gray-400 -mt-2">Sistem Manajemen Penjualan & Servis</p>
-        </div>
-
-        {/* Login Type Switcher */}
-        <div className="grid grid-cols-2 gap-2 bg-muted p-1 rounded-lg">
-          <Button
-            onClick={() => setLoginType('member')}
-            variant={loginType === 'member' ? 'default' : 'ghost'}
-            className="w-full"
-          >
-            <User className="mr-2 h-4 w-4" />
-            Member
-          </Button>
-          <Button
-            onClick={() => setLoginType('staff')}
-            variant={loginType === 'staff' ? 'default' : 'ghost'}
-            className="w-full"
-          >
-            <Building className="mr-2 h-4 w-4" />
-            Staf
-          </Button>
-        </div>
-
-        {/* Conditional Content */}
-        {loginType === 'staff' ? (
-          <>
-            <p className="text-center text-sm text-muted-foreground">
-              Silakan masuk untuk melanjutkan ke dasbor.
-            </p>
-            <Auth
-              supabaseClient={supabase}
-              providers={[]}
-              view={'sign_in'}
-              showLinks={false}
-              theme={authTheme}
-              localization={{
-                variables: {
-                  sign_in: {
-                    email_label: 'Email',
-                    password_label: 'Password',
-                    button_label: 'Masuk ke Sistem',
-                    email_input_placeholder: 'Email Anda',
-                    password_input_placeholder: 'Password Anda',
-                    loading_button_label: 'Memproses...',
-                    invalid_login_credentials: 'Email atau password yang Anda masukkan salah. Silakan coba lagi.',
-                  },
-                },
-              }}
-              appearance={{
-                theme: ThemeSupa,
-                variables: {
-                  default: {
-                    colors: {
-                      brand: 'hsl(0 84.2% 60.2%)',
-                      brandAccent: 'hsl(0 74.2% 50.2%)',
-                    },
-                  },
-                },
-                className: {
-                  input: 'bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600',
-                  button: 'py-3 text-base',
-                  label: 'text-sm font-medium',
-                }
-              }}
-            />
-          </>
-        ) : (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">
-              Masuk sebagai member untuk melihat riwayat transaksi dan status servis Anda.
-            </p>
-            <Button asChild size="lg" className="w-full">
-              <Link to="/member-login">Lanjutkan ke Login Member</Link>
-            </Button>
+          <img src={logoSrc} alt="Cellkom.Store Logo" className="h-24 w-auto mx-auto" />
+          <h1 className="text-3xl font-bold text-primary font-poppins">Cellkom.Store</h1>
+          <p className="text-gray-500 dark:text-gray-400 -mt-2">Pusat Service HP dan Komputer</p>
+          <div className="flex justify-center gap-2 pt-2">
+            <Link to="/member-login">
+              <Badge variant="secondary" className="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700">
+                <Star className="h-3 w-3 mr-1" /> Member
+              </Badge>
+            </Link>
+            <Badge variant="default"><ShoppingCart className="h-3 w-3 mr-1" /> Penjualan</Badge>
           </div>
+        </div>
+
+        {/* Supabase Auth UI */}
+        {!session ? (
+          <Auth
+            supabaseClient={supabase}
+            providers={[]}
+            view="sign_in"
+            showLinks={false}
+            theme={authTheme}
+            localization={{
+              variables: {
+                sign_in: {
+                  email_label: 'Email',
+                  password_label: 'Password',
+                  button_label: 'Masuk ke Sistem',
+                  email_input_placeholder: 'Email Anda',
+                  password_input_placeholder: 'Password Anda',
+                  loading_button_label: 'Memproses...',
+                },
+              },
+            }}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: 'hsl(0 84.2% 60.2%)',
+                    brandAccent: 'hsl(0 74.2% 50.2%)',
+                  },
+                },
+              },
+              className: {
+                input: 'bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600',
+              }
+            }}
+          />
+        ) : (
+          <p className="text-center">Mengarahkan ke dasbor...</p>
         )}
 
         {/* Footer */}
