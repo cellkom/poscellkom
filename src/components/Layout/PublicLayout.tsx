@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { UserCircle, Instagram, Menu, ShoppingCart } from "lucide-react";
+import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone } from "lucide-react";
 import logoSrc from '/logo.png';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -16,29 +16,29 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
   const { cartCount } = useCart();
 
   const navLinks = [
-    { name: "Layanan", href: "/#services" },
-    { name: "Toko", href: "/products" },
-    { name: "Tentang Kami", href: "/#about" },
-    { name: "Kontak", href: "/#contact" },
+    { name: "Layanan", href: "/#services", icon: Wrench },
+    { name: "Toko", href: "/products", icon: ShoppingCart },
+    { name: "Tentang Kami", href: "/#about", icon: Info },
+    { name: "Kontak", href: "/#contact", icon: Phone },
   ];
 
   return (
     <div className="bg-background text-foreground flex flex-col min-h-screen">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-          <Link to="/" className="flex items-center gap-3">
-            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-12 w-auto" />
-            <div className="hidden md:block">
-              <h1 className="text-xl font-bold font-poppins">
+          <Link to="/" className="flex items-center gap-2">
+            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-10 w-auto" />
+            <div>
+              <h1 className="text-lg md:text-xl font-bold font-poppins">
                 <span className="text-primary">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
               </h1>
-              <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
+              <p className="hidden md:block text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
             </div>
           </Link>
           
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
             {navLinks.map(link => (
-              <Link key={link.name} to={link.href} className="text-muted-foreground transition-colors hover:text-primary">
+              <Link key={link.name} to={link.href.startsWith('/#') ? link.href : `/${link.href.split('/').pop()}`} className="text-muted-foreground transition-colors hover:text-primary">
                 {link.name}
               </Link>
             ))}
@@ -79,7 +79,8 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                 <SheetContent side="right">
                   <nav className="grid gap-6 text-lg font-medium mt-8">
                     {navLinks.map(link => (
-                      <Link key={link.name} to={link.href} className="text-muted-foreground hover:text-foreground">
+                      <Link key={link.name} to={link.href} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
+                        <link.icon className="h-6 w-6" />
                         {link.name}
                       </Link>
                     ))}
