@@ -51,6 +51,10 @@ const MemberLoginPage = () => {
           </div>
         </div>
 
+        <p className="text-center text-sm text-muted-foreground px-4">
+          Daftarkan akun Anda dan nikmati kemudahan berbelanja sparepart berkualitas.
+        </p>
+
         <Auth
           supabaseClient={supabase}
           providers={[]}
