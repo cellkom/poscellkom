@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, UserCircle } from "lucide-react";
 import logoSrc from '/logo.png';
 
 const PublicPage = () => {
@@ -53,7 +54,7 @@ const PublicPage = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-          <Link to="/public" className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <img src={logoSrc} alt="CELLKOM Logo" className="h-12 w-auto" />
             <div>
               <h1 className="text-lg font-bold text-primary font-poppins">CELLKOM</h1>
@@ -61,9 +62,24 @@ const PublicPage = () => {
             </div>
           </Link>
           <div className="flex items-center gap-4">
-            <Button asChild>
-              <Link to="/login">Login Staff</Link>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <UserCircle className="h-6 w-6" />
+                  <span className="sr-only">Buka menu login</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Menu Login</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/login">Login Staff</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/login">Login Website</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
