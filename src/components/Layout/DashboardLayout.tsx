@@ -21,7 +21,7 @@ import {
   HardDrive,
   Info,
 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -70,7 +70,7 @@ const getInitials = (name: string) => {
 const NavContent = ({ isMobileNav = false }: { isMobileNav?: boolean }) => {
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState<string | null>(() => {
-    const activeParent = navItems.find(item => item.children?.some(child => child.path === location.pathname));
+    const activeParent = navItems.find(item => item.children?.some(child => location.pathname.startsWith(child.path!)));
     return activeParent?.name || null;
   });
 
@@ -84,7 +84,7 @@ const NavContent = ({ isMobileNav = false }: { isMobileNav?: boolean }) => {
                 variant="ghost"
                 className={cn(
                   "w-full justify-between hover:bg-primary-foreground/10",
-                  item.children.some(child => location.pathname === child.path) && "bg-primary-foreground/10",
+                  item.children.some(child => location.pathname.startsWith(child.path!)) && "bg-primary-foreground/10",
                   isMobileNav && "justify-start"
                 )}
               >
@@ -97,7 +97,7 @@ const NavContent = ({ isMobileNav = false }: { isMobileNav?: boolean }) => {
             </CollapsibleTrigger>
             <CollapsibleContent className="pl-6 pt-2 flex flex-col gap-1">
               {item.children.map((child) => (
-                <Button key={child.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname === child.path && "bg-primary-foreground/10", "justify-start")}>
+                <Button key={child.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname.startsWith(child.path!) && "bg-primary-foreground/10", "justify-start")}>
                   <Link to={child.path!} className="flex items-center gap-2">
                     <child.icon className="h-4 w-4" />
                     {child.name}
@@ -107,7 +107,7 @@ const NavContent = ({ isMobileNav = false }: { isMobileNav?: boolean }) => {
             </CollapsibleContent>
           </Collapsible>
         ) : (
-          <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname === item.path && "bg-primary-foreground/10", isMobileNav && "justify-start")}>
+          <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname.startsWith(item.path!) && "bg-primary-foreground/10", isMobileNav && "justify-start")}>
             <Link to={item.path!} className="flex items-center gap-2">
               <item.icon className="h-4 w-4" />
               {item.name}
