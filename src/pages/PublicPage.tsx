@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, UserCircle, Instagram, Menu } from "lucide-react";
+import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, UserCircle, Instagram, Menu, Code } from "lucide-react";
 import logoSrc from '/logo.png';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -15,6 +15,7 @@ const PublicPage = () => {
     { name: "Layanan", href: "#services" },
     { name: "Toko", href: "#products" },
     { name: "Tentang Kami", href: "#about" },
+    { name: "Layanan IT", href: "#it-services" },
     { name: "Berita", href: "#news" },
     { name: "Kontak", href: "#contact" },
   ];
@@ -218,8 +219,31 @@ const PublicPage = () => {
           </div>
         </section>
 
+        {/* IT Services Section */}
+        <section id="it-services" className="py-16 md:py-24 bg-background">
+          <div className="container px-4 md:px-6 text-center">
+            <div className="mx-auto max-w-3xl">
+              <div className="inline-block rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary mb-4">
+                <Code className="inline-block h-4 w-4 mr-2" />
+                Jasa Pembuatan Aplikasi
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Butuh Aplikasi Untuk Bisnis Anda?</h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Selain layanan servis, tim IT kami juga siap membantu mengembangkan solusi digital untuk bisnis Anda. Dapatkan aplikasi custom seperti sistem kasir, manajemen inventaris, atau website profil yang modern dan fungsional.
+              </p>
+              <div className="mt-8">
+                <Button size="lg" asChild>
+                  <a href="#contact">
+                    Konsultasi Gratis <ArrowRight className="ml-2 h-5 w-5" />
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* News Section */}
-        <section id="news" className="py-16 md:py-24 bg-background">
+        <section id="news" className="py-16 md:py-24 bg-secondary/50">
           <div className="container px-4 md:px-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Berita & Update</h2>
@@ -231,7 +255,7 @@ const PublicPage = () => {
       </main>
 
       {/* Footer */}
-      <footer id="contact" className="bg-secondary/50 text-muted-foreground pt-16 pb-8">
+      <footer id="contact" className="bg-background text-muted-foreground pt-16 pb-8">
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Segera Kunjungi Store Kami</h2>

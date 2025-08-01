@@ -32,8 +32,8 @@ const LoginPage = () => {
         
         {/* Header */}
         <div className="text-center space-y-4">
-          <img src={logoSrc} alt="CELLKOM Logo" className="h-24 w-auto mx-auto" />
-          <h1 className="text-3xl font-bold text-primary font-poppins">CELLKOM</h1>
+          <img src={logoSrc} alt="Cellkom.Store Logo" className="h-24 w-auto mx-auto" />
+          <h1 className="text-3xl font-bold text-primary font-poppins">Cellkom.Store</h1>
           <p className="text-gray-500 -mt-2">Pusat Service HP dan Komputer</p>
           <div className="flex justify-center gap-2 pt-2">
             <Badge variant="secondary"><Wrench className="h-3 w-3 mr-1" /> Service</Badge>
@@ -84,7 +84,7 @@ const LoginPage = () => {
             <div className="flex justify-center gap-4 text-xs text-gray-500">
                 <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-primary" /> Sistem Aman</span>
             </div>
-            <p className="text-xs text-gray-400">&copy; {new Date().getFullYear()} CELLKOM - management system</p>
+            <p className="text-xs text-gray-400">&copy; {new Date().getFullYear()} Cellkom.Store - management system</p>
         </div>
 
       </div>
