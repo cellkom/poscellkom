@@ -52,27 +52,19 @@ const PublicPage = () => {
     <PublicLayout>
       <main>
         {/* Hero Section */}
-        <section 
-          className="relative py-20 md:py-32 text-center text-white bg-gray-800"
-          style={{
-            backgroundImage: "url('/hero-background.jpg')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        >
-          <div className="absolute inset-0 bg-black/60 z-0"></div>
-          <div className="container relative z-10 px-4 md:px-6">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4">
+        <section className="py-20 md:py-32 text-center">
+          <div className="container px-4 md:px-6">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-primary to-orange-400">
               Solusi Total untuk Gadget & Komputer Anda
             </h1>
-            <p className="max-w-3xl mx-auto text-lg text-gray-200 mb-8">
+            <p className="max-w-3xl mx-auto text-lg text-muted-foreground mb-8">
               Dari perbaikan cepat hingga penjualan sparepart berkualitas, kami siap melayani semua kebutuhan teknologi Anda dengan profesional.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>
                 <a href="#services">Layanan Servis Kami <Wrench className="ml-2 h-5 w-5" /></a>
               </Button>
-              <Button size="lg" variant="outline" asChild className="border-white text-white hover:bg-white hover:text-black">
+              <Button size="lg" variant="outline" asChild>
                 <Link to="/products">Lihat Produk Unggulan <ArrowRight className="ml-2 h-5 w-5" /></Link>
               </Button>
             </div>
