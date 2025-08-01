@@ -68,7 +68,7 @@ const ProductsPage = () => {
             <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
             {filteredProducts.length > 0 ? (
               filteredProducts.map(product => (
                 <Card key={product.id} className="overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-2 flex flex-col">
@@ -81,22 +81,23 @@ const ProductsPage = () => {
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent className="p-4 space-y-3 flex-grow flex flex-col justify-between">
+                  <CardContent className="p-3 md:p-4 space-y-2 md:space-y-3 flex-grow flex flex-col justify-between">
                     <div>
                       <div className="flex justify-between items-start gap-2">
-                        <h3 className="font-semibold text-base line-clamp-2" title={product.name}>{product.name}</h3>
-                        <Badge variant="outline">{product.category}</Badge>
+                        <h3 className="font-semibold text-sm md:text-base line-clamp-2" title={product.name}>{product.name}</h3>
+                        <Badge variant="outline" className="text-xs shrink-0">{product.category}</Badge>
                       </div>
                       {product.stock > 0 ? (
-                        <Badge variant="secondary" className="mt-2">Stok: {product.stock}</Badge>
+                        <Badge variant="secondary" className="mt-2 text-xs">Stok: {product.stock}</Badge>
                       ) : (
-                        <Badge variant="destructive" className="mt-2">Stok Habis</Badge>
+                        <Badge variant="destructive" className="mt-2 text-xs">Stok Habis</Badge>
                       )}
                     </div>
-                    <div className="pt-3">
-                      <p className="text-xl font-bold text-primary">{formatCurrency(product.retailPrice)}</p>
-                      <Button className="w-full mt-3" disabled={product.stock <= 0} onClick={() => handleAddToCart(product)}>
-                        Tambah ke Keranjang <ShoppingCart className="ml-2 h-4 w-4" />
+                    <div className="pt-2 md:pt-3">
+                      <p className="text-lg md:text-xl font-bold text-primary">{formatCurrency(product.retailPrice)}</p>
+                      <Button size="sm" className="w-full mt-2 md:mt-3" disabled={product.stock <= 0} onClick={() => handleAddToCart(product)}>
+                        <span className="hidden sm:inline">Tambah</span>
+                        <ShoppingCart className="sm:ml-2 h-4 w-4" />
                       </Button>
                     </div>
                   </CardContent>
