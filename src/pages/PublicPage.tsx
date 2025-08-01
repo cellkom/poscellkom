@@ -2,10 +2,22 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, UserCircle, Instagram } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, UserCircle, Instagram, Menu } from "lucide-react";
 import logoSrc from '/logo.png';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const PublicPage = () => {
+  const isMobile = useIsMobile();
+
+  const navLinks = [
+    { name: "Layanan", href: "#services" },
+    { name: "Toko", href: "#products" },
+    { name: "Tentang Kami", href: "#about" },
+    { name: "Berita", href: "#news" },
+    { name: "Kontak", href: "#contact" },
+  ];
+
   const services = [
     {
       icon: Smartphone,
@@ -56,12 +68,21 @@ const PublicPage = () => {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link to="/" className="flex items-center gap-3">
             <img src={logoSrc} alt="CELLKOM Logo" className="h-12 w-auto" />
-            <div>
+            <div className="hidden md:block">
               <h1 className="text-lg font-bold text-primary font-poppins">CELLKOM</h1>
               <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
             </div>
           </Link>
-          <div className="flex items-center gap-4">
+          
+          <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
+            {navLinks.map(link => (
+              <a key={link.name} href={link.href} className="text-muted-foreground transition-colors hover:text-primary">
+                {link.name}
+              </a>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -80,6 +101,26 @@ const PublicPage = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {isMobile && (
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Buka menu navigasi</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right">
+                  <nav className="grid gap-6 text-lg font-medium mt-8">
+                    {navLinks.map(link => (
+                      <a key={link.name} href={link.href} className="text-muted-foreground hover:text-foreground">
+                        {link.name}
+                      </a>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            )}
           </div>
         </div>
       </header>
@@ -166,10 +207,31 @@ const PublicPage = () => {
             </div>
           </div>
         </section>
+
+        {/* About Us Section */}
+        <section id="about" className="py-16 md:py-24 bg-background">
+          <div className="container px-4 md:px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tentang Kami</h2>
+              <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">CELLKOM adalah pusat layanan terpadu untuk perbaikan dan penjualan sparepart smartphone, komputer, dan laptop. Berdiri sejak tahun 2024, kami berkomitmen untuk memberikan solusi teknologi yang cepat, andal, dan terjangkau bagi masyarakat.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* News Section */}
+        <section id="news" className="py-16 md:py-24 bg-secondary/50">
+          <div className="container px-4 md:px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Berita & Update</h2>
+              <p className="mt-4 text-lg text-muted-foreground">Informasi dan berita terbaru dari kami.</p>
+              <p className="mt-4 text-muted-foreground">Segera hadir...</p>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
-      <footer className="bg-background text-muted-foreground">
+      <footer id="contact" className="bg-background text-muted-foreground">
         <div className="container mx-auto px-4 md:px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Column 1: Logo & About */}
@@ -189,8 +251,8 @@ const PublicPage = () => {
               <ul className="space-y-2 text-sm">
                 <li><a href="#services" className="hover:text-primary transition-colors">Layanan</a></li>
                 <li><a href="#products" className="hover:text-primary transition-colors">Toko</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Tentang Kami</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Berita</a></li>
+                <li><a href="#about" className="hover:text-primary transition-colors">Tentang Kami</a></li>
+                <li><a href="#news" className="hover:text-primary transition-colors">Berita</a></li>
               </ul>
             </div>
 
