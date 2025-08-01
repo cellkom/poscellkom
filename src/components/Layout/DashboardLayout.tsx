@@ -146,7 +146,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <div className="mb-6">
                     <Link to="/dashboard" className="flex items-center gap-3">
                       <img src={logoSrc} alt="CELLKOM Logo" className="h-12 w-auto" />
-                      <h1 className="text-2xl font-bold text-primary tracking-tighter">CELLKOM</h1>
+                      <div>
+                        <h1 className="text-lg font-bold text-primary font-poppins">CELLKOM</h1>
+                        <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
+                      </div>
                     </Link>
                   </div>
                   <nav className="flex flex-col space-y-1">{renderNavLinks(true)}</nav>
@@ -155,7 +158,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             )}
             <Link to="/dashboard" className="flex items-center gap-3">
               <img src={logoSrc} alt="CELLKOM Logo" className="h-10 w-auto" />
-              <h1 className="hidden md:block text-2xl font-bold text-primary tracking-tighter">CELLKOM</h1>
+              <div className="hidden md:block">
+                <h1 className="text-lg font-bold text-primary font-poppins">CELLKOM</h1>
+                <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
+              </div>
             </Link>
           </div>
           {!isMobile && <nav className="hidden md:flex items-center space-x-1">{renderNavLinks()}</nav>}

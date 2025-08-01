@@ -55,7 +55,10 @@ const PublicPage = () => {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link to="/public" className="flex items-center gap-3">
             <img src={logoSrc} alt="CELLKOM Logo" className="h-10 w-auto" />
-            <h1 className="text-2xl font-bold text-primary tracking-tighter">CELLKOM</h1>
+            <div>
+              <h1 className="text-lg font-bold text-primary font-poppins">CELLKOM</h1>
+              <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
+            </div>
           </Link>
           <div className="flex items-center gap-4">
             <Button asChild>
