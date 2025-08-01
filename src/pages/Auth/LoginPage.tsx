@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
@@ -55,8 +55,10 @@ const LoginPage = () => {
         
         {/* Header */}
         <div className="text-center space-y-4">
-          <img src={logoSrc} alt="Cellkom.Store Logo" className="h-24 w-auto mx-auto" />
-          <h1 className="text-3xl font-bold text-primary font-poppins">Cellkom.Store</h1>
+          <Link to="/" className="inline-block cursor-pointer group">
+            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-24 w-auto mx-auto transition-transform group-hover:scale-105" />
+            <h1 className="text-3xl font-bold text-primary font-poppins transition-colors group-hover:text-primary/90">Cellkom.Store</h1>
+          </Link>
           <p className="text-gray-500 dark:text-gray-400 -mt-2">Pusat Service HP dan Komputer</p>
           
           {/* Auth Mode Toggle */}
