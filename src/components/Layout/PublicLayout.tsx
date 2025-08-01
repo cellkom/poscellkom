@@ -95,6 +95,17 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
 
       <footer id="contact" className="bg-background text-muted-foreground pt-16 pb-8 border-t">
         <div className="container mx-auto px-4 md:px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+              Segera Kunjungi Store Kami
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+              Kami siap membantu Anda dengan layanan terbaik.
+            </p>
+            <div className="mt-6 flex justify-center">
+              <div className="w-24 h-1 bg-primary rounded-full"></div>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="space-y-4">
               <Link to="/" className="flex items-center gap-3">
