@@ -145,11 +145,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <SheetContent side="left" className="w-64 p-4">
                   <div className="mb-6">
                     <Link to="/dashboard" className="flex items-center gap-3">
-                      <img src={logoSrc} alt="Cellkom.Store Logo" className="h-12 w-auto" />
-                      <div>
-                        <h1 className="text-lg font-bold text-primary font-poppins">Cellkom.Store</h1>
-                        <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
-                      </div>
+                      <img src={logoSrc} alt="Cellkom.Store Logo" className="h-10 w-auto" />
                     </Link>
                   </div>
                   <nav className="flex flex-col space-y-1">{renderNavLinks(true)}</nav>
@@ -157,11 +153,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </Sheet>
             )}
             <Link to="/dashboard" className="flex items-center gap-3">
-              <img src={logoSrc} alt="Cellkom.Store Logo" className="h-12 w-auto" />
-              <div className="hidden md:block">
-                <h1 className="text-lg font-bold text-primary font-poppins">Cellkom.Store</h1>
-                <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
-              </div>
+              <img src={logoSrc} alt="Cellkom.Store Logo" className="h-10 w-auto" />
             </Link>
           </div>
           {!isMobile && <nav className="hidden md:flex items-center space-x-1">{renderNavLinks()}</nav>}
