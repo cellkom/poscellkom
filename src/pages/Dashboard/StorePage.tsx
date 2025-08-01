@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useStock } from "@/hooks/use-stock";
-import { Loader2, Search, ShoppingCart } from "lucide-react";
+import { Loader2, Search, ShoppingCart, ImageIcon } from "lucide-react";
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
@@ -53,8 +53,12 @@ const StorePage = () => {
               filteredProducts.map(product => (
                 <Card key={product.id} className="overflow-hidden group transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                   <CardHeader className="p-0">
-                    <div className="bg-muted aspect-square flex items-center justify-center">
-                      <ShoppingCart className="h-16 w-16 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
+                    <div className="bg-muted aspect-square flex items-center justify-center overflow-hidden">
+                      {product.imageUrl ? (
+                        <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                      ) : (
+                        <ImageIcon className="h-16 w-16 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className="p-4 space-y-2">
