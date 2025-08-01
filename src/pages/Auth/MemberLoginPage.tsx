@@ -1,19 +1,32 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/components/ThemeProvider';
-import { ShieldCheck, Star, ShoppingCart } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { showSuccess, showError } from '@/utils/toast';
 import logoSrc from '/logo.png';
+import { Loader2, Star, ShoppingCart } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const MemberLoginPage = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const { theme } = useTheme();
-  const [authTheme, setAuthTheme] = useState<'light' | 'dark'>('light');
+  const [loading, setLoading] = useState(false);
+
+  // State for sign-in form
+  const [signInEmail, setSignInEmail] = useState('');
+  const [signInPassword, setSignInPassword] = useState('');
+
+  // State for sign-up form
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
 
   useEffect(() => {
     if (session) {
@@ -21,28 +34,56 @@ const MemberLoginPage = () => {
     }
   }, [session, navigate]);
 
-  useEffect(() => {
-    const getEffectiveTheme = () => {
-      if (theme === 'system') {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      }
-      return theme;
-    };
-    setAuthTheme(getEffectiveTheme());
-  }, [theme]);
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: signInEmail,
+      password: signInPassword,
+    });
+    if (error) {
+      showError(error.message);
+    } else {
+      navigate('/products');
+    }
+    setLoading(false);
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email: signUpEmail,
+      password: signUpPassword,
+      options: {
+        data: {
+          full_name: fullName,
+          phone: phone,
+          address: address,
+          is_member: 'true', // Marker for the trigger
+        },
+      },
+    });
+    if (error) {
+      showError(error.message);
+    } else {
+      showSuccess('Pendaftaran berhasil! Silakan cek email Anda untuk verifikasi.');
+    }
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6">
-        <div className="text-center space-y-4">
-          <Link to="/">
-            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-24 w-auto mx-auto" />
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <Link to="/" className="inline-block">
+            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-20 w-auto mx-auto" />
           </Link>
-          <h1 className="text-3xl font-bold font-poppins">
+          <CardTitle className="text-2xl font-bold font-poppins mt-2">
             <span className="text-primary">Cellkom</span>
             <span className="font-semibold text-muted-foreground">.Store</span>
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 -mt-2">Pusat Service HP dan Komputer</p>
+          </CardTitle>
+          <CardDescription>Akun Member</CardDescription>
           <div className="flex justify-center gap-2 pt-2">
             <Badge variant="default"><Star className="h-3 w-3 mr-1" /> Member</Badge>
             <Link to="/login">
@@ -51,64 +92,60 @@ const MemberLoginPage = () => {
               </Badge>
             </Link>
           </div>
-        </div>
-
-        <p className="text-center text-sm text-muted-foreground px-4">
-          Daftarkan akun Anda dan nikmati kemudahan berbelanja sparepart berkualitas.
-        </p>
-
-        <Auth
-          supabaseClient={supabase}
-          providers={[]}
-          view="sign_in"
-          showLinks={true}
-          theme={authTheme}
-          localization={{
-            variables: {
-              sign_in: {
-                email_label: 'Email',
-                password_label: 'Password',
-                button_label: 'Masuk',
-                link_text: 'Sudah punya akun? Masuk',
-              },
-              sign_up: {
-                email_label: 'Email',
-                password_label: 'Password',
-                button_label: 'Daftar Sekarang',
-                link_text: 'Belum punya akun? Daftar',
-                email_input_placeholder: 'Email Anda',
-                password_input_placeholder: 'Buat Password Anda',
-              },
-              forgotten_password: {
-                email_label: 'Email',
-                button_label: 'Kirim instruksi reset password',
-                link_text: 'Lupa password?',
-              }
-            },
-          }}
-          appearance={{
-            theme: ThemeSupa,
-            variables: {
-              default: {
-                colors: {
-                  brand: 'hsl(0 84.2% 60.2%)',
-                  brandAccent: 'hsl(0 74.2% 50.2%)',
-                },
-              },
-            },
-            className: {
-              input: 'bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600',
-            }
-          }}
-        />
-
-        <div className="text-center space-y-3 pt-4 border-t dark:border-gray-700">
-          <div className="flex justify-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-            <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-primary" /> Transaksi Aman</span>
-          </div>
-          <p className="text-xs text-gray-400 dark:text-gray-500">&copy; {new Date().getFullYear()} Cellkom.Store</p>
-        </div>
-      </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="signin" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="signin">Masuk</TabsTrigger>
+              <TabsTrigger value="signup">Daftar</TabsTrigger>
+            </TabsList>
+            <TabsContent value="signin">
+              <form onSubmit={handleSignIn} className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signin-email">Email</Label>
+                  <Input id="signin-email" type="email" placeholder="email@anda.com" required value={signInEmail} onChange={(e) => setSignInEmail(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signin-password">Password</Label>
+                  <Input id="signin-password" type="password" required value={signInPassword} onChange={(e) => setSignInPassword(e.target.value)} />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Masuk
+                </Button>
+              </form>
+            </TabsContent>
+            <TabsContent value="signup">
+              <form onSubmit={handleSignUp} className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-fullname">Nama Lengkap</Label>
+                  <Input id="signup-fullname" placeholder="Nama Lengkap Anda" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input id="signup-email" type="email" placeholder="email@anda.com" required value={signUpEmail} onChange={(e) => setSignUpEmail(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <Input id="signup-password" type="password" placeholder="Buat password" required value={signUpPassword} onChange={(e) => setSignUpPassword(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-phone">Nomor HP</Label>
+                  <Input id="signup-phone" placeholder="0812..." value={phone} onChange={(e) => setPhone(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-address">Alamat</Label>
+                  <Input id="signup-address" placeholder="Alamat lengkap" value={address} onChange={(e) => setAddress(e.target.value)} />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Daftar Sekarang
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };
