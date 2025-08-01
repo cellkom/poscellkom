@@ -1,12 +1,13 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
+import MemberRoute from './components/MemberRoute';
 import { Toaster } from './components/ui/sonner';
 import { ThemeProvider } from './components/ThemeProvider';
 
+import HomePage from './pages/HomePage';
 import LoginPage from './pages/Auth/LoginPage';
-import PublicPage from './pages/PublicPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import StockPage from './pages/Dashboard/StockPage';
 import StorePage from './pages/Dashboard/StorePage';
@@ -25,6 +26,10 @@ import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
 import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
 import NotFound from './pages/NotFound';
 
+// Member Pages
+import MemberHomePage from './pages/Member/MemberHomePage';
+import OrderPage from './pages/Member/OrderPage';
+
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -32,9 +37,10 @@ function App() {
         <AuthProvider>
           <Toaster richColors position="top-center" />
           <Routes>
-            <Route path="/" element={<PublicPage />} />
+            <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             
+            {/* Rute Staf/Admin */}
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/dashboard/store" element={<StorePage />} />
@@ -55,6 +61,14 @@ function App() {
               <Route element={<AdminRoute />}>
                 <Route path="/dashboard/users" element={<UsersPage />} />
               </Route>
+            </Route>
+
+            {/* Rute Member */}
+            <Route element={<MemberRoute />}>
+                <Route path="/member/home" element={<MemberHomePage />} />
+                <Route path="/member/order/:orderId" element={<OrderPage />} />
+                {/* Placeholder untuk halaman riwayat pesanan di masa depan */}
+                <Route path="/member/orders" element={<OrderPage />} /> 
             </Route>
 
             <Route path="*" element={<NotFound />} />

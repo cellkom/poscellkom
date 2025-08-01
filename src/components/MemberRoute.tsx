@@ -2,8 +2,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Outlet } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
-const ProtectedRoute = () => {
-  const { user, loading, profile } = useAuth();
+const MemberRoute = () => {
+  const { profile, loading, user } = useAuth();
 
   if (loading) {
     return (
@@ -17,13 +17,12 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Jika pengguna adalah member, arahkan dari dasbor staf
-  if (profile?.role === 'Member') {
-    return <Navigate to="/member/home" replace />;
+  if (profile?.role === 'Admin' || profile?.role === 'Kasir') {
+    return <Navigate to="/dashboard" replace />;
   }
 
-  // Izinkan Admin dan Kasir
+  // Asumsikan pengguna login lainnya adalah 'Member'
   return <Outlet />;
 };
 
-export default ProtectedRoute;
+export default MemberRoute;

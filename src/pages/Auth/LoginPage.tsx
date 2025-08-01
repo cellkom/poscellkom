@@ -5,22 +5,27 @@ import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/components/ThemeProvider';
-import { ShoppingCart, ShieldCheck, Star } from 'lucide-react';
+import { ShoppingCart, ShieldCheck, Star, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logoSrc from '/logo.png';
 
 const LoginPage = () => {
-  const { session, loading } = useAuth();
+  const { session, profile, loading } = useAuth();
   const navigate = useNavigate();
   const { theme } = useTheme();
   const [authTheme, setAuthTheme] = useState<'light' | 'dark'>('light');
-  const [authMode, setAuthMode] = useState<'staff' | 'member'>('member'); // 'staff' for Penjualan
+  const [authMode, setAuthMode] = useState<'member' | 'staff'>('member');
 
   useEffect(() => {
-    if (session) {
-      navigate('/dashboard');
+    // Efek ini menangani pengalihan setelah profil pengguna dimuat
+    if (!loading && profile) {
+      if (profile.role === 'Admin' || profile.role === 'Kasir') {
+        navigate('/dashboard', { replace: true });
+      } else if (profile.role === 'Member') {
+        navigate('/member/home', { replace: true });
+      }
     }
-  }, [session, navigate]);
+  }, [session, profile, loading, navigate]);
 
   useEffect(() => {
     const getEffectiveTheme = () => {
@@ -41,10 +46,10 @@ const LoginPage = () => {
     }
   }, [theme]);
 
-  if (loading && !session) {
+  if (loading || session) {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-            <div className="text-gray-800 dark:text-gray-200 text-2xl font-semibold">Loading...</div>
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
     );
   }
@@ -81,8 +86,7 @@ const LoginPage = () => {
         </div>
 
         {/* Supabase Auth UI */}
-        {!session ? (
-          <>
+        <>
             <p className="text-center text-sm text-muted-foreground">
               {authMode === 'member' ? 'Daftar atau masuk sebagai Member untuk memesan layanan.' : 'Silakan masuk untuk melanjutkan.'}
             </p>
@@ -133,9 +137,6 @@ const LoginPage = () => {
               }}
             />
           </>
-        ) : (
-          <p className="text-center">Mengarahkan ke dasbor...</p>
-        )}
 
         {/* Footer */}
         <div className="text-center space-y-3 pt-4 border-t dark:border-gray-700">
