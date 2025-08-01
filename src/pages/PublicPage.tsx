@@ -169,14 +169,14 @@ const PublicPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-300">
+      <footer className="bg-background text-muted-foreground">
         <div className="container mx-auto px-4 md:px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Column 1: Logo & About */}
             <div className="space-y-4">
               <Link to="/" className="flex items-center gap-3">
                 <img src={logoSrc} alt="CELLKOM Logo" className="h-8 w-auto" />
-                <span className="text-xl font-bold text-white font-poppins">CELLKOM</span>
+                <span className="text-xl font-bold text-foreground font-poppins">CELLKOM</span>
               </Link>
               <p className="text-sm">
                 Pusat Servis HP dan Komputer Terpercaya. Cepat, Profesional, dan Bergaransi.
@@ -185,7 +185,7 @@ const PublicPage = () => {
 
             {/* Column 2: Navigasi */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Navigasi</h3>
+              <h3 className="text-lg font-semibold text-foreground">Navigasi</h3>
               <ul className="space-y-2 text-sm">
                 <li><a href="#services" className="hover:text-primary transition-colors">Layanan</a></li>
                 <li><a href="#products" className="hover:text-primary transition-colors">Toko</a></li>
@@ -196,7 +196,7 @@ const PublicPage = () => {
 
             {/* Column 3: Kontak */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Kontak</h3>
+              <h3 className="text-lg font-semibold text-foreground">Kontak</h3>
               <address className="space-y-2 text-sm not-italic">
                 <p>Jorong Kampung Baru, Muaro Paiti, Kec. Kapur IX</p>
                 <p>Email: <a href="mailto:ckcellkom@gmail.com" className="hover:text-primary transition-colors">ckcellkom@gmail.com</a></p>
@@ -206,7 +206,7 @@ const PublicPage = () => {
 
             {/* Column 4: Ikuti Kami */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Ikuti Kami</h3>
+              <h3 className="text-lg font-semibold text-foreground">Ikuti Kami</h3>
               <p className="text-sm">Dapatkan info terbaru dan promo menarik.</p>
               <div className="flex space-x-4">
                 <a href="#" aria-label="Instagram" className="hover:text-primary transition-colors">
@@ -216,8 +216,8 @@ const PublicPage = () => {
             </div>
           </div>
         </div>
-        <div className="border-t border-slate-700">
-          <div className="container mx-auto px-4 md:px-6 py-4 text-center text-sm text-slate-400">
+        <div className="border-t border-border">
+          <div className="container mx-auto px-4 md:px-6 py-4 text-center text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Cellkomtech. All Rights Reserved.
           </div>
         </div>
