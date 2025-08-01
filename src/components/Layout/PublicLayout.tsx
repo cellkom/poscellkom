@@ -18,8 +18,6 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
   const navLinks = [
     { name: "Layanan", href: "/#services" },
     { name: "Toko", href: "/products" },
-    { name: "Layanan IT", href: "/#it-services" },
-    { name: "Berita", href: "/#news" },
     { name: "Tentang Kami", href: "/#about" },
     { name: "Kontak", href: "/#contact" },
   ];
@@ -40,9 +38,9 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
           
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
             {navLinks.map(link => (
-              <a key={link.name} href={link.href} className="text-muted-foreground transition-colors hover:text-primary">
+              <Link key={link.name} to={link.href} className="text-muted-foreground transition-colors hover:text-primary">
                 {link.name}
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -81,9 +79,9 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                 <SheetContent side="right">
                   <nav className="grid gap-6 text-lg font-medium mt-8">
                     {navLinks.map(link => (
-                      <a key={link.name} href={link.href} className="text-muted-foreground hover:text-foreground">
+                      <Link key={link.name} to={link.href} className="text-muted-foreground hover:text-foreground">
                         {link.name}
-                      </a>
+                      </Link>
                     ))}
                   </nav>
                 </SheetContent>
@@ -112,11 +110,10 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">Navigasi</h3>
               <ul className="space-y-2 text-sm">
-                {navLinks.map(link => (
-                  <li key={link.name}>
-                    <a href={link.href} className="hover:text-primary transition-colors">{link.name}</a>
-                  </li>
-                ))}
+                <li><a href="/#services" className="hover:text-primary transition-colors">Layanan</a></li>
+                <li><Link to="/products" className="hover:text-primary transition-colors">Toko</Link></li>
+                <li><a href="/#about" className="hover:text-primary transition-colors">Tentang Kami</a></li>
+                <li><a href="/#news" className="hover:text-primary transition-colors">Berita</a></li>
               </ul>
             </div>
             <div className="space-y-4">
