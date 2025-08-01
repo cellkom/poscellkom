@@ -1,67 +1,51 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import AdminRoute from './components/AdminRoute';
-import { Toaster } from './components/ui/sonner';
-import { ThemeProvider } from './components/ThemeProvider';
-
-import LoginPage from './pages/Auth/LoginPage';
-import PublicPage from './pages/PublicPage';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { SessionProvider, useSession } from './contexts/SessionContext';
+import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
+import SalesPage from './pages/Dashboard/SalesPage';
 import StockPage from './pages/Dashboard/StockPage';
-import StorePage from './pages/Dashboard/StorePage';
-import SalesPage from './pages/Dashboard/Transaction/SalesPage';
-import ServicePage from './pages/Dashboard/Transaction/ServicePage';
-import InstallmentPage from './pages/Dashboard/Transaction/InstallmentPage';
-import AddInstallmentPage from './pages/Dashboard/Transaction/AddInstallmentPage';
-import CustomerPage from './pages/Dashboard/Data/CustomerPage';
-import SupplierPage from './pages/Dashboard/Data/SupplierPage';
+import ServicePage from './pages/Dashboard/ServicePage';
 import ReportsPage from './pages/Dashboard/ReportsPage';
-import SalesReportPage from './pages/Dashboard/Reports/SalesReportPage';
-import ServiceReportPage from './pages/Dashboard/Reports/ServiceReportPage';
-import TodayReportPage from './pages/Dashboard/Reports/TodayReportPage';
-import UsersPage from './pages/Dashboard/UsersPage';
-import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
-import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
-import NotFound from './pages/NotFound';
+import SettingsPage from './pages/Dashboard/SettingsPage';
+import CustomersPage from './pages/Dashboard/CustomersPage';
+import SuppliersPage from './pages/Dashboard/SuppliersPage';
+import InstallmentsPage from './pages/Dashboard/InstallmentsPage';
+
+const AppRoutes = () => {
+  const { session, loading } = useSession();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-lg">Memuat...</div>
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route path="/login" element={!session ? <LoginPage /> : <Navigate to="/dashboard" />} />
+      <Route path="/dashboard" element={session ? <DashboardPage /> : <Navigate to="/login" />} />
+      <Route path="/dashboard/sales" element={session ? <SalesPage /> : <Navigate to="/login" />} />
+      <Route path="/dashboard/stock" element={session ? <StockPage /> : <Navigate to="/login" />} />
+      <Route path="/dashboard/service" element={session ? <ServicePage /> : <Navigate to="/login" />} />
+      <Route path="/dashboard/reports" element={session ? <ReportsPage /> : <Navigate to="/login" />} />
+      <Route path="/dashboard/settings" element={session ? <SettingsPage /> : <Navigate to="/login" />} />
+      <Route path="/dashboard/customers" element={session ? <CustomersPage /> : <Navigate to="/login" />} />
+      <Route path="/dashboard/suppliers" element={session ? <SuppliersPage /> : <Navigate to="/login" />} />
+      <Route path="/dashboard/installments" element={session ? <InstallmentsPage /> : <Navigate to="/login" />} />
+      <Route path="/" element={<Navigate to={session ? "/dashboard" : "/login"} />} />
+    </Routes>
+  );
+};
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <BrowserRouter>
-        <AuthProvider>
-          <Toaster richColors position="top-center" />
-          <Routes>
-            <Route path="/" element={<PublicPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/dashboard/store" element={<StorePage />} />
-              <Route path="/dashboard/stock" element={<StockPage />} />
-              <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
-              <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
-              <Route path="/dashboard/transaction/service" element={<ServicePage />} />
-              <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
-              <Route path="/dashboard/transaction/add-installment" element={<AddInstallmentPage />} />
-              <Route path="/dashboard/data/customers" element={<CustomerPage />} />
-              <Route path="/dashboard/data/suppliers" element={<SupplierPage />} />
-              <Route path="/dashboard/reports" element={<ReportsPage />} />
-              <Route path="/dashboard/reports/sales" element={<SalesReportPage />} />
-              <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
-              <Route path="/dashboard/reports/today" element={<TodayReportPage />} />
-              <Route path="/dashboard/services-in-progress" element={<ServicesInProgressPage />} />
-              
-              <Route element={<AdminRoute />}>
-                <Route path="/dashboard/users" element={<UsersPage />} />
-              </Route>
-            </Route>
-
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+    <Router>
+      <SessionProvider>
+        <AppRoutes />
+      </SessionProvider>
+    </Router>
   );
 }
 
