@@ -36,7 +36,10 @@ const MemberLoginPage = () => {
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6">
         <div className="text-center space-y-4">
           <img src={logoSrc} alt="Cellkom.Store Logo" className="h-24 w-auto mx-auto" />
-          <h1 className="text-3xl font-bold text-primary font-poppins">Cellkom.Store</h1>
+          <h1 className="text-3xl font-bold font-poppins">
+            <span className="text-primary">Cellkom</span>
+            <span className="font-semibold text-muted-foreground">.Store</span>
+          </h1>
           <p className="text-gray-500 dark:text-gray-400 -mt-2">Pusat Service HP dan Komputer</p>
           <div className="flex justify-center gap-2 pt-2">
             <Badge variant="default"><Star className="h-3 w-3 mr-1" /> Member</Badge>
