@@ -193,10 +193,16 @@ const PublicPage = () => {
           </div>
         </section>
 
-        {/* Why Choose Us Section */}
-        <section className="py-16 md:py-24 bg-secondary/50">
+        {/* About Us Section */}
+        <section id="about" className="py-16 md:py-24 bg-secondary/50">
           <div className="container px-4 md:px-6">
-            <div className="grid md:grid-cols-3 gap-12 text-center">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tentang Kami</h2>
+              <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
+                CELLKOM adalah pusat layanan terpadu untuk perbaikan dan penjualan sparepart smartphone, komputer, dan laptop. Berdiri sejak tahun 2024, kami berkomitmen untuk memberikan solusi teknologi yang cepat, andal, dan terjangkau bagi masyarakat.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-12 text-center mt-16">
               {features.map((feature) => (
                 <div key={feature.title} className="flex flex-col items-center">
                   <feature.icon className="h-10 w-10 mb-4 text-primary" />
@@ -208,18 +214,8 @@ const PublicPage = () => {
           </div>
         </section>
 
-        {/* About Us Section */}
-        <section id="about" className="py-16 md:py-24 bg-background">
-          <div className="container px-4 md:px-6">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tentang Kami</h2>
-              <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">CELLKOM adalah pusat layanan terpadu untuk perbaikan dan penjualan sparepart smartphone, komputer, dan laptop. Berdiri sejak tahun 2024, kami berkomitmen untuk memberikan solusi teknologi yang cepat, andal, dan terjangkau bagi masyarakat.</p>
-            </div>
-          </div>
-        </section>
-
         {/* News Section */}
-        <section id="news" className="py-16 md:py-24 bg-secondary/50">
+        <section id="news" className="py-16 md:py-24 bg-background">
           <div className="container px-4 md:px-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Berita & Update</h2>
