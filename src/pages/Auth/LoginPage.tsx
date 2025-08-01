@@ -14,7 +14,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const [authTheme, setAuthTheme] = useState<'light' | 'dark'>('light');
-  const [authMode, setAuthMode] = useState<'staff' | 'member'>('staff'); // 'staff' for Penjualan
+  const [authMode, setAuthMode] = useState<'staff' | 'member'>('member'); // 'staff' for Penjualan
 
   useEffect(() => {
     if (session) {
