@@ -15,6 +15,7 @@ export interface Product {
   barcode: string;
   supplierId: string | null;
   entryDate: string;
+  imageUrl: string | null;
 }
 
 // Interface ini merepresentasikan skema di database (snake_case)
@@ -30,6 +31,7 @@ interface DbProduct {
   barcode: string;
   supplier_id: string | null;
   entry_date: string;
+  image_url: string | null;
 }
 
 // Fungsi untuk mengubah format dari database ke format aplikasi
@@ -45,6 +47,7 @@ const fromDbProduct = (dbProduct: DbProduct): Product => ({
   barcode: dbProduct.barcode,
   supplierId: dbProduct.supplier_id,
   entryDate: dbProduct.entry_date,
+  imageUrl: dbProduct.image_url,
 });
 
 // Fungsi untuk mengubah format dari aplikasi ke format database
@@ -59,7 +62,31 @@ const toDbProduct = (product: Partial<Omit<Product, 'id' | 'createdAt'>>) => {
   if (product.barcode !== undefined) dbProduct.barcode = product.barcode;
   if (product.supplierId !== undefined) dbProduct.supplier_id = product.supplierId;
   if (product.entryDate !== undefined) dbProduct.entry_date = product.entryDate;
+  if (product.imageUrl !== undefined) dbProduct.image_url = product.imageUrl;
   return dbProduct;
+};
+
+const uploadProductImage = async (imageFile: File): Promise<string | null> => {
+  if (!imageFile) return null;
+
+  const fileExt = imageFile.name.split('.').pop();
+  const fileName = `${Date.now()}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  const { error: uploadError, data } = await supabase.storage
+    .from('product-images')
+    .upload(filePath, imageFile);
+
+  if (uploadError) {
+    showError(`Gagal mengunggah gambar: ${uploadError.message}`);
+    return null;
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('product-images')
+    .getPublicUrl(data.path);
+
+  return publicUrl;
 };
 
 
@@ -110,8 +137,14 @@ export const useStock = () => {
     };
   }, []);
 
-  const addProduct = async (newProductData: Omit<Product, 'id' | 'createdAt'>) => {
-    const dbData = toDbProduct(newProductData);
+  const addProduct = async (newProductData: Omit<Product, 'id' | 'createdAt' | 'imageUrl'>, imageFile: File | null) => {
+    let imageUrl: string | null = null;
+    if (imageFile) {
+      imageUrl = await uploadProductImage(imageFile);
+      if (!imageUrl) return null; // Stop if upload fails
+    }
+
+    const dbData = toDbProduct({ ...newProductData, imageUrl });
     const { data, error } = await supabase
       .from('products')
       .insert(dbData)
@@ -127,8 +160,24 @@ export const useStock = () => {
     return data ? fromDbProduct(data) : null;
   };
 
-  const updateProduct = async (id: string, updatedFields: Partial<Omit<Product, 'id' | 'createdAt'>>) => {
-    const dbData = toDbProduct(updatedFields);
+  const updateProduct = async (id: string, updatedFields: Partial<Omit<Product, 'id' | 'createdAt'>>, imageFile: File | null) => {
+    let imageUrl = updatedFields.imageUrl;
+
+    if (imageFile) {
+      const newImageUrl = await uploadProductImage(imageFile);
+      if (newImageUrl) {
+        imageUrl = newImageUrl;
+        const oldImageUrl = products.find(p => p.id === id)?.imageUrl;
+        if (oldImageUrl) {
+          const oldImageName = oldImageUrl.split('/').pop();
+          if (oldImageName) {
+            await supabase.storage.from('product-images').remove([oldImageName]);
+          }
+        }
+      }
+    }
+
+    const dbData = toDbProduct({ ...updatedFields, imageUrl });
     const { data, error } = await supabase
       .from('products')
       .update(dbData)
@@ -188,7 +237,6 @@ export const useStock = () => {
     if (entryDate) {
         updateData.entry_date = entryDate;
     }
-    // Check for undefined to allow setting supplier to null
     if (supplierId !== undefined) {
         updateData.supplier_id = supplierId;
     }

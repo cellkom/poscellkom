@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useStock, Product } from "@/hooks/use-stock";
-import { Loader2, Search, ShoppingCart } from "lucide-react";
+import { Loader2, Search, ShoppingCart, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -73,8 +73,12 @@ const ProductsPage = () => {
               filteredProducts.map(product => (
                 <Card key={product.id} className="overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-2 flex flex-col">
                   <CardHeader className="p-0">
-                    <div className="bg-muted aspect-square flex items-center justify-center">
-                      <ShoppingCart className="h-20 w-20 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
+                    <div className="bg-muted aspect-square flex items-center justify-center overflow-hidden">
+                      {product.imageUrl ? (
+                        <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                      ) : (
+                        <ImageIcon className="h-20 w-20 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className="p-4 space-y-3 flex-grow flex flex-col justify-between">

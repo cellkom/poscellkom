@@ -10,14 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Calendar } from "@/components/ui/calendar";
-import { PlusCircle, Search, Edit, Trash2, RefreshCw, PlusSquare, ChevronsUpDown, Check, Calendar as CalendarIcon } from "lucide-react";
+import { PlusCircle, Search, Edit, Trash2, RefreshCw, PlusSquare, ChevronsUpDown, Check, Calendar as CalendarIcon, Image as ImageIcon } from "lucide-react";
 import Barcode from "@/components/Barcode";
 import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useSuppliers } from "@/hooks/use-suppliers";
 import { supabase } from "@/integrations/supabase/client";
-import { useStock, Product } from "@/hooks/use-stock"; // Import useStock hook
+import { useStock, Product } from "@/hooks/use-stock";
 
 const newItemInitialState = { name: '', category: '', stock: 0, buyPrice: 0, retailPrice: 0, resellerPrice: 0, barcode: '', entryDate: new Date(), supplierId: '' };
 const newSupplierInitialState = { name: '', phone: '', address: '' };
@@ -30,9 +30,13 @@ const StockPage = () => {
 
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
   const [newItem, setNewItem] = useState(newItemInitialState);
+  const [newItemImage, setNewItemImage] = useState<File | null>(null);
+  const [newItemImagePreview, setNewItemImagePreview] = useState<string | null>(null);
 
   const [isEditItemDialogOpen, setIsEditItemDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Product | null>(null);
+  const [editingItemImage, setEditingItemImage] = useState<File | null>(null);
+  const [editingItemImagePreview, setEditingItemImagePreview] = useState<string | null>(null);
 
   const [isAddStockDialogOpen, setIsAddStockDialogOpen] = useState(false);
   const [stockToAdd, setStockToAdd] = useState(addStockInitialState);
@@ -46,7 +50,7 @@ const StockPage = () => {
     return (
       item.name.toLowerCase().includes(term) ||
       item.id.toLowerCase().includes(term) ||
-      item.barcode.toLowerCase().includes(term)
+      (item.barcode && item.barcode.toLowerCase().includes(term))
     );
   });
 
@@ -65,6 +69,19 @@ const StockPage = () => {
     setNewItem(prev => ({ ...prev, [name]: isNumeric ? Number(value) : value }));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'new' | 'edit') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (type === 'new') {
+        setNewItemImage(file);
+        setNewItemImagePreview(URL.createObjectURL(file));
+      } else {
+        setEditingItemImage(file);
+        setEditingItemImagePreview(URL.createObjectURL(file));
+      }
+    }
+  };
+
   const handleAddItemSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItem.name || !newItem.category || !newItem.barcode) {
@@ -74,12 +91,14 @@ const StockPage = () => {
     
     const added = await addProduct({
       ...newItem,
-      entryDate: newItem.entryDate.toISOString(), // Convert Date to ISO string
-    });
+      entryDate: newItem.entryDate.toISOString(),
+    }, newItemImage);
 
     if (added) {
       setIsAddItemDialogOpen(false);
       setNewItem(newItemInitialState);
+      setNewItemImage(null);
+      setNewItemImagePreview(null);
     }
   };
 
@@ -103,12 +122,15 @@ const StockPage = () => {
       resellerPrice: editingItem.resellerPrice,
       barcode: editingItem.barcode,
       supplierId: editingItem.supplierId,
-      entryDate: editingItem.entryDate, // Already ISO string from fetched data
-    });
+      entryDate: editingItem.entryDate,
+      imageUrl: editingItem.imageUrl,
+    }, editingItemImage);
 
     if (updated) {
       setIsEditItemDialogOpen(false);
       setEditingItem(null);
+      setEditingItemImage(null);
+      setEditingItemImagePreview(null);
     }
   };
 
@@ -154,7 +176,6 @@ const StockPage = () => {
     }
 
     if (addedSupplier) {
-      // Update supplier in both forms
       setStockToAdd(prev => ({ ...prev, supplierId: addedSupplier.id }));
       setNewItem(prev => ({ ...prev, supplierId: addedSupplier.id }));
     }
@@ -180,7 +201,6 @@ const StockPage = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              {/* Add Stock Dialog */}
               <Dialog open={isAddStockDialogOpen} onOpenChange={setIsAddStockDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" className="flex items-center gap-2">
@@ -271,7 +291,6 @@ const StockPage = () => {
                   </form>
                 </DialogContent>
               </Dialog>
-              {/* Add Supplier Dialog */}
               <Dialog open={isAddSupplierDialogOpen} onOpenChange={setIsAddSupplierDialogOpen}>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
@@ -290,7 +309,6 @@ const StockPage = () => {
                   </form>
                 </DialogContent>
               </Dialog>
-              {/* Add Item Dialog */}
               <Dialog open={isAddItemDialogOpen} onOpenChange={(open) => { setIsAddItemDialogOpen(open); if (open) handleGenerateBarcode(); }}>
                 <DialogTrigger asChild>
                   <Button className="flex items-center gap-2">
@@ -304,6 +322,13 @@ const StockPage = () => {
                   </DialogHeader>
                   <form onSubmit={handleAddItemSubmit}>
                     <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="image" className="text-right">Foto</Label>
+                        <div className="col-span-3">
+                          <Input id="image" type="file" accept="image/*" onChange={(e) => handleImageChange(e, 'new')} className="text-sm" />
+                          {newItemImagePreview && <img src={newItemImagePreview} alt="Preview" className="mt-2 h-24 w-24 object-cover rounded-md border" />}
+                        </div>
+                      </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="barcode" className="text-right">Barcode</Label>
                         <div className="col-span-3 flex items-center gap-2">
@@ -368,7 +393,6 @@ const StockPage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Barcode</TableHead>
                   <TableHead>Nama Barang</TableHead>
                   <TableHead>Kategori</TableHead>
                   <TableHead>Supplier</TableHead>
@@ -380,15 +404,25 @@ const StockPage = () => {
               </TableHeader>
               <TableBody>
                 {productsLoading ? (
-                  <TableRow><TableCell colSpan={8} className="text-center h-24">Memuat data stok...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center h-24">Memuat data stok...</TableCell></TableRow>
                 ) : filteredStock.length > 0 ? (
                   filteredStock.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell className="font-mono">
-                        <div>{item.barcode}</div>
-                        <div className="text-xs text-muted-foreground">{item.id}</div>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
+                            {item.imageUrl ? (
+                              <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover rounded-md" />
+                            ) : (
+                              <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-medium">{item.name}</div>
+                            <div className="text-xs text-muted-foreground font-mono">{item.barcode}</div>
+                          </div>
+                        </div>
                       </TableCell>
-                      <TableCell>{item.name}</TableCell>
                       <TableCell>{item.category}</TableCell>
                       <TableCell>{suppliers.find(s => s.id === item.supplierId)?.name || '-'}</TableCell>
                       <TableCell>{format(new Date(item.entryDate), "dd/MM/yyyy")}</TableCell>
@@ -407,7 +441,7 @@ const StockPage = () => {
                     </TableRow>
                   ))
                 ) : (
-                  <TableRow><TableCell colSpan={8} className="text-center h-24">Tidak ada data stok.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center h-24">Tidak ada data stok.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -415,7 +449,6 @@ const StockPage = () => {
         </CardContent>
       </Card>
 
-      {/* Edit Item Dialog */}
       <Dialog open={isEditItemDialogOpen} onOpenChange={setIsEditItemDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -424,6 +457,15 @@ const StockPage = () => {
           {editingItem && (
             <form onSubmit={handleEditItemSubmit}>
               <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-image" className="text-right">Foto</Label>
+                  <div className="col-span-3">
+                    <Input id="edit-image" type="file" accept="image/*" onChange={(e) => handleImageChange(e, 'edit')} className="text-sm" />
+                    {(editingItemImagePreview || editingItem.imageUrl) && (
+                      <img src={editingItemImagePreview || editingItem.imageUrl!} alt="Preview" className="mt-2 h-24 w-24 object-cover rounded-md border" />
+                    )}
+                  </div>
+                </div>
                 <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-barcode" className="text-right">Barcode</Label><Input id="edit-barcode" name="barcode" value={editingItem.barcode} onChange={handleEditItemChange} className="col-span-3 font-mono" /></div>
                 <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-name" className="text-right">Nama</Label><Input id="edit-name" name="name" value={editingItem.name} onChange={handleEditItemChange} className="col-span-3" /></div>
                 <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-category" className="text-right">Kategori</Label><Select name="category" onValueChange={(value) => setEditingItem({ ...editingItem, category: value })} value={editingItem.category}><SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Sparepart HP">Sparepart HP</SelectItem><SelectItem value="Sparepart Komputer">Sparepart Komputer</SelectItem><SelectItem value="Aksesoris">Aksesoris</SelectItem></SelectContent></Select></div>
