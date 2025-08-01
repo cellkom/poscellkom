@@ -68,9 +68,11 @@ const PublicPage = () => {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link to="/" className="flex items-center gap-3">
-            <img src={logoSrc} alt="CELLKOM Logo" className="h-12 w-auto" />
+            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-12 w-auto" />
             <div className="hidden md:block">
-              <h1 className="text-lg font-bold text-primary font-poppins">CELLKOM</h1>
+              <h1 className="text-xl font-bold font-poppins">
+                <span className="text-primary">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
+              </h1>
               <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
             </div>
           </Link>
@@ -201,7 +203,7 @@ const PublicPage = () => {
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tentang Kami</h2>
               <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
-                CELLKOM adalah pusat layanan terpadu untuk perbaikan dan penjualan sparepart smartphone, komputer, dan laptop. Berdiri sejak tahun 2024, kami berkomitmen untuk memberikan solusi teknologi yang cepat, andal, dan terjangkau bagi masyarakat.
+                Cellkom.Store adalah pusat layanan terpadu untuk perbaikan dan penjualan sparepart smartphone, komputer, dan laptop. Berdiri sejak tahun 2024, kami berkomitmen untuk memberikan solusi teknologi yang cepat, andal, dan terjangkau bagi masyarakat.
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-12 text-center mt-16">
@@ -235,8 +237,10 @@ const PublicPage = () => {
             {/* Column 1: Logo & About */}
             <div className="space-y-4">
               <Link to="/" className="flex items-center gap-3">
-                <img src={logoSrc} alt="CELLKOM Logo" className="h-8 w-auto" />
-                <span className="text-xl font-bold text-foreground font-poppins">CELLKOM</span>
+                <img src={logoSrc} alt="Cellkom.Store Logo" className="h-8 w-auto" />
+                <span className="text-xl font-bold font-poppins">
+                  <span className="text-foreground">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
+                </span>
               </Link>
               <p className="text-sm">
                 Pusat Servis HP dan Komputer Terpercaya. Cepat, Profesional, dan Bergaransi.
