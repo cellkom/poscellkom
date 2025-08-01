@@ -35,7 +35,9 @@ const LoginPage = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6">
         <div className="text-center space-y-4">
-          <img src={logoSrc} alt="Cellkom.Store Logo" className="h-24 w-auto mx-auto" />
+          <Link to="/">
+            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-24 w-auto mx-auto" />
+          </Link>
           <h1 className="text-3xl font-bold font-poppins">
             <span className="text-primary">Cellkom</span>
             <span className="font-semibold text-muted-foreground">.Store</span>
