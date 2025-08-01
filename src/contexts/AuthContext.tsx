@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 export interface Profile {
   id: string;
   full_name: string;
-  role: 'Admin' | 'Kasir' | 'Member';
+  role: 'Admin' | 'Kasir';
   avatar_url?: string;
 }
 
