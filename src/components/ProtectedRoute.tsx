@@ -1,14 +1,15 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Outlet } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute = () => {
-  const { user, loading, profile } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4">Memeriksa Sesi...</h1>
+        </div>
       </div>
     );
   }
@@ -17,12 +18,6 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Jika pengguna adalah member, arahkan dari dasbor staf
-  if (profile?.role === 'Member') {
-    return <Navigate to="/member/home" replace />;
-  }
-
-  // Izinkan Admin dan Kasir
   return <Outlet />;
 };
 
