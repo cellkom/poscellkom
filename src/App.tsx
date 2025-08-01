@@ -1,50 +1,74 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { SessionProvider, useSession } from './contexts/SessionContext';
-import LoginPage from './pages/LoginPage';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+
+// Public Page
+import PublicPage from './pages/PublicPage';
+
+// Auth Page
+import LoginPage from './pages/Auth/LoginPage';
+
+// Dashboard Pages
 import DashboardPage from './pages/Dashboard/DashboardPage';
-import SalesPage from './pages/Dashboard/SalesPage';
+import SalesPage from './pages/Dashboard/Transaction/SalesPage';
 import StockPage from './pages/Dashboard/StockPage';
-import ServicePage from './pages/Dashboard/ServicePage';
+import ServicePage from './pages/Dashboard/Transaction/ServicePage';
+import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
+import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
+import InstallmentsPage from './pages/Dashboard/Transaction/InstallmentPage';
+import AddInstallmentPage from './pages/Dashboard/Transaction/AddInstallmentPage';
+import CustomersPage from './pages/Dashboard/Data/CustomerPage';
+import SuppliersPage from './pages/Dashboard/Data/SupplierPage';
+import UsersPage from './pages/Dashboard/UsersPage';
+
+// Report Pages
 import ReportsPage from './pages/Dashboard/ReportsPage';
-import SettingsPage from './pages/Dashboard/SettingsPage';
-import CustomersPage from './pages/Dashboard/CustomersPage';
-import SuppliersPage from './pages/Dashboard/SuppliersPage';
-import InstallmentsPage from './pages/Dashboard/InstallmentsPage';
+import SalesReportPage from './pages/Dashboard/Reports/SalesReportPage';
+import ServiceReportPage from './pages/Dashboard/Reports/ServiceReportPage';
+import TodayReportPage from './pages/Dashboard/Reports/TodayReportPage';
 
-const AppRoutes = () => {
-  const { session, loading } = useSession();
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-lg">Memuat...</div>
-      </div>
-    );
-  }
-
-  return (
-    <Routes>
-      <Route path="/login" element={!session ? <LoginPage /> : <Navigate to="/dashboard" />} />
-      <Route path="/dashboard" element={session ? <DashboardPage /> : <Navigate to="/login" />} />
-      <Route path="/dashboard/sales" element={session ? <SalesPage /> : <Navigate to="/login" />} />
-      <Route path="/dashboard/stock" element={session ? <StockPage /> : <Navigate to="/login" />} />
-      <Route path="/dashboard/service" element={session ? <ServicePage /> : <Navigate to="/login" />} />
-      <Route path="/dashboard/reports" element={session ? <ReportsPage /> : <Navigate to="/login" />} />
-      <Route path="/dashboard/settings" element={session ? <SettingsPage /> : <Navigate to="/login" />} />
-      <Route path="/dashboard/customers" element={session ? <CustomersPage /> : <Navigate to="/login" />} />
-      <Route path="/dashboard/suppliers" element={session ? <SuppliersPage /> : <Navigate to="/login" />} />
-      <Route path="/dashboard/installments" element={session ? <InstallmentsPage /> : <Navigate to="/login" />} />
-      <Route path="/" element={<Navigate to={session ? "/dashboard" : "/login"} />} />
-    </Routes>
-  );
-};
+// Not Found Page
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
     <Router>
-      <SessionProvider>
-        <AppRoutes />
-      </SessionProvider>
+      <AuthProvider>
+        <Routes>
+          {/* Public and Auth Routes */}
+          <Route path="/" element={<PublicPage />} />
+          <Route path="/login" element={<LoginPage />} />
+
+          {/* Protected Dashboard Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
+            <Route path="/dashboard/stock" element={<StockPage />} />
+            <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
+            <Route path="/dashboard/transaction/service" element={<ServicePage />} />
+            <Route path="/dashboard/services-in-progress" element={<ServicesInProgressPage />} />
+            <Route path="/dashboard/transaction/installments" element={<InstallmentsPage />} />
+            <Route path="/dashboard/transaction/add-installment" element={<AddInstallmentPage />} />
+            <Route path="/dashboard/data/customers" element={<CustomersPage />} />
+            <Route path="/dashboard/data/suppliers" element={<SuppliersPage />} />
+            
+            {/* Reports */}
+            <Route path="/dashboard/reports" element={<ReportsPage />} />
+            <Route path="/dashboard/reports/sales" element={<SalesReportPage />} />
+            <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
+            <Route path="/dashboard/reports/today" element={<TodayReportPage />} />
+
+            {/* Admin Only Routes */}
+            <Route element={<AdminRoute />}>
+              <Route path="/dashboard/users" element={<UsersPage />} />
+            </Route>
+          </Route>
+
+          {/* Fallback Route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AuthProvider>
     </Router>
   );
 }

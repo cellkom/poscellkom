@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useSession } from '@/contexts/SessionContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -28,61 +27,70 @@ import {
   Package,
   Wrench,
   BarChart2,
-  Settings,
   Users,
   Truck,
   Repeat,
   Menu,
   LogOut,
   UserCircle,
-  ChevronDown,
+  ClipboardList,
+  Settings,
 } from 'lucide-react';
-import { showSuccess } from '@/utils/toast';
-
-const navItems = [
-  { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { name: 'Kasir', path: '/dashboard/sales', icon: ShoppingCart },
-  { name: 'Stok', path: '/dashboard/stock', icon: Package },
-  { name: 'Servis', path: '/dashboard/service', icon: Wrench },
-  { name: 'Cicilan', path: '/dashboard/installments', icon: Repeat },
-  { name: 'Laporan', path: '/dashboard/reports', icon: BarChart2 },
-  {
-    name: 'Manajemen',
-    subItems: [
-      { name: 'Pelanggan', path: '/dashboard/customers', icon: Users },
-      { name: 'Supplier', path: '/dashboard/suppliers', icon: Truck },
-    ],
-  },
-  { name: 'Pengaturan', path: '/dashboard/settings', icon: Settings },
-];
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
-  const { profile } = useSession();
+  const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
+  const navItems = [
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    {
+      name: 'Transaksi',
+      icon: ShoppingCart,
+      subItems: [
+        { name: 'Kasir Penjualan', path: '/dashboard/transaction/sales', icon: ShoppingCart },
+        { name: 'Kasir Service', path: '/dashboard/transaction/service', icon: Wrench },
+        { name: 'Data Service Masuk', path: '/dashboard/service-masuk', icon: ClipboardList },
+        { name: 'Manajemen Cicilan', path: '/dashboard/transaction/installments', icon: Repeat },
+      ],
+    },
+    {
+      name: 'Manajemen Data',
+      icon: Package,
+      subItems: [
+        { name: 'Stok Barang', path: '/dashboard/stock', icon: Package },
+        { name: 'Data Pelanggan', path: '/dashboard/data/customers', icon: Users },
+        { name: 'Data Supplier', path: '/dashboard/data/suppliers', icon: Truck },
+      ],
+    },
+    { name: 'Laporan', path: '/dashboard/reports', icon: BarChart2 },
+  ];
+
+  const adminNavItems = [
+    { name: 'Manajemen User', path: '/dashboard/users', icon: Settings },
+  ];
+
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    showSuccess("Anda berhasil keluar.");
+    await signOut();
     navigate('/login');
   };
 
-  const NavContent = ({ isMobileNav = false }: { isMobileNav?: boolean }) => (
-    <nav className="flex flex-col gap-2 p-4">
-      <Accordion type="multiple" className="w-full" defaultValue={['manajemen-item']}>
+  const NavContent = () => (
+    <nav className="flex flex-col gap-1 p-2">
+      <Accordion type="multiple" className="w-full" defaultValue={['transaksi-item', 'manajemen-data-item']}>
         {navItems.map((item) =>
           item.subItems ? (
-            <AccordionItem value="manajemen-item" key={item.name} className="border-b-0">
+            <AccordionItem value={`${item.name.toLowerCase().replace(' ', '-')}-item`} key={item.name} className="border-b-0">
               <AccordionTrigger className="py-2 px-3 rounded-md hover:bg-primary-foreground/10 text-white/80 hover:text-white data-[state=open]:bg-primary-foreground/10">
-                <div className="flex items-center gap-2">
-                  <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+                <div className="flex items-center gap-2 font-semibold">
+                  <item.icon className="h-5 w-5" />
                   {item.name}
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="pl-6 pt-2 flex flex-col gap-1">
+              <AccordionContent className="pl-6 pt-1 flex flex-col gap-1">
                 {item.subItems.map((subItem) => (
-                  <Button key={subItem.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10 justify-start", location.pathname === subItem.path && "bg-primary-foreground/10")}>
+                  <Button key={subItem.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10 justify-start", location.pathname === subItem.path && "bg-primary-foreground/10 text-white")}>
                     <Link to={subItem.path!} className="flex items-center gap-2">
                       <subItem.icon className="h-4 w-4" />
                       {subItem.name}
@@ -92,13 +100,26 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               </AccordionContent>
             </AccordionItem>
           ) : (
-            <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname === item.path && "bg-primary-foreground/10", isMobileNav && "justify-start")}>
-              <Link to={item.path!} className="flex items-center gap-2">
-                <item.icon className="h-4 w-4" />
+            <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10 justify-start font-semibold", location.pathname === item.path && "bg-primary-foreground/10 text-white")}>
+              <Link to={item.path!} className="flex items-center gap-3 px-3 py-2">
+                <item.icon className="h-5 w-5" />
                 {item.name}
               </Link>
             </Button>
           )
+        )}
+        {profile?.role === 'Admin' && (
+          <>
+            <div className="my-2 border-t border-gray-700"></div>
+            {adminNavItems.map((item) => (
+              <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10 justify-start font-semibold", location.pathname === item.path && "bg-primary-foreground/10 text-white")}>
+                <Link to={item.path!} className="flex items-center gap-3 px-3 py-2">
+                  <item.icon className="h-5 w-5" />
+                  {item.name}
+                </Link>
+              </Button>
+            ))}
+          </>
         )}
       </Accordion>
     </nav>
@@ -107,9 +128,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
       <aside className="hidden md:flex flex-col w-64 bg-gray-800 text-white">
-        <div className="flex items-center justify-center h-16 border-b border-gray-700">
-          <h1 className="text-2xl font-bold">ServisKuy</h1>
-        </div>
+        <Link to="/dashboard" className="flex items-center justify-center h-16 border-b border-gray-700">
+          <img src="/logo.png" alt="Logo" className="h-8 w-auto mr-2" />
+          <h1 className="text-xl font-bold text-white">Cellkom</h1>
+        </Link>
         <NavContent />
       </aside>
       <div className="flex-1 flex flex-col">
@@ -122,10 +144,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="bg-gray-800 text-white p-0 w-64">
-              <div className="flex items-center justify-center h-16 border-b border-gray-700">
-                <h1 className="text-2xl font-bold">ServisKuy</h1>
-              </div>
-              <NavContent isMobileNav />
+              <Link to="/dashboard" className="flex items-center justify-center h-16 border-b border-gray-700">
+                <img src="/logo.png" alt="Logo" className="h-8 w-auto mr-2" />
+                <h1 className="text-xl font-bold text-white">Cellkom</h1>
+              </Link>
+              <NavContent />
             </SheetContent>
           </Sheet>
           <div className="flex-1" />
@@ -144,10 +167,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Akun Saya</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate('/dashboard/settings')}>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Pengaturan</span>
-              </DropdownMenuItem>
+              {profile?.role === 'Admin' && (
+                <DropdownMenuItem onClick={() => navigate('/dashboard/users')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Manajemen User</span>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
