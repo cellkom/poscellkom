@@ -30,21 +30,52 @@ const MemberLoginPage = () => {
 
   useEffect(() => {
     if (session) {
-      navigate('/products');
+      const checkSessionRole = async () => {
+        if (session.user) {
+          const { data: memberProfile } = await supabase
+            .from('members')
+            .select('id')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (memberProfile) {
+            navigate('/products');
+          } else {
+             await supabase.auth.signOut();
+          }
+        }
+      }
+      checkSessionRole();
     }
   }, [session, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: signInEmail,
       password: signInPassword,
     });
-    if (error) {
-      showError(error.message);
-    } else {
-      navigate('/products');
+
+    if (authError) {
+      showError("Email atau password salah.");
+      setLoading(false);
+      return;
+    }
+
+    if (authData.user) {
+      const { data: memberProfile, error: profileError } = await supabase
+        .from('members')
+        .select('id')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError || !memberProfile) {
+        showError("Akun member tidak ditemukan. Silakan login di halaman staf jika Anda adalah staf.");
+        await supabase.auth.signOut();
+      } else {
+        navigate('/products');
+      }
     }
     setLoading(false);
   };
