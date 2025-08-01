@@ -231,9 +231,17 @@ const PublicPage = () => {
       </main>
 
       {/* Footer */}
-      <footer id="contact" className="bg-background text-muted-foreground">
-        <div className="container mx-auto px-4 md:px-6 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <footer id="contact" className="bg-secondary/50 text-muted-foreground pt-16 pb-8">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Segera Kunjungi Store Kami</h2>
+            <p className="mt-4 text-lg text-muted-foreground">Kami siap membantu Anda dengan layanan terbaik.</p>
+            <div className="mt-6 flex justify-center">
+              <div className="w-24 h-1 bg-primary rounded-full"></div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pt-8">
             {/* Column 1: Logo & About */}
             <div className="space-y-4">
               <Link to="/" className="flex items-center gap-3">
@@ -280,7 +288,7 @@ const PublicPage = () => {
             </div>
           </div>
         </div>
-        <div className="border-t border-border">
+        <div className="border-t border-border mt-12">
           <div className="container mx-auto px-4 md:px-6 py-4 text-center text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Cellkomtech. All Rights Reserved.
           </div>
