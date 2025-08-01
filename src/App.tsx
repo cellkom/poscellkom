@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
+import StaffRoute from './components/StaffRoute';
+import MemberRoute from './components/MemberRoute';
 import AdminRoute from './components/AdminRoute';
 import { Toaster } from './components/ui/sonner';
 import { ThemeProvider } from './components/ThemeProvider';
@@ -23,6 +24,7 @@ import TodayReportPage from './pages/Dashboard/Reports/TodayReportPage';
 import UsersPage from './pages/Dashboard/UsersPage';
 import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
 import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
+import MemberHomePage from './pages/Member/MemberHomePage';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -32,10 +34,12 @@ function App() {
         <AuthProvider>
           <Toaster richColors position="top-center" />
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<PublicPage />} />
             <Route path="/login" element={<LoginPage />} />
             
-            <Route element={<ProtectedRoute />}>
+            {/* Staff Routes (Dashboard) */}
+            <Route element={<StaffRoute />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/dashboard/store" element={<StorePage />} />
               <Route path="/dashboard/stock" element={<StockPage />} />
@@ -55,6 +59,11 @@ function App() {
               <Route element={<AdminRoute />}>
                 <Route path="/dashboard/users" element={<UsersPage />} />
               </Route>
+            </Route>
+
+            {/* Member Routes */}
+            <Route element={<MemberRoute />}>
+                <Route path="/member/home" element={<MemberHomePage />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
