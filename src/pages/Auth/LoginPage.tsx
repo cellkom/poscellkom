@@ -23,23 +23,17 @@ const LoginPage = () => {
       return; // Tunggu hingga proses pengecekan autentikasi selesai
     }
 
-    if (session) {
-      if (profile) {
-        // Pengguna sudah login dan punya profil, arahkan sesuai peran
-        if (profile.role === 'Admin' || profile.role === 'Kasir') {
-          navigate('/dashboard');
-        } else if (profile.role === 'Member') {
-          // Member mendarat di halaman login staf, arahkan ke area mereka
-          navigate('/products');
-        }
-      } else {
-        // Pengguna punya sesi tapi tidak punya profil, ini adalah state yang tidak valid.
-        // Logout untuk mencegah terjebak.
-        showError("Gagal memuat profil. Sesi Anda tidak valid, silakan login kembali.");
-        supabase.auth.signOut();
+    if (session && profile) {
+      // Pengguna sudah login dan punya profil, arahkan sesuai peran
+      if (profile.role === 'Admin' || profile.role === 'Kasir') {
+        navigate('/dashboard');
+      } else if (profile.role === 'Member') {
+        // Member mendarat di halaman login staf, arahkan ke area mereka
+        navigate('/products');
       }
     }
-    // Jika tidak ada sesi, tetap di halaman login.
+    // Jika sesi ada tapi profil belum termuat, jangan lakukan apa-apa.
+    // Ini mencegah logout otomatis saat terjadi race condition.
   }, [session, profile, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
