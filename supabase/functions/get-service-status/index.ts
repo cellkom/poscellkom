@@ -39,6 +39,7 @@ serve(async (req) => {
         description,
         status,
         date,
+        service_info,
         customers ( name )
       `)
       .eq('id', serviceId)

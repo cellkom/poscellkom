@@ -13,6 +13,7 @@ export interface ServiceEntry {
   damage_type: string; // Renamed to match DB convention
   description: string;
   status: 'Pending' | 'Proses' | 'Selesai' | 'Gagal/Cancel' | 'Sudah Diambil';
+  service_info: string | null;
   // customerName and customerPhone will be fetched via join or separately
 }
 
@@ -90,6 +91,7 @@ export const useServiceEntries = () => {
         device_type: newEntryData.device_type,
         damage_type: newEntryData.damage_type,
         description: newEntryData.description,
+        service_info: newEntryData.service_info,
         status: 'Pending', // Default status for new entries
       })
       .select()
@@ -116,6 +118,7 @@ export const useServiceEntries = () => {
         damage_type: updatedFields.damage_type,
         description: updatedFields.description,
         status: updatedFields.status,
+        service_info: updatedFields.service_info,
       })
       .eq('id', id)
       .select()

@@ -29,6 +29,7 @@ interface ServiceEntryFormData {
   deviceType: string;
   damageType: string;
   description: string;
+  service_info: string;
 }
 
 interface ReceiptServiceEntry {
@@ -49,6 +50,7 @@ const initialState: ServiceEntryFormData = {
   deviceType: '',
   damageType: '',
   description: '',
+  service_info: '',
 };
 
 const newCustomerInitialState = { name: '', phone: '', address: '' };
@@ -113,6 +115,7 @@ const ServiceMasukPage = () => {
         deviceType: entry.device_type,
         damageType: entry.damage_type,
         description: entry.description,
+        service_info: entry.service_info || '',
       });
     } else {
       setEditingEntry(null);
@@ -140,6 +143,7 @@ const ServiceMasukPage = () => {
         device_type: formData.deviceType,
         damage_type: formData.damageType,
         description: formData.description,
+        service_info: formData.service_info,
       });
       if (updated) {
         setIsFormOpen(false);
@@ -159,6 +163,7 @@ const ServiceMasukPage = () => {
         device_type: formData.deviceType,
         damage_type: formData.damageType,
         description: formData.description,
+        service_info: formData.service_info,
       });
 
       if (newEntry) {
@@ -339,6 +344,10 @@ const ServiceMasukPage = () => {
               <div>
                 <Label htmlFor="description">Deskripsi / Kelengkapan</Label>
                 <Textarea id="description" placeholder="Deskripsikan keluhan dan kelengkapan" value={formData.description} onChange={(e) => handleInputChange('description', e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="service_info">Info Servis (Untuk Pelacakan)</Label>
+                <Textarea id="service_info" placeholder="Contoh: Menunggu sparepart LCD, sedang dalam proses diagnosa." value={formData.service_info} onChange={(e) => handleInputChange('service_info', e.target.value)} />
               </div>
             </div>
             <DialogFooter className="p-4 pt-0">
