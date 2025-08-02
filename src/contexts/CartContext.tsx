@@ -1,79 +1,114 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
-import { Product } from '@/hooks/use-stock';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
+import { useAuth } from './AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-export type CartItem = Product & { quantity: number };
+export interface Product {
+  id: number;
+  name: string;
+  price: number;
+  stock: number;
+  image_url?: string;
+}
+
+export interface CartItem extends Product {
+  quantity: number;
+}
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (item: Product) => void;
-  removeFromCart: (itemId: string) => void;
-  updateQuantity: (itemId: string, quantity: number) => void;
+  addToCart: (product: Product) => void;
+  removeFromCart: (productId: number) => void;
+  updateQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
   cartCount: number;
+  totalPrice: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { user } = useAuth(); // Mengambil status autentikasi pengguna
+  const navigate = useNavigate(); // Untuk mengarahkan pengguna
 
-  const addToCart = (item: Product) => {
+  useEffect(() => {
+    const storedCart = localStorage.getItem('cart');
+    if (storedCart) {
+      setCartItems(JSON.parse(storedCart));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  const addToCart = (product: Product) => {
+    // PERUBAHAN: Cek apakah pengguna sudah login
+    if (!user) {
+      toast.info("Silakan login atau daftar untuk melanjutkan belanja.");
+      navigate('/member-login'); // Arahkan ke halaman login member
+      return; // Hentikan fungsi jika belum login
+    }
+
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(i => i.id === item.id);
+      const existingItem = prevItems.find(item => item.id === product.id);
       if (existingItem) {
-        if (existingItem.quantity >= item.stock) {
-          toast.warning(`Stok ${item.name} tidak mencukupi.`);
+        if (existingItem.quantity < product.stock) {
+          toast.success(`${product.name} ditambahkan ke keranjang!`);
+          return prevItems.map(item =>
+            item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          );
+        } else {
+          toast.warning(`Stok untuk ${product.name} tidak mencukupi.`);
           return prevItems;
         }
-        return prevItems.map(i =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-        );
+      } else {
+        if (product.stock > 0) {
+          toast.success(`${product.name} ditambahkan ke keranjang!`);
+          return [...prevItems, { ...product, quantity: 1 }];
+        } else {
+          toast.error(`${product.name} sedang habis.`);
+          return prevItems;
+        }
       }
-      return [...prevItems, { ...item, quantity: 1 }];
     });
-    toast.success(`${item.name} ditambahkan ke keranjang!`);
   };
 
-  const removeFromCart = (itemId: string) => {
-    setCartItems(prevItems => prevItems.filter(i => i.id !== itemId));
+  const removeFromCart = (productId: number) => {
+    setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+    toast.info("Produk telah dihapus dari keranjang.");
   };
 
-  const updateQuantity = (itemId: string, quantity: number) => {
-    setCartItems(prevItems => {
-      const itemToUpdate = prevItems.find(i => i.id === itemId);
-      if (!itemToUpdate) return prevItems;
-
-      if (quantity > itemToUpdate.stock) {
-        toast.warning(`Stok ${itemToUpdate.name} hanya tersisa ${itemToUpdate.stock}.`);
-        quantity = itemToUpdate.stock;
-      }
-
-      if (quantity <= 0) {
-        return prevItems.filter(i => i.id !== itemId);
-      }
-      return prevItems.map(i =>
-        i.id === itemId ? { ...i, quantity } : i
-      );
-    });
+  const updateQuantity = (productId: number, quantity: number) => {
+    setCartItems(prevItems =>
+      prevItems.map(item => {
+        if (item.id === productId) {
+          if (quantity > 0 && quantity <= item.stock) {
+            return { ...item, quantity };
+          } else if (quantity > item.stock) {
+            toast.warning(`Stok untuk ${item.name} hanya tersisa ${item.stock}.`);
+            return { ...item, quantity: item.stock };
+          }
+        }
+        return item;
+      }).filter(item => item.quantity > 0)
+    );
   };
 
   const clearCart = () => {
     setCartItems([]);
+    localStorage.removeItem('cart');
   };
 
   const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);
+  const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
-  const value = {
-    cartItems,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-    cartCount,
-  };
-
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, totalPrice }}>
+      {children}
+    </CartContext.Provider>
+  );
 };
 
 export const useCart = () => {
