@@ -9,7 +9,17 @@ import { useState, useMemo, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Product } from "@/hooks/use-stock"; // Import the correct Product type
+
+// Definisikan tipe data untuk produk
+interface Product {
+  id: string;
+  name: string;
+  category: string | null;
+  stock: number;
+  retailPrice: number;
+  imageUrl: string | null;
+  barcode: string | null;
+}
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -23,7 +33,7 @@ const ProductsPage = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('products')
-        .select('id, created_at, name, category, stock, buy_price, retail_price, reseller_price, barcode, supplier_id, entry_date, image_url')
+        .select('id, name, category, stock, retail_price, image_url, barcode')
         .order('name', { ascending: true });
 
       if (error) {
@@ -32,17 +42,12 @@ const ProductsPage = () => {
       } else if (data) {
         const formattedData: Product[] = data.map(p => ({
           id: p.id,
-          createdAt: p.created_at,
           name: p.name,
           category: p.category,
           stock: p.stock,
-          buyPrice: p.buy_price,
           retailPrice: p.retail_price,
-          resellerPrice: p.reseller_price,
-          barcode: p.barcode,
-          supplierId: p.supplier_id,
-          entryDate: p.entry_date,
           imageUrl: p.image_url,
+          barcode: p.barcode,
         }));
         setProducts(formattedData);
       }
@@ -82,6 +87,7 @@ const ProductsPage = () => {
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);
+    toast.success(`${product.name} ditambahkan ke keranjang!`);
   };
 
   return (

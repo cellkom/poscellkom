@@ -2,22 +2,22 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, Loader2 } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Loader2, Image as ImageIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { showError } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
 import { format } from "date-fns";
 import { useNews, NewsArticle } from "@/hooks/use-news";
-import { supabase } from "@/integrations/supabase/client";
 
 const NewsManagementPage = () => {
   const { user } = useAuth();
-  const { articles, loading, fetchArticles, uploadNewsImage, addArticle, updateArticle, deleteArticle } = useNews();
+  const { articles, loading, fetchArticles, uploadNewsImage } = useNews();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
@@ -26,24 +26,7 @@ const NewsManagementPage = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchArticles(true); // Initial fetch
-
-    const channel = supabase
-      .channel('news-management-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'news' },
-        () => {
-          // When something changes in the news table, refetch all articles in admin mode
-          fetchArticles(true);
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscription on component unmount
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    fetchArticles(true); // Fetch all articles for admin
   }, [fetchArticles]);
 
   const generateSlug = (title: string) => {
@@ -100,35 +83,41 @@ const NewsManagementPage = () => {
     let imageUrl = editingArticle?.image_url || null;
     if (imageFile) {
       imageUrl = await uploadNewsImage(imageFile);
-      if (!imageUrl) {
-        setIsSubmitting(false);
-        return;
-      }
     }
 
     const payload = {
       ...formData,
       image_url: imageUrl,
       author_id: user.id,
-      published_at: formData.status === 'published' ? (editingArticle?.published_at || new Date().toISOString()) : null,
+      published_at: formData.status === 'published' ? new Date().toISOString() : null,
     };
 
-    let success;
+    let error;
     if (editingArticle) {
-      success = await updateArticle(editingArticle.id, payload);
+      ({ error } = await supabase.from('news').update(payload).eq('id', editingArticle.id));
     } else {
-      success = await addArticle(payload as any);
+      ({ error } = await supabase.from('news').insert(payload));
     }
 
-    if (success) {
+    if (error) {
+      showError(`Gagal menyimpan berita: ${error.message}`);
+    } else {
+      showSuccess(`Berita berhasil ${editingArticle ? 'diperbarui' : 'ditambahkan'}.`);
       setIsDialogOpen(false);
+      fetchArticles(true);
     }
     setIsSubmitting(false);
   };
 
   const handleDelete = async (articleId: string) => {
     if (window.confirm("Anda yakin ingin menghapus berita ini?")) {
-      await deleteArticle(articleId);
+      const { error } = await supabase.from('news').delete().eq('id', articleId);
+      if (error) {
+        showError(`Gagal menghapus: ${error.message}`);
+      } else {
+        showSuccess("Berita berhasil dihapus.");
+        fetchArticles(true);
+      }
     }
   };
 
