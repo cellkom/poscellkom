@@ -20,35 +20,60 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (authLoading) {
-      return; // Tunggu hingga proses pengecekan autentikasi selesai
+      return; // Tunggu hingga proses pengecekan autentikasi awal selesai
     }
 
     if (session && profile) {
-      // Pengguna sudah login dan punya profil, arahkan sesuai peran
+      // Jika pengguna sudah login dan punya profil, arahkan mereka
       if (profile.role === 'Admin' || profile.role === 'Kasir') {
         navigate('/dashboard');
-      } else if (profile.role === 'Member') {
-        // Member mendarat di halaman login staf, arahkan ke area mereka
-        navigate('/products');
       }
     }
-    // Jika sesi ada tapi profil belum termuat, jangan lakukan apa-apa.
-    // Ini mencegah logout otomatis saat terjadi race condition.
   }, [session, profile, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
       showError("Email atau password salah.");
+      setLoading(false);
+      return;
     }
-    // useEffect akan menangani pengalihan setelah login berhasil
+
+    if (data.user) {
+      // Langsung periksa profil setelah login berhasil
+      const { data: staffProfile } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', data.user.id)
+        .single();
+
+      if (staffProfile) {
+        // Pengguna adalah staf, arahkan ke dashboard
+        navigate('/dashboard');
+      } else {
+        // Bukan staf, periksa apakah dia member
+        const { data: memberProfile } = await supabase
+          .from('members')
+          .select('id')
+          .eq('id', data.user.id)
+          .single();
+        
+        if (memberProfile) {
+          showError("Akun ini adalah akun Member. Silakan gunakan halaman login Member.");
+          await supabase.auth.signOut();
+        } else {
+          showError("Profil pengguna tidak ditemukan. Akun mungkin tidak aktif.");
+          await supabase.auth.signOut();
+        }
+      }
+    }
     setLoading(false);
   };
 

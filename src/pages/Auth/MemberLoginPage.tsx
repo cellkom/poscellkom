@@ -30,34 +30,59 @@ const MemberLoginPage = () => {
 
   useEffect(() => {
     if (authLoading) {
-      return; // Tunggu hingga proses pengecekan autentikasi selesai
+      return; // Tunggu hingga proses pengecekan autentikasi awal selesai
     }
 
     if (session && profile) {
-      // Pengguna sudah login dan punya profil, arahkan sesuai peran
+      // Jika pengguna sudah login dan punya profil, arahkan mereka
       if (profile.role === 'Member') {
         navigate('/products');
-      } else if (profile.role === 'Admin' || profile.role === 'Kasir') {
-        // Staf mendarat di halaman login member, arahkan ke dashboard
-        navigate('/dashboard');
       }
     }
-    // Jika sesi ada tapi profil belum termuat, jangan lakukan apa-apa.
-    // Ini mencegah logout otomatis saat terjadi race condition.
   }, [session, profile, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: signInEmail,
       password: signInPassword,
     });
 
     if (error) {
       showError("Email atau password salah.");
+      setLoading(false);
+      return;
     }
-    // useEffect akan menangani pengalihan setelah login berhasil
+
+    if (data.user) {
+      // Langsung periksa profil setelah login berhasil
+      const { data: memberProfile } = await supabase
+        .from('members')
+        .select('id')
+        .eq('id', data.user.id)
+        .single();
+
+      if (memberProfile) {
+        // Pengguna adalah member, arahkan ke halaman produk
+        navigate('/products');
+      } else {
+        // Bukan member, periksa apakah dia staf
+        const { data: staffProfile } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', data.user.id)
+          .single();
+        
+        if (staffProfile) {
+          showError("Akun ini adalah akun Staf/Admin. Silakan gunakan halaman login Penjualan.");
+          await supabase.auth.signOut();
+        } else {
+          showError("Profil member tidak ditemukan. Silakan daftar jika belum punya akun.");
+          await supabase.auth.signOut();
+        }
+      }
+    }
     setLoading(false);
   };
 
