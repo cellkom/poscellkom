@@ -3,13 +3,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, Code, Image as ImageIcon } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom"; // Import useLocation
 import { useStock } from "@/hooks/use-stock";
+import { useEffect } from "react"; // Import useEffect
 
 const PublicPage = () => {
   const { products, loading } = useStock();
   const featuredProducts = products.slice(0, 4);
   const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+
+  const location = useLocation(); // Get the current location object
+
+  // Effect to scroll to the element specified by the URL hash
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location]); // Re-run when the location object changes (including hash)
 
   const services = [
     {
