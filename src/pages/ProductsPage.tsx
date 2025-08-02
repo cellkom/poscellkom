@@ -121,7 +121,7 @@ const ProductsPage = () => {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {Array.from({ length: 8 }).map((_, index) => (
               <Card key={index}>
                 <CardHeader className="p-0">
@@ -144,7 +144,7 @@ const ProductsPage = () => {
                 <p className="text-sm">Coba sesuaikan pencarian atau filter Anda.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                 {filteredProducts.map((product) => (
                   <Card key={product.id} className="overflow-hidden group transition-shadow hover:shadow-lg flex flex-col">
                     <CardHeader className="p-0">
