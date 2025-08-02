@@ -6,35 +6,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
+import ReceiptModal from "@/components/modals/ReceiptModal"; // Import ReceiptModal
+import { ServiceEntryWithCustomer } from "@/hooks/use-service-entries"; // Use the extended interface
 
-type ServiceStatus = 'Pending' | 'Diagnosa' | 'Menunggu Konfirmasi' | 'Dikerjakan' | 'Selesai' | 'Diambil' | 'Dibatalkan';
-
-interface ServiceEntry {
-  id: number;
-  created_at: string;
-  customer_id: string;
-  kasir_id: string;
-  category: string;
-  device_type: string;
-  damage_type: string;
-  description: string;
-  status: ServiceStatus;
-  date: string;
-  customers: {
-    name: string;
-  } | null;
-}
+type ServiceStatus = 'Pending' | 'Proses' | 'Selesai' | 'Gagal/Cancel' | 'Sudah Diambil'; // Updated to match ServiceEntry status types
 
 const ServiceTrackingPage = () => {
   const [serviceId, setServiceId] = useState("");
-  const [serviceData, setServiceData] = useState<ServiceEntry | null>(null);
+  const [serviceData, setServiceData] = useState<ServiceEntryWithCustomer | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
+  const [isReceiptModalOpen, setReceiptModalOpen] = useState(false); // State for receipt modal
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,24 +35,33 @@ const ServiceTrackingPage = () => {
     setSearched(true);
 
     try {
+      // Ensure serviceId is a number for the edge function if it expects a number
+      const parsedServiceId = parseInt(serviceId, 10);
+      if (isNaN(parsedServiceId)) {
+        throw new Error("ID Servis tidak valid. Harap masukkan angka.");
+      }
+
       const { data, error: functionError } = await supabase.functions.invoke('get-service-status', {
-        body: { serviceId },
+        body: { serviceId: parsedServiceId }, // Pass the parsed number
       });
 
       if (functionError) {
-        // The function itself returned an error (e.g., 404, 500)
         throw new Error("ID Servis tidak ditemukan atau terjadi kesalahan pada server.");
       }
       
       if (data.error) {
-        // The function returned a JSON with an error property
         throw new Error(data.error);
       }
 
       if (data) {
-        setServiceData(data);
+        // Map the data to ServiceEntryWithCustomer interface
+        const formattedData: ServiceEntryWithCustomer = {
+          ...data,
+          customerName: data.customers?.name || 'N/A',
+          customerPhone: data.customers?.phone || 'N/A',
+        };
+        setServiceData(formattedData);
       } else {
-        // Handle case where data is null/undefined but no error was thrown
         throw new Error("Data servis tidak ditemukan.");
       }
 
@@ -81,20 +77,23 @@ const ServiceTrackingPage = () => {
   const getStatusColor = (status: ServiceStatus) => {
     switch (status) {
       case 'Pending':
-      case 'Diagnosa':
         return 'bg-yellow-500 hover:bg-yellow-600';
-      case 'Menunggu Konfirmasi':
-        return 'bg-blue-500 hover:bg-blue-600';
-      case 'Dikerjakan':
+      case 'Proses':
         return 'bg-indigo-500 hover:bg-indigo-600';
       case 'Selesai':
         return 'bg-green-500 hover:bg-green-600';
-      case 'Diambil':
+      case 'Sudah Diambil':
         return 'bg-gray-500 hover:bg-gray-600';
-      case 'Dibatalkan':
+      case 'Gagal/Cancel':
         return 'bg-red-500 hover:bg-red-600';
       default:
         return 'bg-gray-400 hover:bg-gray-500';
+    }
+  };
+
+  const handleViewReceipt = () => {
+    if (serviceData) {
+      setReceiptModalOpen(true);
     }
   };
 
@@ -152,9 +151,9 @@ const ServiceTrackingPage = () => {
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle>Detail Servis #{serviceData.id}</CardTitle>
+                    <CardTitle>Detail Servis #SVC-{serviceData.id}</CardTitle>
                     <CardDescription>
-                      Atas nama: {serviceData.customers?.name || 'N/A'}
+                      Atas nama: {serviceData.customerName || 'N/A'}
                     </CardDescription>
                   </div>
                   <Badge className={`${getStatusColor(serviceData.status)} text-white`}>{serviceData.status}</Badge>
@@ -167,16 +166,12 @@ const ServiceTrackingPage = () => {
                     <p className="font-medium">{format(new Date(serviceData.date), 'd MMMM yyyy, HH:mm', { locale: id })}</p>
                   </div>
                   <div>
-                    <Label className="text-sm text-muted-foreground">Kategori</Label>
-                    <p className="font-medium">{serviceData.category}</p>
-                  </div>
-                  <div>
                     <Label className="text-sm text-muted-foreground">Tipe Perangkat</Label>
                     <p className="font-medium">{serviceData.device_type}</p>
                   </div>
                   <div>
-                    <Label className="text-sm text-muted-foreground">Jenis Kerusakan</Label>
-                    <p className="font-medium">{serviceData.damage_type}</p>
+                    <Label className="text-sm text-muted-foreground">Info Status</Label>
+                    <p className="font-medium">{serviceData.service_info || '-'}</p>
                   </div>
                 </div>
                 <div>
@@ -184,15 +179,22 @@ const ServiceTrackingPage = () => {
                   <p className="font-medium">{serviceData.description}</p>
                 </div>
               </CardContent>
-              <CardFooter>
-                <p className="text-xs text-muted-foreground">
-                  Jika ada pertanyaan, silakan hubungi kami dengan menyertakan ID Servis Anda.
-                </p>
+              <CardFooter className="flex justify-end">
+                <Button onClick={handleViewReceipt}>
+                  <Eye className="mr-2 h-4 w-4" /> Lihat Struk
+                </Button>
               </CardFooter>
             </Card>
           )}
         </div>
       </div>
+      {serviceData && (
+        <ReceiptModal
+          isOpen={isReceiptModalOpen}
+          onClose={() => setReceiptModalOpen(false)}
+          entry={serviceData}
+        />
+      )}
     </PublicLayout>
   );
 };
