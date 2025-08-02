@@ -15,24 +15,18 @@ async function isAdmin(supabaseClient: SupabaseClient): Promise<boolean> {
       return false;
     }
 
-    // Use a non-strict query to avoid errors if the profile is temporarily missing
-    const { data: profiles, error: profileError } = await supabaseClient
+    const { data: profile, error: profileError } = await supabaseClient
       .from('users')
       .select('role')
-      .eq('id', user.id);
+      .eq('id', user.id)
+      .single();
 
     if (profileError) {
       console.error('Admin check failed: Error fetching profile', profileError);
       return false;
     }
 
-    // Check if a profile was found and if the role is 'Admin'
-    if (!profiles || profiles.length === 0) {
-      console.error('Admin check failed: Profile not found for user', user.id);
-      return false;
-    }
-
-    return profiles[0].role === 'Admin';
+    return profile.role === 'Admin';
   } catch (e) {
     console.error('Error in isAdmin check:', e);
     return false;
@@ -40,28 +34,17 @@ async function isAdmin(supabaseClient: SupabaseClient): Promise<boolean> {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
-  // Ensure the request is a POST request
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
-      status: 405,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
   try {
-    // Create a Supabase client with the user's authorization to check their role
     const userSupabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     )
 
-    // Verify if the user is an admin
     const isUserAdmin = await isAdmin(userSupabaseClient);
     if (!isUserAdmin) {
       return new Response(JSON.stringify({ error: 'Forbidden: Not an admin' }), {
@@ -70,7 +53,6 @@ serve(async (req) => {
       })
     }
 
-    // Create a Supabase client with the service role for performing admin actions
     const adminSupabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -121,8 +103,6 @@ serve(async (req) => {
 
         if (error) throw error;
 
-        // The handle_new_user trigger should create the profile in public.users
-        // If the role needs to be Admin, we update it.
         if (role === 'Admin') {
           const { error: updateError } = await adminSupabaseClient
             .from('users')
@@ -137,19 +117,19 @@ serve(async (req) => {
         });
       }
       case 'update': {
-        const { id, role } = payload;
+        const { id, role, full_name } = payload;
         if (!id || !role) {
           return new Response(JSON.stringify({ error: 'Missing user ID or role' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
         const { error } = await adminSupabaseClient
           .from('users')
-          .update({ role })
+          .update({ role, full_name })
           .eq('id', id);
         
         if (error) throw error;
 
-        return new Response(JSON.stringify({ message: 'User role updated successfully' }), {
+        return new Response(JSON.stringify({ message: 'User updated successfully' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
         });
