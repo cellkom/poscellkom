@@ -68,7 +68,7 @@ function App() {
                 <Route path="/dashboard/services-in-progress" element={<ServicesInProgressPage />} />
                 
                 <Route element={<AdminRoute />}>
-                  <Route path="/dashboard/users" element={<UsersPage />} />
+                  <Route path="/dashboard/data/users" element={<UsersPage />} />
                   <Route path="/dashboard/news" element={<NewsManagementPage />} />
                 </Route>
               </Route>

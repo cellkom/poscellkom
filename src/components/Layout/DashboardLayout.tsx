@@ -54,7 +54,7 @@ const navItems: NavItem[] = [
     subItems: [
         { name: "Pelanggan", icon: Users, path: "/dashboard/data/customers" },
         { name: "Supplier", icon: Truck, path: "/dashboard/data/suppliers" },
-        { name: "Users", icon: Users, path: "/dashboard/users", adminOnly: true },
+        { name: "Users", icon: Users, path: "/dashboard/data/users", adminOnly: true },
     ]
   },
   { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
