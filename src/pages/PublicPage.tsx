@@ -1,10 +1,16 @@
 import PublicLayout from "@/components/Layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, Code } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, Code, Image as ImageIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useStock } from "@/hooks/use-stock";
 
 const PublicPage = () => {
+  const { products, loading } = useStock();
+  const featuredProducts = products.slice(0, 4);
+  const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+
   const services = [
     {
       icon: Smartphone,
@@ -21,13 +27,6 @@ const PublicPage = () => {
       title: "Servis Printer",
       description: "Perbaikan hasil cetak, printer tidak menarik kertas, infus, reset, dan penggantian sparepart.",
     },
-  ];
-
-  const products = [
-    { name: "LCD iPhone 11 Original", category: "Sparepart HP", price: "Rp 850.000" },
-    { name: "Baterai Samsung A51", category: "Sparepart HP", price: "Rp 250.000" },
-    { name: "SSD 256GB V-Gen", category: "Sparepart Komputer", price: "Rp 350.000" },
-    { name: "Tinta Printer Epson 003", category: "Aksesoris", price: "Rp 75.000" },
   ];
 
   const features = [
@@ -102,18 +101,39 @@ const PublicPage = () => {
               <p className="mt-4 text-lg text-muted-foreground">Temukan komponen dan aksesoris berkualitas untuk perangkat Anda.</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {products.map((product) => (
-                <Card key={product.name} className="overflow-hidden group transition-shadow hover:shadow-lg">
-                  <div className="bg-muted h-48 flex items-center justify-center">
-                    <ShoppingCart className="h-16 w-16 text-muted-foreground/30 group-hover:scale-110 transition-transform" />
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold truncate">{product.name}</h3>
-                    <p className="text-sm text-muted-foreground">{product.category}</p>
-                    <p className="font-bold mt-2 text-primary">{product.price}</p>
-                  </CardContent>
-                </Card>
-              ))}
+              {loading ? (
+                Array.from({ length: 4 }).map((_, index) => (
+                  <Card key={index}>
+                    <CardHeader className="p-0">
+                      <Skeleton className="h-48 w-full" />
+                    </CardHeader>
+                    <CardContent className="p-4 space-y-2">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-6 w-1/3 mt-2" />
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                featuredProducts.map((product) => (
+                  <Card key={product.id} className="overflow-hidden group transition-shadow hover:shadow-lg">
+                    <CardHeader className="p-0">
+                      <div className="bg-muted aspect-square flex items-center justify-center overflow-hidden">
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                        ) : (
+                          <ImageIcon className="h-20 w-20 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold truncate" title={product.name}>{product.name}</h3>
+                      <p className="text-sm text-muted-foreground">{product.category}</p>
+                      <p className="font-bold mt-2 text-primary">{formatCurrency(product.retailPrice)}</p>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
             <div className="text-center mt-12">
               <Button asChild size="lg">
