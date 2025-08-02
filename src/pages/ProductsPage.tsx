@@ -1,3 +1,4 @@
+import React, { useState, useMemo } from "react";
 import PublicLayout from "@/components/Layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStock } from "@/hooks/use-stock";
 import { ShoppingCart, Search, Loader2, Image as ImageIcon } from "lucide-react";
-import { useState, useMemo } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { formatCurrency } from '@/lib/utils'; // Import from utils
