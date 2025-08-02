@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Wrench, Smartphone, Laptop, Cpu, Shield, Clock, Users, Newspaper, Phone, Mail, MapPin, Info, ClipboardScan, FileText, Settings, ShieldCheck } from 'lucide-react';
+import { ShoppingCart, Wrench, Smartphone, Laptop, Cpu, Shield, Clock, Users, Newspaper, Phone, Mail, MapPin, Info, ClipboardList, FileText, Settings, ShieldCheck } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -181,7 +181,7 @@ const PublicPage = () => {
             <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-4 lg:gap-16 mt-12">
               <div className="grid gap-1 text-center">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground mb-4">
-                  <ClipboardScan className="h-8 w-8" />
+                  <ClipboardList className="h-8 w-8" />
                 </div>
                 <h3 className="text-lg font-bold">1. Pengecekan Awal</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
