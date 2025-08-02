@@ -1,107 +1,276 @@
-import PublicLayout from "@/components/Layout/PublicLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, Code, Image as ImageIcon } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
-import { useStock } from "@/hooks/use-stock";
-import { useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { ShoppingCart, Wrench, Smartphone, Laptop, Cpu, Shield, Clock, Users, Newspaper, Phone, Mail, MapPin, Info, ClipboardScan, FileText, Settings, ShieldCheck } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
+import logoSrc from '/logo.png';
+
+interface News {
+  id: string;
+  title: string;
+  content: string;
+  image_url: string;
+  slug: string;
+  published_at: string;
+}
 
 const PublicPage = () => {
-  const { products, loading } = useStock();
-  const { session, profile } = useAuth();
-  const location = useLocation();
-
-  const isMember = session && profile?.role === 'Member';
-  const displayedProducts = isMember ? products : products.slice(0, 4);
-
-  const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
-
-  useEffect(() => {
-    if (location.hash) {
-      const element = document.getElementById(location.hash.substring(1));
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  }, [location]);
+  const { data: news, isLoading: isLoadingNews } = useQuery<News[]>({
+    queryKey: ['news'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+        .limit(3);
+      if (error) throw new Error(error.message);
+      return data || [];
+    },
+  });
 
   const services = [
-    {
-      icon: Smartphone,
-      title: "Servis Smartphone",
-      description: "Ganti LCD, baterai, perbaikan mati total, masalah software, dan lainnya untuk semua merk HP.",
-    },
-    {
-      icon: Laptop,
-      title: "Servis Komputer & Laptop",
-      description: "Instal ulang OS, upgrade RAM/SSD, perbaikan motherboard, pembersihan virus, dan perawatan hardware.",
-    },
-    {
-      icon: Printer,
-      title: "Servis Printer",
-      description: "Perbaikan hasil cetak, printer tidak menarik kertas, infus, reset, dan penggantian sparepart.",
-    },
+    { icon: Smartphone, title: 'Servis Smartphone', description: 'Perbaikan semua merek HP, dari layar retak hingga masalah baterai.' },
+    { icon: Laptop, title: 'Servis Laptop & PC', description: 'Solusi untuk masalah hardware dan software komputer Anda.' },
+    { icon: Cpu, title: 'Ganti Sparepart', description: 'Suku cadang original dan berkualitas untuk semua jenis perangkat.' },
   ];
 
-  const features = [
-    {
-      icon: Wrench,
-      title: "Teknisi Ahli",
-      description: "Tim kami terdiri dari teknisi profesional dan berpengalaman di bidangnya.",
-    },
-    {
-      icon: Sparkles,
-      title: "Sparepart Berkualitas",
-      description: "Kami hanya menggunakan sparepart original atau dengan kualitas terbaik.",
-    },
-    {
-      icon: ShieldCheck,
-      title: "Garansi Servis",
-      description: "Setiap perbaikan yang kami lakukan disertai dengan garansi untuk kepuasan Anda.",
-    },
+  const whyUs = [
+    { icon: Shield, title: 'Bergaransi', description: 'Setiap perbaikan dan produk yang kami jual memiliki garansi resmi.' },
+    { icon: Clock, title: 'Pengerjaan Cepat', description: 'Kami menghargai waktu Anda dengan proses yang efisien.' },
+    { icon: Users, title: 'Teknisi Ahli', description: 'Tim kami terdiri dari para profesional berpengalaman di bidangnya.' },
+  ];
+
+  const testimonials = [
+    { name: 'Budi Santoso', role: 'Pelanggan', avatar: '/avatars/budi.jpg', text: 'Servisnya cepat dan hasilnya memuaskan. Laptop saya kembali normal seperti baru. Recommended!' },
+    { name: 'Citra Lestari', role: 'Pelanggan', avatar: '/avatars/citra.jpg', text: 'Pilihan aksesorisnya lengkap dan harganya terjangkau. Pelayanannya juga ramah banget.' },
   ];
 
   return (
-    <PublicLayout>
-      <main>
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+      {/* Header */}
+      <header className="px-4 lg:px-6 h-16 flex items-center bg-white dark:bg-gray-950 shadow-sm sticky top-0 z-50">
+        <Link to="/" className="flex items-center justify-center">
+          <img src={logoSrc} alt="Cellkom.Store Logo" className="h-10 w-auto" />
+          <span className="sr-only">Cellkom.Store</span>
+        </Link>
+        <nav className="ml-auto flex gap-4 sm:gap-6">
+          <a className="text-sm font-medium hover:underline underline-offset-4" href="#services">
+            Layanan
+          </a>
+          <a className="text-sm font-medium hover:underline underline-offset-4" href="#products">
+            Produk
+          </a>
+          <a className="text-sm font-medium hover:underline underline-offset-4" href="#news">
+            Berita
+          </a>
+          <a className="text-sm font-medium hover:underline underline-offset-4" href="#contact">
+            Kontak
+          </a>
+          <Link to="/member-login">
+            <Button variant="outline" size="sm">Login Member</Button>
+          </Link>
+          <Link to="/login">
+            <Button size="sm">Login Staf</Button>
+          </Link>
+        </nav>
+      </header>
+
+      <main className="flex-1">
         {/* Hero Section */}
         <section className="py-20 md:py-32 text-center">
           <div className="container px-4 md:px-6">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-primary to-orange-400">
               Solusi Total untuk Gadget & Komputer Anda
             </h1>
-            <p className="max-w-3xl mx-auto text-lg text-muted-foreground mb-8">
-              Dari perbaikan cepat hingga penjualan sparepart berkualitas, kami siap melayani semua kebutuhan teknologi Anda dengan profesional.
+            <p className="max-w-[700px] mx-auto text-gray-500 md:text-xl dark:text-gray-400 mb-8">
+              Dari perbaikan cepat hingga penjualan produk berkualitas, Cellkom.Store adalah partner terpercaya Anda.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild>
-                <a href="#services">Layanan Servis Kami <Wrench className="ml-2 h-5 w-5" /></a>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link to="/products">Lihat Produk Unggulan <ArrowRight className="ml-2 h-5 w-5" /></Link>
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
+              <Link
+                to="/products"
+                className="inline-flex h-12 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+              >
+                <ShoppingCart className="mr-2 h-4 w-4" /> Belanja Sekarang
+              </Link>
+              <a
+                href="#services"
+                className="inline-flex h-12 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+              >
+                <Wrench className="mr-2 h-4 w-4" /> Layanan Servis Kami
+              </a>
+              <a
+                href="#service-process"
+                className="inline-flex h-12 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+              >
+                <Info className="mr-2 h-4 w-4" /> Informasi Proses Service
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Products Section */}
+        <section id="products" className="w-full py-12 md:py-24 lg:py-32 bg-white dark:bg-gray-950">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <div className="inline-block rounded-lg bg-gray-100 px-3 py-1 text-sm dark:bg-gray-800">Produk Unggulan</div>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Temukan Kebutuhan Anda</h2>
+                <p className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+                  Kami menyediakan berbagai macam aksesoris, sparepart, dan produk digital lainnya.
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-5xl items-start gap-6 py-12 lg:grid-cols-3 lg:gap-12">
+              {/* Placeholder for products */}
+              <Card><CardHeader><CardTitle>Aksesoris</CardTitle></CardHeader><CardContent><p>Charger, kabel, casing, dan lainnya.</p></CardContent></Card>
+              <Card><CardHeader><CardTitle>Sparepart</CardTitle></CardHeader><CardContent><p>LCD, baterai, dan komponen lainnya.</p></CardContent></Card>
+              <Card><CardHeader><CardTitle>Produk Lain</CardTitle></CardHeader><CardContent><p>Perdana, voucher, dan produk digital.</p></CardContent></Card>
+            </div>
+            <div className="flex justify-center">
+              <Link to="/products">
+                <Button>Lihat Semua Produk</Button>
+              </Link>
             </div>
           </div>
         </section>
 
         {/* Services Section */}
-        <section id="services" className="py-16 md:py-24 bg-secondary/50">
+        <section id="services" className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Layanan Servis Profesional</h2>
-              <p className="mt-4 text-lg text-muted-foreground">Kami menangani berbagai jenis kerusakan dengan teknisi berpengalaman.</p>
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <div className="inline-block rounded-lg bg-gray-100 px-3 py-1 text-sm dark:bg-gray-800">Layanan Kami</div>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Profesional dan Terpercaya</h2>
+                <p className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+                  Percayakan perangkat Anda kepada kami untuk penanganan terbaik.
+                </p>
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {services.map((service) => (
-                <Card key={service.title} className="text-center hover:shadow-xl hover:-translate-y-2 transition-transform duration-300">
-                  <CardHeader>
-                    <service.icon className="h-12 w-12 mx-auto text-primary" />
-                    <CardTitle className="mt-4">{service.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{service.description}</p>
+            <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-3 mt-12">
+              {services.map((service, index) => (
+                <div key={index} className="grid gap-1 text-center">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground mb-4">
+                    <service.icon className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-lg font-bold">{service.title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{service.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Service Process Section */}
+        <section id="service-process" className="w-full py-12 md:py-24 lg:py-32 bg-white dark:bg-gray-950">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <div className="inline-block rounded-lg bg-gray-100 px-3 py-1 text-sm dark:bg-gray-800">Proses Servis Kami</div>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Transparan dan Terstruktur</h2>
+                <p className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+                  Kami memastikan Anda selalu tahu status perbaikan perangkat Anda di setiap langkahnya.
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-4 lg:gap-16 mt-12">
+              <div className="grid gap-1 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground mb-4">
+                  <ClipboardScan className="h-8 w-8" />
+                </div>
+                <h3 className="text-lg font-bold">1. Pengecekan Awal</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Bawa perangkat Anda, tim kami akan melakukan diagnosa awal dan memberikan penjelasan masalah.
+                </p>
+              </div>
+              <div className="grid gap-1 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground mb-4">
+                  <FileText className="h-8 w-8" />
+                </div>
+                <h3 className="text-lg font-bold">2. Estimasi & Persetujuan</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Anda akan menerima estimasi biaya dan waktu. Perbaikan hanya dilanjutkan setelah persetujuan Anda.
+                </p>
+              </div>
+              <div className="grid gap-1 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground mb-4">
+                  <Settings className="h-8 w-8" />
+                </div>
+                <h3 className="text-lg font-bold">3. Proses Perbaikan</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Teknisi ahli kami akan memperbaiki perangkat Anda menggunakan suku cadang berkualitas.
+                </p>
+              </div>
+              <div className="grid gap-1 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground mb-4">
+                  <ShieldCheck className="h-8 w-8" />
+                </div>
+                <h3 className="text-lg font-bold">4. Pengambilan & Garansi</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Kami akan mengabari Anda jika sudah selesai. Semua servis kami dilengkapi dengan garansi.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Why Us Section */}
+        <section id="why-us" className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <div className="inline-block rounded-lg bg-gray-100 px-3 py-1 text-sm dark:bg-gray-800">Mengapa Kami?</div>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Keunggulan Cellkom.Store</h2>
+                <p className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+                  Kami berkomitmen untuk memberikan yang terbaik bagi pelanggan kami.
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-3 mt-12">
+              {whyUs.map((item, index) => (
+                <div key={index} className="grid gap-1 text-center">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground mb-4">
+                    <item.icon className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-lg font-bold">{item.title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{item.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-white dark:bg-gray-950">
+          <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
+            <div className="space-y-3">
+              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">Apa Kata Pelanggan Kami</h2>
+              <p className="mx-auto max-w-[600px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+                Kepuasan Anda adalah prioritas utama kami.
+              </p>
+            </div>
+            <div className="grid w-full grid-cols-1 lg:grid-cols-2 gap-8">
+              {testimonials.map((testimonial, index) => (
+                <Card key={index}>
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <Avatar>
+                        <AvatarImage src={testimonial.avatar} />
+                        <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="grid gap-2 text-left">
+                        <p className="text-sm leading-loose text-gray-500 dark:text-gray-400">
+                          &ldquo;{testimonial.text}&rdquo;
+                        </p>
+                        <div className="font-semibold">{testimonial.name}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{testimonial.role}</div>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -109,107 +278,79 @@ const PublicPage = () => {
           </div>
         </section>
 
-        {/* Featured Products Section */}
-        <section id="products" className="py-16 md:py-24 bg-background">
+        {/* News Section */}
+        <section id="news" className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                {isMember ? "Semua Produk & Sparepart" : "Produk & Sparepart Unggulan"}
-              </h2>
-              <p className="mt-4 text-lg text-muted-foreground">
-                {isMember ? "Jelajahi semua koleksi kami yang tersedia." : "Temukan komponen dan aksesoris berkualitas untuk perangkat Anda."}
-              </p>
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <div className="inline-block rounded-lg bg-gray-100 px-3 py-1 text-sm dark:bg-gray-800">
+                  <Newspaper className="inline-block w-4 h-4 mr-1" />
+                  Berita & Promo
+                </div>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Ikuti Kabar Terbaru</h2>
+                <p className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+                  Jangan lewatkan informasi dan penawaran menarik dari kami.
+                </p>
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {loading ? (
-                Array.from({ length: isMember ? 8 : 4 }).map((_, index) => (
-                  <Card key={index}>
-                    <CardHeader className="p-0">
-                      <Skeleton className="h-48 w-full" />
-                    </CardHeader>
-                    <CardContent className="p-4 space-y-2">
-                      <Skeleton className="h-5 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                      <Skeleton className="h-6 w-1/3 mt-2" />
-                    </CardContent>
-                  </Card>
-                ))
+            <div className="mx-auto grid max-w-5xl gap-6 py-12 lg:grid-cols-3 lg:gap-12">
+              {isLoadingNews ? (
+                <p>Memuat berita...</p>
               ) : (
-                displayedProducts.map((product) => (
-                  <Card key={product.id} className="overflow-hidden group transition-shadow hover:shadow-lg">
-                    <CardHeader className="p-0">
-                      <div className="bg-muted aspect-square flex items-center justify-center overflow-hidden">
-                        {product.imageUrl ? (
-                          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
-                        ) : (
-                          <ImageIcon className="h-20 w-20 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
-                        )}
-                      </div>
-                    </CardHeader>
+                news?.map((item) => (
+                  <Card key={item.id} className="overflow-hidden">
+                    <img
+                      alt={item.title}
+                      className="aspect-video w-full object-cover"
+                      height="250"
+                      src={item.image_url || '/placeholder.svg'}
+                      width="400"
+                    />
                     <CardContent className="p-4">
-                      <h3 className="font-semibold truncate" title={product.name}>{product.name}</h3>
-                      <p className="text-sm text-muted-foreground">{product.category}</p>
-                      <p className="font-bold mt-2 text-primary">{formatCurrency(product.retailPrice)}</p>
+                      <Badge variant="secondary" className="mb-2">{format(new Date(item.published_at), 'dd MMMM yyyy', { locale: id })}</Badge>
+                      <h3 className="text-lg font-bold mb-2">{item.title}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-3">{item.content}</p>
+                      <Link to={`/news/${item.slug}`} className="text-sm font-medium text-primary hover:underline mt-4 inline-block">
+                        Baca Selengkapnya
+                      </Link>
                     </CardContent>
                   </Card>
                 ))
               )}
             </div>
-            {!isMember && (
-              <div className="text-center mt-12">
-                <Button asChild size="lg">
-                  <Link to="/products">Lihat Semua Produk <ArrowRight className="ml-2 h-5 w-5" /></Link>
-                </Button>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* About Us Section */}
-        <section id="about" className="py-16 md:py-24 bg-secondary/50">
-          <div className="container px-4 md:px-6">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tentang Kami</h2>
-              <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
-                Cellkom.Store adalah pusat layanan terpadu untuk perbaikan dan penjualan sparepart smartphone, komputer, dan laptop. Berdiri sejak tahun 2024, kami berkomitmen untuk memberikan solusi teknologi yang cepat, andal, dan terjangkau bagi masyarakat.
-              </p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-12 text-center mt-16">
-              {features.map((feature) => (
-                <div key={feature.title} className="flex flex-col items-center">
-                  <feature.icon className="h-10 w-10 mb-4 text-primary" />
-                  <h3 className="text-xl font-semibold">{feature.title}</h3>
-                  <p className="text-muted-foreground mt-2">{feature.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* IT Services Section */}
-        <section id="it-services" className="py-16 md:py-24 bg-background">
-          <div className="container px-4 md:px-6 text-center">
-            <div className="mx-auto max-w-3xl">
-              <div className="inline-block rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary mb-4">
-                <Code className="inline-block h-4 w-4 mr-2" />
-                Jasa Pembuatan Aplikasi
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Butuh Aplikasi Untuk Bisnis Anda?</h2>
-              <p className="mt-4 text-lg text-muted-foreground">
-                Selain layanan servis, tim IT kami juga siap membantu mengembangkan solusi digital untuk bisnis Anda. Dapatkan aplikasi custom seperti sistem kasir, manajemen inventaris, atau website profil yang modern dan fungsional.
-              </p>
-              <div className="mt-8">
-                <Button size="lg" asChild>
-                  <a href="#contact">
-                    Konsultasi Gratis <ArrowRight className="ml-2 h-5 w-5" />
-                  </a>
-                </Button>
-              </div>
-            </div>
           </div>
         </section>
       </main>
-    </PublicLayout>
+
+      {/* Footer */}
+      <footer id="contact" className="bg-gray-100 dark:bg-gray-800 py-8">
+        <div className="container mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
+          <div>
+            <h4 className="font-semibold mb-2">Cellkom.Store</h4>
+            <p className="text-gray-600 dark:text-gray-400">Pusat servis dan penjualan aksesoris HP & Komputer terpercaya di kota Anda.</p>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-2">Hubungi Kami</h4>
+            <ul className="space-y-1 text-gray-600 dark:text-gray-400">
+              <li className="flex items-center"><Mail className="w-4 h-4 mr-2" /> email@cellkom.store</li>
+              <li className="flex items-center"><Phone className="w-4 h-4 mr-2" /> (0274) 123456</li>
+              <li className="flex items-center"><MapPin className="w-4 h-4 mr-2" /> Jl. Malioboro No. 1, Yogyakarta</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-2">Tautan</h4>
+            <ul className="space-y-1">
+              <li><a href="#services" className="hover:underline">Layanan</a></li>
+              <li><a href="#products" className="hover:underline">Produk</a></li>
+              <li><a href="#" className="hover:underline">Tentang Kami</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="container mx-auto px-4 md:px-6 mt-8 text-center text-xs text-gray-500 dark:text-gray-400">
+          &copy; {new Date().getFullYear()} Cellkom.Store. All rights reserved.
+        </div>
+      </footer>
+    </div>
   );
 };
 
