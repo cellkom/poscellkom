@@ -32,9 +32,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   const signOut = async () => {
+    const lastRole = profile?.role;
     await supabase.auth.signOut();
-    setProfile(null);
-    navigate('/');
+    // The onAuthStateChange listener will automatically clear the session and profile state.
+    // We navigate based on the role before it's cleared for better UX.
+    if (lastRole === 'Admin' || lastRole === 'Kasir') {
+      navigate('/login');
+    } else {
+      navigate('/member-login');
+    }
   };
 
   const fetchProfile = async (currentUser: User): Promise<UserProfile | null> => {
@@ -73,26 +79,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   useEffect(() => {
-    const setAuthData = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error getting session:", error);
-        setLoading(false);
-        return;
-      }
-
-      setSession(session);
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        const currentProfile = await fetchProfile(currentUser);
-        setProfile(currentProfile);
-      }
-      setLoading(false);
-    };
-
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    setLoading(true);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       const currentUser = session?.user ?? null;
       setUser(currentUser);
@@ -106,10 +94,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    setAuthData();
-
     return () => {
-      listener?.subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
