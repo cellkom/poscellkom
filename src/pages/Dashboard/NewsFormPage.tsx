@@ -48,6 +48,7 @@ const NewsFormPage: React.FC = () => {
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = form;
   const watchedTitle = watch("title");
+  const watchedContent = watch("content"); // Watch content as well
 
   useEffect(() => {
     if (id) {
@@ -182,7 +183,13 @@ const NewsFormPage: React.FC = () => {
 
               <div>
                 <Label htmlFor="content">Konten Berita</Label>
-                <Textarea id="content" {...register("content")} className="mt-1 min-h-[150px]" />
+                <Textarea
+                  id="content"
+                  {...register("content")}
+                  value={watchedContent} // Explicitly set value
+                  onChange={(e) => setValue("content", e.target.value)} // Explicitly set onChange
+                  className="mt-1 min-h-[150px]"
+                />
                 {errors.content?.message && <p className="text-red-500 text-sm mt-1">{errors.content.message}</p>}
               </div>
 
