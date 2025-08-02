@@ -29,13 +29,27 @@ const MemberLoginPage = () => {
   const [address, setAddress] = useState('');
 
   useEffect(() => {
-    if (!authLoading && session && profile) {
-      if (profile.role === 'Member') {
-        navigate('/products');
-      } else if (profile.role === 'Admin' || profile.role === 'Kasir') {
-        navigate('/dashboard');
+    if (authLoading) {
+      return; // Tunggu hingga proses pengecekan autentikasi selesai
+    }
+
+    if (session) {
+      if (profile) {
+        // Pengguna sudah login dan punya profil, arahkan sesuai peran
+        if (profile.role === 'Member') {
+          navigate('/products');
+        } else if (profile.role === 'Admin' || profile.role === 'Kasir') {
+          // Staf mendarat di halaman login member, arahkan ke dashboard
+          navigate('/dashboard');
+        }
+      } else {
+        // Pengguna punya sesi tapi tidak punya profil, ini adalah state yang tidak valid.
+        // Logout untuk mencegah terjebak.
+        showError("Gagal memuat profil. Sesi Anda tidak valid, silakan login kembali.");
+        supabase.auth.signOut();
       }
     }
+    // Jika tidak ada sesi, tetap di halaman login.
   }, [session, profile, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -49,7 +63,7 @@ const MemberLoginPage = () => {
     if (error) {
       showError("Email atau password salah.");
     }
-    // Let the AuthContext and useEffect handle the rest.
+    // useEffect akan menangani pengalihan setelah login berhasil
     setLoading(false);
   };
 
