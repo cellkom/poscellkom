@@ -5,8 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useServiceEntries } from "@/hooks/use-service-entries";
 import { Eye, Printer, Trash2 } from "lucide-react";
 import { useState } from "react";
-import ReceiptModal from "@/components/modals/ReceiptModal"; // Corrected import path
-import { ServiceEntryWithCustomer } from "@/hooks/use-service-entries"; // Corrected import path
+import ReceiptModal from "@/components/modals/ReceiptModal";
+import { ServiceEntryWithCustomer } from "@/hooks/use-service-entries";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
 import {
@@ -89,7 +89,7 @@ const ServiceMasukPage = () => {
             <TableBody>
               {serviceEntries.map((entry) => (
                 <TableRow key={entry.id}>
-                  <TableCell>{entry.id}</TableCell>
+                  <TableCell>SVC-{entry.id}</TableCell>
                   <TableCell>{entry.customerName || 'N/A'}</TableCell>
                   <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
                   <TableCell>{entry.device_type}</TableCell>
