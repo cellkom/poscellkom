@@ -2,13 +2,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useServiceEntries } from "@/hooks/use-service-entries"; // Corrected import path
+import { useServiceEntries } from "@/hooks/use-service-entries";
 import { Eye, Printer, Trash2 } from "lucide-react";
 import { useState } from "react";
-import ReceiptModal from "@/components/modals/ReceiptModal";
-import { ServiceEntry } from "@/hooks/use-service-entries"; // Corrected import path
-import { supabase } from "@/integrations/supabase/client"; // Corrected import path
-import { showSuccess, showError } from "@/utils/toast"; // Import from utils/toast
+import ReceiptModal from "@/components/modals/ReceiptModal"; // Corrected import path
+import { ServiceEntryWithCustomer } from "@/hooks/use-service-entries"; // Corrected import path
+import { supabase } from "@/integrations/supabase/client";
+import { showSuccess, showError } from "@/utils/toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-type Status = 'Pending' | 'Proses' | 'Selesai' | 'Gagal/Cancel' | 'Sudah Diambil'; // Updated to match ServiceEntry status types
+type Status = 'Pending' | 'Proses' | 'Selesai' | 'Gagal/Cancel' | 'Sudah Diambil';
 
 const getStatusBadgeVariant = (status: Status) => {
   switch (status) {
@@ -32,7 +32,7 @@ const getStatusBadgeVariant = (status: Status) => {
       return 'default';
     case 'Selesai':
     case 'Sudah Diambil':
-      return 'default'; // Changed to default for completed/taken
+      return 'default';
     case 'Gagal/Cancel':
       return 'destructive';
     default:
@@ -41,12 +41,12 @@ const getStatusBadgeVariant = (status: Status) => {
 };
 
 const ServiceMasukPage = () => {
-  const { serviceEntries, loading: isLoading, deleteServiceEntry, updateServiceEntry } = useServiceEntries(); // Use hooks directly
-  const [selectedEntry, setSelectedEntry] = useState<ServiceEntry | null>(null);
+  const { serviceEntries, loading: isLoading, deleteServiceEntry, updateServiceEntry } = useServiceEntries();
+  const [selectedEntry, setSelectedEntry] = useState<ServiceEntryWithCustomer | null>(null);
   const [isReceiptModalOpen, setReceiptModalOpen] = useState(false);
-  const [entryToDelete, setEntryToDelete] = useState<ServiceEntry | null>(null);
+  const [entryToDelete, setEntryToDelete] = useState<ServiceEntryWithCustomer | null>(null);
 
-  const handleViewReceipt = (entry: ServiceEntry) => {
+  const handleViewReceipt = (entry: ServiceEntryWithCustomer) => {
     setSelectedEntry(entry);
     setReceiptModalOpen(true);
   };
@@ -66,7 +66,6 @@ const ServiceMasukPage = () => {
   };
 
   if (isLoading) return <div>Loading...</div>;
-  // No need for a separate error state here, useServiceEntries handles toasts for errors
 
   return (
     <>
