@@ -1,20 +1,61 @@
 import PublicLayout from "@/components/Layout/PublicLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useStock } from "@/hooks/use-stock";
-import { ShoppingCart, Search, Loader2, Image as ImageIcon } from "lucide-react";
-import { useState, useMemo } from "react";
+import { ShoppingCart, Search, Image as ImageIcon } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
+// Definisikan tipe data untuk produk
+interface Product {
+  id: string;
+  name: string;
+  category: string | null;
+  stock: number;
+  retailPrice: number;
+  imageUrl: string | null;
+  barcode: string | null;
+}
 
 const ProductsPage = () => {
-  const { products, loading } = useStock();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, category, stock, retail_price, image_url, barcode')
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error("Error fetching products:", error);
+        toast.error("Gagal memuat produk.");
+      } else if (data) {
+        const formattedData: Product[] = data.map(p => ({
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          stock: p.stock,
+          retailPrice: p.retail_price,
+          imageUrl: p.image_url,
+          barcode: p.barcode,
+        }));
+        setProducts(formattedData);
+      }
+      setLoading(false);
+    };
+
+    fetchProducts();
+  }, []);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
@@ -44,7 +85,7 @@ const ProductsPage = () => {
     return filtered;
   }, [products, searchTerm, categoryFilter]);
 
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: Product) => {
     addToCart(product);
     toast.success(`${product.name} ditambahkan ke keranjang!`);
   };
