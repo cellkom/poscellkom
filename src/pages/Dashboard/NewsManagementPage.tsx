@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { showError } from "@/utils/toast";
 import { format } from "date-fns";
 import { useNews, NewsArticle } from "@/hooks/use-news";
+import { supabase } from "@/integrations/supabase/client";
 
 const NewsManagementPage = () => {
   const { user } = useAuth();
@@ -25,7 +26,24 @@ const NewsManagementPage = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchArticles(true); // Fetch all articles for admin
+    fetchArticles(true); // Initial fetch
+
+    const channel = supabase
+      .channel('news-management-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'news' },
+        () => {
+          // When something changes in the news table, refetch all articles in admin mode
+          fetchArticles(true);
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on component unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchArticles]);
 
   const generateSlug = (title: string) => {
@@ -104,17 +122,13 @@ const NewsManagementPage = () => {
 
     if (success) {
       setIsDialogOpen(false);
-      fetchArticles(true);
     }
     setIsSubmitting(false);
   };
 
   const handleDelete = async (articleId: string) => {
     if (window.confirm("Anda yakin ingin menghapus berita ini?")) {
-      const success = await deleteArticle(articleId);
-      if (success) {
-        fetchArticles(true);
-      }
+      await deleteArticle(articleId);
     }
   };
 
