@@ -178,7 +178,7 @@ const NewsFormPage: React.FC = () => {
               <div>
                 <Label htmlFor="title">Judul Berita</Label>
                 <Input id="title" {...register("title")} className="mt-1" />
-                {errors.title?.message && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
+                {errors.title?.message && <p className="text-red-500 text-sm mt-1">{String(errors.title.message)}</p>}
               </div>
 
               <div>
@@ -190,7 +190,7 @@ const NewsFormPage: React.FC = () => {
                   onChange={(e) => setValue("content", e.target.value)} // Explicitly set onChange
                   className="mt-1 min-h-[150px]"
                 />
-                {errors.content?.message && <p className="text-red-500 text-sm mt-1">{errors.content.message}</p>}
+                {errors.content?.message && <p className="text-red-500 text-sm mt-1">{String(errors.content.message)}</p>}
               </div>
 
               <div>
@@ -202,7 +202,7 @@ const NewsFormPage: React.FC = () => {
                     <img src={currentImageUrl} alt="Current News Image" className="w-32 h-32 object-cover rounded-md mt-1" />
                   </div>
                 )}
-                {errors.image?.message && <p className="text-red-500 text-sm mt-1">{errors.image.message}</p>}
+                {errors.image?.message && <p className="text-red-500 text-sm mt-1">{String(errors.image.message)}</p>}
               </div>
 
               <div>
@@ -216,7 +216,7 @@ const NewsFormPage: React.FC = () => {
                     <SelectItem value="published">Dipublikasikan</SelectItem>
                   </SelectContent>
                 </Select>
-                {errors.status?.message && <p className="text-red-500 text-sm mt-1">{errors.status.message}</p>}
+                {errors.status?.message && <p className="text-red-500 text-sm mt-1">{String(errors.status.message)}</p>}
               </div>
 
               <div>
@@ -243,7 +243,7 @@ const NewsFormPage: React.FC = () => {
                     />
                   </PopoverContent>
                 </Popover>
-                {errors.published_at?.message && <p className="text-red-500 text-sm mt-1">{errors.published_at.message}</p>}
+                {errors.published_at?.message && <p className="text-red-500 text-sm mt-1">{String(errors.published_at.message)}</p>}
               </div>
 
               <div>
