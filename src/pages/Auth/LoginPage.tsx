@@ -12,17 +12,21 @@ import { Badge } from '@/components/ui/badge';
 import logoSrc from '/logo.png';
 
 const LoginPage = () => {
-  const { session, loading: authLoading } = useAuth();
+  const { session, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    if (!authLoading && session) {
-      navigate('/dashboard');
+    if (!authLoading && session && profile) {
+      if (profile.role === 'Admin' || profile.role === 'Kasir') {
+        navigate('/dashboard');
+      } else if (profile.role === 'Member') {
+        navigate('/products');
+      }
     }
-  }, [session, authLoading, navigate]);
+  }, [session, profile, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +66,6 @@ const LoginPage = () => {
       
       // Let AuthContext handle setting the session and profile.
       // The useEffect will then navigate to the dashboard.
-      // No need to call navigate() here directly.
     } else {
       // Should not happen if authError is null, but as a safeguard
       setLoading(false);

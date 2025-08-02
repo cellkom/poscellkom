@@ -13,7 +13,7 @@ import { Loader2, Star, ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const MemberLoginPage = () => {
-  const { session } = useAuth();
+  const { session, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
@@ -29,25 +29,14 @@ const MemberLoginPage = () => {
   const [address, setAddress] = useState('');
 
   useEffect(() => {
-    if (session) {
-      const checkSessionRole = async () => {
-        if (session.user) {
-          const { data: memberProfile } = await supabase
-            .from('members')
-            .select('id')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (memberProfile) {
-            navigate('/products');
-          } else {
-             await supabase.auth.signOut();
-          }
-        }
+    if (!authLoading && session && profile) {
+      if (profile.role === 'Member') {
+        navigate('/products');
+      } else if (profile.role === 'Admin' || profile.role === 'Kasir') {
+        navigate('/dashboard');
       }
-      checkSessionRole();
     }
-  }, [session, navigate]);
+  }, [session, profile, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,9 +62,10 @@ const MemberLoginPage = () => {
       if (profileError || !memberProfile) {
         showError("Akun member tidak ditemukan. Silakan login di halaman staf jika Anda adalah staf.");
         await supabase.auth.signOut();
-      } else {
-        navigate('/products');
+        setLoading(false);
+        return;
       }
+      // Let the useEffect handle navigation
     }
     setLoading(false);
   };
