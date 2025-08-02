@@ -39,25 +39,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchProfile = async (currentUser: User): Promise<UserProfile | null> => {
     // Coba ambil profil dari tabel 'users' (staf)
-    const { data: staffProfile } = await supabase
+    const { data: staffProfiles, error: staffError } = await supabase
       .from('users')
       .select('*')
-      .eq('id', currentUser.id)
-      .single();
+      .eq('id', currentUser.id);
 
-    if (staffProfile) {
-      return staffProfile;
+    if (staffError) {
+      console.error("Error fetching staff profile:", staffError);
+    } else if (staffProfiles && staffProfiles.length > 0) {
+      return staffProfiles[0];
     }
 
     // Jika bukan staf, coba ambil dari tabel 'members'
-    const { data: memberProfile } = await supabase
+    const { data: memberProfiles, error: memberError } = await supabase
       .from('members')
       .select('*')
-      .eq('id', currentUser.id)
-      .single();
+      .eq('id', currentUser.id);
 
-    if (memberProfile) {
-      return { ...memberProfile, role: 'Member', email: currentUser.email };
+    if (memberError) {
+      console.error("Error fetching member profile:", memberError);
+    } else if (memberProfiles && memberProfiles.length > 0) {
+      return { ...memberProfiles[0], role: 'Member', email: currentUser.email };
     }
 
     return null;

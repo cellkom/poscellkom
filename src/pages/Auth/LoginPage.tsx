@@ -40,13 +40,12 @@ const LoginPage = () => {
     }
 
     if (authData.user) {
-      const { data: profile, error: profileError } = await supabase
+      const { data: profiles, error: profileError } = await supabase
         .from('users')
         .select('role')
-        .eq('id', authData.user.id)
-        .single();
+        .eq('id', authData.user.id);
 
-      if (profileError || !profile) {
+      if (profileError || !profiles || profiles.length === 0) {
         showError("Akun staf tidak ditemukan. Silakan login di halaman member jika Anda adalah member.");
         await supabase.auth.signOut();
       } else {
