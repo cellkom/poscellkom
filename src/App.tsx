@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -33,54 +34,58 @@ import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
 import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
 import NotFound from './pages/NotFound';
 
+const queryClient = new QueryClient();
+
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      <BrowserRouter>
-        <AuthProvider>
-          <CartProvider>
-            <Toaster richColors position="top-center" />
-            <Routes>
-              <Route path="/" element={<PublicPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/member-login" element={<MemberLoginPage />} />
-              <Route path="/products" element={<ProductsPage />} />
-              <Route path="/news" element={<NewsPage />} />
-              <Route path="/news/:slug" element={<NewsDetailPage />} />
-              
-              <Route element={<MemberRoute />}>
-                <Route path="/member-profile" element={<MemberProfilePage />} />
-              </Route>
-
-              <Route element={<ProtectedRoute />}>
-                <Route path="/profile" element={<UserProfilePage />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/dashboard/stock" element={<StockPage />} />
-                <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
-                <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
-                <Route path="/dashboard/transaction/service" element={<ServicePage />} />
-                <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
-                <Route path="/dashboard/transaction/add-installment" element={<AddInstallmentPage />} />
-                <Route path="/dashboard/data/customers" element={<CustomerPage />} />
-                <Route path="/dashboard/data/suppliers" element={<SupplierPage />} />
-                <Route path="/dashboard/reports" element={<ReportsPage />} />
-                <Route path="/dashboard/reports/sales" element={<SalesReportPage />} />
-                <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
-                <Route path="/dashboard/reports/today" element={<TodayReportPage />} />
-                <Route path="/dashboard/services-in-progress" element={<ServicesInProgressPage />} />
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+        <BrowserRouter>
+          <AuthProvider>
+            <CartProvider>
+              <Toaster richColors position="top-center" />
+              <Routes>
+                <Route path="/" element={<PublicPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/member-login" element={<MemberLoginPage />} />
+                <Route path="/products" element={<ProductsPage />} />
+                <Route path="/news" element={<NewsPage />} />
+                <Route path="/news/:slug" element={<NewsDetailPage />} />
                 
-                <Route element={<AdminRoute />}>
-                  <Route path="/dashboard/data/users" element={<UsersPage />} />
-                  <Route path="/dashboard/news" element={<NewsManagementPage />} />
+                <Route element={<MemberRoute />}>
+                  <Route path="/member-profile" element={<MemberProfilePage />} />
                 </Route>
-              </Route>
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </CartProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/profile" element={<UserProfilePage />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/dashboard/stock" element={<StockPage />} />
+                  <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
+                  <Route path="/dashboard/transaction/sales" element={<SalesPage />} />
+                  <Route path="/dashboard/transaction/service" element={<ServicePage />} />
+                  <Route path="/dashboard/transaction/installments" element={<InstallmentPage />} />
+                  <Route path="/dashboard/transaction/add-installment" element={<AddInstallmentPage />} />
+                  <Route path="/dashboard/data/customers" element={<CustomerPage />} />
+                  <Route path="/dashboard/data/suppliers" element={<SupplierPage />} />
+                  <Route path="/dashboard/reports" element={<ReportsPage />} />
+                  <Route path="/dashboard/reports/sales" element={<SalesReportPage />} />
+                  <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
+                  <Route path="/dashboard/reports/today" element={<TodayReportPage />} />
+                  <Route path="/dashboard/services-in-progress" element={<ServicesInProgressPage />} />
+                  
+                  <Route element={<AdminRoute />}>
+                    <Route path="/dashboard/data/users" element={<UsersPage />} />
+                    <Route path="/dashboard/news" element={<NewsManagementPage />} />
+                  </Route>
+                </Route>
+
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </CartProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 
