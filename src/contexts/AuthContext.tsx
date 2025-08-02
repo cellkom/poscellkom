@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
@@ -31,55 +31,81 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const fetchProfile = useCallback(async (currentUser: User): Promise<UserProfile | null> => {
+    // Coba ambil profil dari tabel 'users' (staf)
+    const { data: staffProfile, error: staffError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', currentUser.id)
+      .single();
+
+    if (staffProfile) {
+      return staffProfile;
+    }
+    // PGRST116 berarti tidak ada baris yang ditemukan, yang diharapkan jika pengguna adalah anggota.
+    // Kami hanya mencatat kesalahan lain.
+    if (staffError && staffError.code !== 'PGRST116') {
+      console.error("Error fetching staff profile:", staffError);
+    }
+
+    // Jika bukan staf, coba ambil dari tabel 'members'
+    const { data: memberProfile, error: memberError } = await supabase
+      .from('members')
+      .select('*')
+      .eq('id', currentUser.id)
+      .single();
+
+    if (memberProfile) {
+      return { ...memberProfile, role: 'Member', email: currentUser.email };
+    }
+    if (memberError && memberError.code !== 'PGRST116') {
+      console.error("Error fetching member profile:", memberError);
+    }
+
+    return null;
+  }, []);
+
   const signOut = async () => {
     const lastRole = profile?.role;
+    
     await supabase.auth.signOut();
-    // The onAuthStateChange listener will automatically clear the session and profile state.
-    // We navigate based on the role before it's cleared for better UX.
+    
+    // Atur ulang state secara manual untuk memastikan pembaruan UI segera dan mencegah race condition.
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+
+    // Navigasi berdasarkan peran sebelum dibersihkan.
     if (lastRole === 'Admin' || lastRole === 'Kasir') {
       navigate('/login');
     } else {
       navigate('/member-login');
     }
   };
-
-  const fetchProfile = async (currentUser: User): Promise<UserProfile | null> => {
-    // Coba ambil profil dari tabel 'users' (staf)
-    const { data: staffProfiles, error: staffError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', currentUser.id);
-
-    if (staffError) {
-      console.error("Error fetching staff profile:", staffError);
-    } else if (staffProfiles && staffProfiles.length > 0) {
-      return staffProfiles[0];
-    }
-
-    // Jika bukan staf, coba ambil dari tabel 'members'
-    const { data: memberProfiles, error: memberError } = await supabase
-      .from('members')
-      .select('*')
-      .eq('id', currentUser.id);
-
-    if (memberError) {
-      console.error("Error fetching member profile:", memberError);
-    } else if (memberProfiles && memberProfiles.length > 0) {
-      return { ...memberProfiles[0], role: 'Member', email: currentUser.email };
-    }
-
-    return null;
-  };
   
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
       if (user) {
           const currentProfile = await fetchProfile(user);
           setProfile(currentProfile);
       }
-  }
+  }, [user, fetchProfile]);
 
   useEffect(() => {
     setLoading(true);
+    
+    // Dapatkan sesi awal saat aplikasi dimuat
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        const currentProfile = await fetchProfile(currentUser);
+        setProfile(currentProfile);
+      }
+      setLoading(false); // Set loading ke false setelah pemeriksaan awal
+    });
+
+    // Siapkan listener untuk perubahan selanjutnya
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       const currentUser = session?.user ?? null;
@@ -89,6 +115,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const currentProfile = await fetchProfile(currentUser);
         setProfile(currentProfile);
       } else {
+        // Ini menangani logout
         setProfile(null);
       }
       setLoading(false);
@@ -97,7 +124,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [fetchProfile]);
 
   const value = {
     session,
