@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper } from "lucide-react";
+import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard } from "lucide-react";
 import logoSrc from '/logo.png';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -65,7 +65,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name} />
+                      <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name || ''} />
                       <AvatarFallback>{profile.full_name?.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                   </Button>
@@ -73,9 +73,21 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>{profile.email}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  {profile.role === 'Admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
+                        <LayoutDashboard className="h-4 w-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
-                    <Link to="/member-profile">Profil Saya</Link>
+                    <Link to="/member-profile" className="flex items-center gap-2 cursor-pointer">
+                      <UserCircle className="h-4 w-4" />
+                      <span>Profil Saya</span>
+                    </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={signOut} className="cursor-pointer">
                     Logout
                   </DropdownMenuItem>
