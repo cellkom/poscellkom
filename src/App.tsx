@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import AdminRoute from './components/AdminRoute';
 import { Toaster } from './components/ui/sonner';
 import { ThemeProvider } from './components/ThemeProvider';
 
@@ -64,12 +63,8 @@ function App() {
                 <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
                 <Route path="/dashboard/reports/today" element={<TodayReportPage />} />
                 <Route path="/dashboard/services-in-progress" element={<ServicesInProgressPage />} />
-                
-                {/* Admin Only Routes */}
-                <Route element={<AdminRoute />}>
-                  <Route path="/dashboard/data/users" element={<UsersPage />} />
-                  <Route path="/dashboard/news" element={<NewsManagementPage />} />
-                </Route>
+                <Route path="/dashboard/data/users" element={<UsersPage />} />
+                <Route path="/dashboard/news" element={<NewsManagementPage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
