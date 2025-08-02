@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard } from "lucide-react";
+import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard, Code } from "lucide-react";
 import logoSrc from '/logo.png';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -18,8 +18,9 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
   const { cartCount } = useCart();
 
   const navLinks = [
-    { name: "Layanan", href: "/#services", icon: Wrench },
-    { name: "Toko", href: "/products", icon: ShoppingCart },
+    { name: "Layanan Servis", href: "/#services", icon: Wrench },
+    { name: "Produk", href: "/products", icon: ShoppingCart },
+    { name: "Jasa Aplikasi", href: "/#it-services", icon: Code },
     { name: "Berita", href: "/news", icon: Newspaper },
     { name: "Tentang Kami", href: "/#about", icon: Info },
     { name: "Kontak", href: "/#contact", icon: Phone },
