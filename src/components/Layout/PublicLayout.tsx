@@ -10,10 +10,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
-  const { session, signOut } = useAuth();
+  const { session, profile, signOut } = useAuth();
   const { cartCount } = useCart();
 
   const navLinks = [
@@ -58,15 +59,18 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
               <span className="sr-only">Keranjang Belanja</span>
             </Button>
 
-            {session ? (
+            {session && profile ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <UserCircle className="h-6 w-6" />
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name} />
+                      <AvatarFallback>{profile.full_name?.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{session.user.email}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{profile.email}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/member-profile">Profil Saya</Link>

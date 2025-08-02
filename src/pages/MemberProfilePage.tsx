@@ -2,49 +2,85 @@ import { useState, useEffect } from 'react';
 import PublicLayout from "@/components/Layout/PublicLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Loader2, User, Mail, Phone, HomeIcon } from "lucide-react";
-import { showError } from '@/utils/toast';
-
-interface MemberProfile {
-  full_name: string;
-  phone: string | null;
-  address: string | null;
-  email: string | undefined;
-}
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, User, Mail, Phone, HomeIcon, Camera } from "lucide-react";
+import { showSuccess, showError } from '@/utils/toast';
 
 const MemberProfilePage = () => {
-  const { session, user } = useAuth();
-  const [profile, setProfile] = useState<MemberProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, profile, refreshProfile } = useAuth();
+  const [formData, setFormData] = useState({ address: '' });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchMemberProfile = async () => {
-      if (!user) {
+    if (profile) {
+      setFormData({ address: profile.address || '' });
+    }
+  }, [profile]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    setLoading(true);
+
+    let avatarUrl = profile?.avatar_url;
+
+    if (imageFile) {
+      const fileExt = imageFile.name.split('.').pop();
+      const filePath = `public/${user.id}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, imageFile, { upsert: true });
+
+      if (uploadError) {
+        showError(`Gagal mengunggah foto: ${uploadError.message}`);
         setLoading(false);
         return;
       }
 
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('members')
-        .select('full_name, phone, address')
-        .eq('id', user.id)
-        .single();
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      avatarUrl = publicUrl;
+    }
 
-      if (error) {
-        showError("Gagal memuat profil member.");
-        console.error(error);
-      } else if (data) {
-        setProfile({ ...data, email: user.email });
-      }
-      setLoading(false);
-    };
+    const { error: updateError } = await supabase
+      .from('members')
+      .update({
+        address: formData.address,
+        avatar_url: avatarUrl,
+      })
+      .eq('id', user.id);
 
-    fetchMemberProfile();
-  }, [user]);
+    if (updateError) {
+      showError(`Gagal memperbarui profil: ${updateError.message}`);
+    } else {
+      showSuccess("Profil berhasil diperbarui!");
+      await refreshProfile(); // Refresh context to update header
+    }
+    setLoading(false);
+  };
+
+  if (!profile) {
+    return (
+      <PublicLayout>
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </PublicLayout>
+    );
+  }
 
   return (
     <PublicLayout>
@@ -52,48 +88,54 @@ const MemberProfilePage = () => {
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="text-2xl">Profil Saya</CardTitle>
-            <p className="text-muted-foreground">Detail informasi akun member Anda.</p>
+            <p className="text-muted-foreground">Kelola informasi akun dan profil Anda.</p>
           </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex justify-center items-center h-40">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <CardContent className="space-y-6">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={imagePreview || profile.avatar_url || ''} alt={profile.full_name} />
+                  <AvatarFallback>{profile.full_name?.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <Button asChild size="icon" className="absolute bottom-0 right-0 rounded-full h-8 w-8">
+                  <Label htmlFor="picture" className="cursor-pointer">
+                    <Camera className="h-4 w-4" />
+                    <Input id="picture" type="file" className="sr-only" accept="image/*" onChange={handleImageChange} />
+                  </Label>
+                </Button>
               </div>
-            ) : profile ? (
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <div className="w-full">
-                    <Label htmlFor="fullName">Nama Lengkap</Label>
-                    <Input id="fullName" value={profile.full_name} readOnly disabled />
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Mail className="h-5 w-5 text-muted-foreground" />
-                  <div className="w-full">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" value={profile.email} readOnly disabled />
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Phone className="h-5 w-5 text-muted-foreground" />
-                  <div className="w-full">
-                    <Label htmlFor="phone">Nomor Telepon</Label>
-                    <Input id="phone" value={profile.phone || '-'} readOnly disabled />
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <HomeIcon className="h-5 w-5 text-muted-foreground" />
-                  <div className="w-full">
-                    <Label htmlFor="address">Alamat</Label>
-                    <Input id="address" value={profile.address || '-'} readOnly disabled />
-                  </div>
+              <h2 className="text-xl font-semibold">{profile.full_name}</h2>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Mail className="h-5 w-5 text-muted-foreground" />
+                <div className="w-full">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" value={profile.email || ''} readOnly disabled />
                 </div>
               </div>
-            ) : (
-              <p className="text-center text-muted-foreground">Profil tidak ditemukan.</p>
-            )}
+              <div className="flex items-center gap-4">
+                <Phone className="h-5 w-5 text-muted-foreground" />
+                <div className="w-full">
+                  <Label htmlFor="phone">Nomor Telepon</Label>
+                  <Input id="phone" value={profile.phone || '-'} readOnly disabled />
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <HomeIcon className="h-5 w-5 text-muted-foreground" />
+                <div className="w-full">
+                  <Label htmlFor="address">Alamat</Label>
+                  <Input id="address" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+                </div>
+              </div>
+            </div>
           </CardContent>
+          <CardFooter>
+            <Button onClick={handleSave} disabled={loading} className="w-full">
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Simpan Perubahan
+            </Button>
+          </CardFooter>
         </Card>
       </div>
     </PublicLayout>
