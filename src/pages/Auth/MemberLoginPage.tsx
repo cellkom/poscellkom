@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,9 @@ import { Badge } from '@/components/ui/badge';
 const MemberLoginPage = () => {
   const { session, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || '/products';
+
   const [loading, setLoading] = useState(false);
 
   // State for sign-in form
@@ -36,10 +39,10 @@ const MemberLoginPage = () => {
     if (session && profile) {
       // Jika pengguna sudah login dan punya profil, arahkan mereka
       if (profile.role === 'Member') {
-        navigate('/products');
+        navigate(from, { replace: true });
       }
     }
-  }, [session, profile, authLoading, navigate]);
+  }, [session, profile, authLoading, navigate, from]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +68,7 @@ const MemberLoginPage = () => {
 
       if (memberProfile) {
         // Pengguna adalah member, arahkan ke halaman produk
-        navigate('/products');
+        navigate(from, { replace: true });
       } else {
         // Bukan member, periksa apakah dia staf
         const { data: staffProfile } = await supabase

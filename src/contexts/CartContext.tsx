@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from './AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export interface Product {
   id: number;
@@ -29,8 +29,9 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const { user } = useAuth(); // Mengambil status autentikasi pengguna
-  const navigate = useNavigate(); // Untuk mengarahkan pengguna
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const storedCart = localStorage.getItem('cart');
@@ -44,11 +45,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [cartItems]);
 
   const addToCart = (product: Product) => {
-    // PERUBAHAN: Cek apakah pengguna sudah login
     if (!user) {
       toast.info("Silakan login atau daftar untuk melanjutkan belanja.");
-      navigate('/member-login'); // Arahkan ke halaman login member
-      return; // Hentikan fungsi jika belum login
+      navigate('/member-login', { state: { from: location.pathname } });
+      return;
     }
 
     setCartItems(prevItems => {
