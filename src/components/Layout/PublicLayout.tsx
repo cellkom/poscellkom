@@ -11,7 +11,7 @@ import { useCart } from "@/contexts/CartContext";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import CartSidebar from "@/components/CartSidebar"; // Import the new component
+import CartSidebar from "@/components/CartSidebar";
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
@@ -26,6 +26,8 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
     { name: "Tentang Kami", href: "/#about", icon: Info },
     { name: "Kontak", href: "/#contact", icon: Phone },
   ];
+
+  const profileLink = profile?.role === 'Member' ? '/member-profile' : '/profile';
 
   return (
     <div className="bg-background text-foreground flex flex-col min-h-screen">
@@ -43,7 +45,6 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
           
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
             {navLinks.map(link => (
-              // Use <a> tag for hash links to enable smooth scrolling
               link.href.startsWith('/#') ? (
                 <a key={link.name} href={link.href} className="text-muted-foreground transition-colors hover:text-primary">
                   {link.name}
@@ -87,7 +88,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{profile.email}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{session.user.email}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {profile.role === 'Admin' && (
                     <DropdownMenuItem asChild>
@@ -98,7 +99,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
-                    <Link to="/member-profile" className="flex items-center gap-2 cursor-pointer">
+                    <Link to={profileLink} className="flex items-center gap-2 cursor-pointer">
                       <UserCircle className="h-4 w-4" />
                       <span>Profil Saya</span>
                     </Link>
@@ -129,7 +130,6 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                 <SheetContent side="right">
                   <nav className="grid gap-6 text-lg font-medium mt-8">
                     {navLinks.map(link => (
-                      // Use <a> tag for hash links in mobile nav as well
                       link.href.startsWith('/#') ? (
                         <a key={link.name} href={link.href} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
                           <link.icon className="h-6 w-6" />

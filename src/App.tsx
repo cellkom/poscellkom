@@ -14,6 +14,7 @@ import ProductsPage from './pages/ProductsPage';
 import NewsPage from './pages/NewsPage';
 import NewsDetailPage from './pages/NewsDetailPage';
 import MemberProfilePage from './pages/MemberProfilePage';
+import UserProfilePage from './pages/UserProfilePage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import StockPage from './pages/Dashboard/StockPage';
 import SalesPage from './pages/Dashboard/Transaction/SalesPage';
@@ -52,6 +53,7 @@ function App() {
               </Route>
 
               <Route element={<ProtectedRoute />}>
+                <Route path="/profile" element={<UserProfilePage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/dashboard/stock" element={<StockPage />} />
                 <Route path="/dashboard/service-masuk" element={<ServiceMasukPage />} />
