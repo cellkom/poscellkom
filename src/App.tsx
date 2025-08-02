@@ -2,8 +2,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import AdminRoute from './components/AdminRoute';
-import MemberRoute from './components/MemberRoute';
 import { Toaster } from './components/ui/sonner';
 import { ThemeProvider } from './components/ThemeProvider';
 
@@ -48,11 +46,8 @@ function App() {
               <Route path="/news" element={<NewsPage />} />
               <Route path="/news/:slug" element={<NewsDetailPage />} />
               
-              <Route element={<MemberRoute />}>
-                <Route path="/member-profile" element={<MemberProfilePage />} />
-              </Route>
-
               <Route element={<ProtectedRoute />}>
+                <Route path="/member-profile" element={<MemberProfilePage />} />
                 <Route path="/profile" element={<UserProfilePage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/dashboard/stock" element={<StockPage />} />
@@ -68,11 +63,8 @@ function App() {
                 <Route path="/dashboard/reports/service" element={<ServiceReportPage />} />
                 <Route path="/dashboard/reports/today" element={<TodayReportPage />} />
                 <Route path="/dashboard/services-in-progress" element={<ServicesInProgressPage />} />
-                
-                <Route element={<AdminRoute />}>
-                  <Route path="/dashboard/data/users" element={<UsersPage />} />
-                  <Route path="/dashboard/news" element={<NewsManagementPage />} />
-                </Route>
+                <Route path="/dashboard/data/users" element={<UsersPage />} />
+                <Route path="/dashboard/news" element={<NewsManagementPage />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

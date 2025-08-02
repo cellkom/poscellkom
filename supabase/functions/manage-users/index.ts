@@ -1,37 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
-import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-// Function to verify if the user is an admin
-async function isAdmin(supabaseClient: SupabaseClient): Promise<boolean> {
-  try {
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !user) {
-      console.error('Admin check failed: Not authenticated', userError);
-      return false;
-    }
-
-    const { data: profile, error: profileError } = await supabaseClient
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError) {
-      console.error('Admin check failed: Error fetching profile', profileError);
-      return false;
-    }
-
-    return profile.role === 'Admin';
-  } catch (e) {
-    console.error('Error in isAdmin check:', e);
-    return false;
-  }
 }
 
 serve(async (req) => {
@@ -40,20 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    const userSupabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
-    )
-
-    const isUserAdmin = await isAdmin(userSupabaseClient);
-    if (!isUserAdmin) {
-      return new Response(JSON.stringify({ error: 'Forbidden: Not an admin' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
+    // Pengecekan admin dihapus sesuai permintaan.
+    // Sekarang, setiap pengguna yang terautentikasi dapat memanggil fungsi ini.
+    // Gunakan service_role_key untuk melakukan operasi admin.
     const adminSupabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''

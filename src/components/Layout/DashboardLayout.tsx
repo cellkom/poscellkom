@@ -22,14 +22,12 @@ interface NavSubItem {
     name: string;
     icon: IconType;
     path: string;
-    adminOnly?: boolean;
 }
 
 interface NavItem {
     name: string;
     icon: IconType;
     path: string;
-    adminOnly?: boolean;
     subItems?: NavSubItem[];
 }
 
@@ -54,11 +52,11 @@ const navItems: NavItem[] = [
     subItems: [
         { name: "Pelanggan", icon: Users, path: "/dashboard/data/customers" },
         { name: "Supplier", icon: Truck, path: "/dashboard/data/suppliers" },
-        { name: "Users", icon: Users, path: "/dashboard/data/users", adminOnly: true },
+        { name: "Users", icon: Users, path: "/dashboard/data/users" },
     ]
   },
   { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
-  { name: "Manajemen Berita", icon: Newspaper, path: "/dashboard/news", adminOnly: true },
+  { name: "Manajemen Berita", icon: Newspaper, path: "/dashboard/news" },
 ];
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
@@ -68,10 +66,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const renderNavLinks = (isMobileNav = false) => {
     const nav = navItems.map((item) => {
-      if (item.adminOnly && profile?.role !== 'Admin') return null;
-
       if (item.subItems) {
-        const visibleSubItems = item.subItems.filter(sub => !sub.adminOnly || profile?.role === 'Admin');
+        const visibleSubItems = item.subItems;
         if (visibleSubItems.length === 0) return null;
 
         return isMobileNav ? (
