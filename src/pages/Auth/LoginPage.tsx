@@ -19,6 +19,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
 
   useEffect(() => {
+    // This effect will run when the session is successfully set by handleSignIn
     if (session) {
       navigate('/dashboard');
     }
@@ -28,31 +29,38 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-staff-login', {
+        body: { email, password },
+      });
 
-    if (authError) {
-      showError("Email atau password salah.");
-      setLoading(false);
-      return;
-    }
-
-    if (authData.user) {
-      const { data: profiles, error: profileError } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', authData.user.id);
-
-      if (profileError || !profiles || profiles.length === 0) {
-        showError("Akun staf tidak ditemukan. Silakan login di halaman member jika Anda adalah member.");
-        await supabase.auth.signOut();
-      } else {
-        navigate('/dashboard');
+      if (error) {
+        // This will catch network errors or function crashes
+        throw new Error(error.message);
       }
+      
+      // The function itself returns errors in the data object with a specific status code
+      if (data.error) {
+        showError(data.error);
+        setLoading(false);
+        return;
+      }
+
+      // If successful, the function returns a session object
+      const { data: sessionData, error: sessionError } = await supabase.auth.setSession(data.session);
+
+      if (sessionError) {
+        showError(`Gagal mengatur sesi: ${sessionError.message}`);
+      } else {
+        // The useEffect will now detect the new session and navigate
+        // No need to navigate() here
+      }
+
+    } catch (e: any) {
+      showError(e.message || 'Terjadi kesalahan saat mencoba login.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
