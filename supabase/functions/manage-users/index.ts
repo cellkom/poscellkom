@@ -15,18 +15,24 @@ async function isAdmin(supabaseClient: SupabaseClient): Promise<boolean> {
       return false;
     }
 
-    const { data: profile, error: profileError } = await supabaseClient
-      .from('users') // Changed from 'profiles'
+    // Use a non-strict query to avoid errors if the profile is temporarily missing
+    const { data: profiles, error: profileError } = await supabaseClient
+      .from('users')
       .select('role')
-      .eq('id', user.id)
-      .single();
+      .eq('id', user.id);
 
-    if (profileError || !profile) {
-      console.error('Admin check failed: Profile not found', profileError);
+    if (profileError) {
+      console.error('Admin check failed: Error fetching profile', profileError);
       return false;
     }
 
-    return profile.role === 'Admin';
+    // Check if a profile was found and if the role is 'Admin'
+    if (!profiles || profiles.length === 0) {
+      console.error('Admin check failed: Profile not found for user', user.id);
+      return false;
+    }
+
+    return profiles[0].role === 'Admin';
   } catch (e) {
     console.error('Error in isAdmin check:', e);
     return false;
@@ -79,7 +85,7 @@ serve(async (req) => {
 
         const userIds = users.map(u => u.id);
         const { data: profiles, error: profileError } = await adminSupabaseClient
-          .from('users') // Changed from 'profiles'
+          .from('users')
           .select('*')
           .in('id', userIds);
         if (profileError) throw profileError;
@@ -115,9 +121,11 @@ serve(async (req) => {
 
         if (error) throw error;
 
+        // The handle_new_user trigger should create the profile in public.users
+        // If the role needs to be Admin, we update it.
         if (role === 'Admin') {
           const { error: updateError } = await adminSupabaseClient
-            .from('users') // Changed from 'profiles'
+            .from('users')
             .update({ role: 'Admin' })
             .eq('id', data.user.id);
           if (updateError) throw updateError;
@@ -135,7 +143,7 @@ serve(async (req) => {
         }
 
         const { error } = await adminSupabaseClient
-          .from('users') // Changed from 'profiles'
+          .from('users')
           .update({ role })
           .eq('id', id);
         
