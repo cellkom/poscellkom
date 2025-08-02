@@ -8,10 +8,8 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // The OPTIONS method is for CORS preflight requests.
-  // I'm updating this to return a 204 No Content status, which is a best practice.
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders, status: 204 })
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
