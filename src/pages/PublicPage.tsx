@@ -2,7 +2,7 @@ import PublicLayout from "@/components/Layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, Code, Image as ImageIcon } from "lucide-react";
+import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, Code, Image as ImageIcon, Search } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useStock } from "@/hooks/use-stock";
 import { useEffect } from "react";
@@ -75,9 +75,12 @@ const PublicPage = () => {
             <p className="max-w-3xl mx-auto text-lg text-muted-foreground mb-8">
               Dari perbaikan cepat hingga penjualan sparepart berkualitas, kami siap melayani semua kebutuhan teknologi Anda dengan profesional.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-wrap gap-4 justify-center">
               <Button size="lg" asChild>
                 <a href="#services">Layanan Servis Kami <Wrench className="ml-2 h-5 w-5" /></a>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link to="/tracking">Info Servis <Search className="ml-2 h-5 w-5" /></Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <Link to="/products">Lihat Produk Unggulan <ArrowRight className="ml-2 h-5 w-5" /></Link>
