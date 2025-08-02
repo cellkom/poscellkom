@@ -2,8 +2,7 @@ import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import Barcode from '@/components/Barcode';
 import logoSrc from '/logo.png';
-
-const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+import { formatCurrency } from '@/lib/utils'; // Import from utils
 
 interface CartItem {
   name: string;
@@ -24,6 +23,7 @@ interface SalesReceiptProps {
     remainingAmount: number;
     discount: number;
     paymentMethod: 'tunai' | 'cicilan';
+    kasirName: string; // Add kasirName prop
   };
   customerType: 'umum' | 'reseller';
 }
@@ -31,7 +31,7 @@ interface SalesReceiptProps {
 const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(({ transaction, customerType }, ref) => {
   if (!transaction) return null;
 
-  const { id: transactionId, items, total, customerName, date, paymentAmount, change, remainingAmount, discount, paymentMethod } = transaction;
+  const { id: transactionId, items, total, customerName, date, paymentAmount, change, remainingAmount, discount, paymentMethod, kasirName } = transaction;
 
   return (
     <div ref={ref} id="receipt-print-area" className="bg-white text-black p-4 font-mono max-w-sm mx-auto border rounded-lg">
@@ -48,7 +48,7 @@ const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(({ transactio
           <span>{format(date, 'dd/MM/yy HH:mm')}</span>
         </div>
         <div className="flex justify-between">
-          <span>Kasir: admin</span>
+          <span>Kasir: {kasirName}</span>
           <span>Pelanggan: {customerName}</span>
         </div>
       </div>

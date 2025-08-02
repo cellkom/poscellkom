@@ -2,8 +2,7 @@ import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import Barcode from '@/components/Barcode';
 import logoSrc from '/logo.png';
-
-const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+import { formatCurrency } from '@/lib/utils'; // Import from utils
 
 interface UsedPart {
   name: string;
@@ -22,6 +21,7 @@ interface ServiceTransaction {
   paymentAmount: number;
   change: number;
   remainingAmount: number;
+  kasirName: string; // Add kasirName prop
 }
 
 interface ReceiptProps {
@@ -31,7 +31,7 @@ interface ReceiptProps {
 const ServiceReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }, ref) => {
   if (!transaction) return null;
 
-  const { id, date, customerName, description, usedParts, total, paymentAmount, change, remainingAmount } = transaction;
+  const { id, date, customerName, description, usedParts, total, paymentAmount, change, remainingAmount, kasirName } = transaction;
 
   return (
     <div ref={ref} id="receipt-print-area" className="bg-white text-black p-4 font-mono max-w-sm mx-auto border rounded-lg">
@@ -45,7 +45,7 @@ const ServiceReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }
 
       <div className="border-b border-dashed border-black my-2 py-1 text-xs">
         <div className="flex justify-between"><span>No: SVC-{id}</span><span>{format(date, 'dd/MM/yy HH:mm')}</span></div>
-        <div className="flex justify-between"><span>Kasir: admin</span><span>Pelanggan: {customerName}</span></div>
+        <div className="flex justify-between"><span>Kasir: {kasirName}</span><span>Pelanggan: {customerName}</span></div>
       </div>
       
       <div className="my-2 py-1 text-xs">

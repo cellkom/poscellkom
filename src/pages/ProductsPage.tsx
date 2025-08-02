@@ -9,14 +9,13 @@ import { ShoppingCart, Search, Loader2, Image as ImageIcon } from "lucide-react"
 import { useState, useMemo } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
+import { formatCurrency } from '@/lib/utils'; // Import from utils
 
 const ProductsPage = () => {
   const { products, loading } = useStock();
   const { addToCart } = useCart();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-
-  const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
   const categories = useMemo(() => {
     const uniqueCategories = new Set<string>();
@@ -93,9 +92,8 @@ const ProductsPage = () => {
                   <Skeleton className="h-10 w-full mt-4" />
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        ) : (
+            ))
+          ) : (
           <>
             {filteredProducts.length === 0 ? (
               <div className="text-center text-muted-foreground py-16">

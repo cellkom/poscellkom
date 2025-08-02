@@ -7,8 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format, startOfToday, endOfToday } from "date-fns";
 import { ArrowLeft, Loader2, ShoppingCart, Wrench, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+import { formatCurrency } from '@/lib/utils'; // Import from utils
 
 interface SaleTransaction {
   id: string;

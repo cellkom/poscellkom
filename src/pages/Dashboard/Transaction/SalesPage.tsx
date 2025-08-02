@@ -18,6 +18,7 @@ import SalesReceipt from "@/components/SalesReceipt";
 import { toPng } from 'html-to-image';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatCurrency } from '@/lib/utils'; // Import from utils
 
 // --- Type Definitions ---
 type CartItem = Product & { quantity: number };
@@ -35,12 +36,13 @@ type CompletedTransaction = {
   change: number;
   remainingAmount: number;
   paymentMethod: PaymentMethod;
+  kasirName: string; // Add kasirName
 };
 
 const SalesPage = () => {
   const { products, updateStockQuantity } = useStock();
   const { customers, addCustomer } = useCustomers();
-  const { user } = useAuth();
+  const { user, profile } = useAuth(); // Get profile for kasirName
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerType, setCustomerType] = useState<CustomerType>('umum');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -53,8 +55,6 @@ const SalesPage = () => {
   const [lastTransaction, setLastTransaction] = useState<CompletedTransaction | null>(null);
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', address: '' });
   const receiptRef = useRef<HTMLDivElement>(null);
-
-  const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
   
   const formatNumberInput = (num: number): string => {
     if (num === 0) return '';
@@ -145,8 +145,8 @@ const SalesPage = () => {
       showError("Jumlah bayar kurang dari total belanja.");
       return;
     }
-    if (!user) {
-      showError("Sesi pengguna tidak ditemukan. Silakan login ulang.");
+    if (!user || !profile?.full_name) { // Ensure user and kasir name are available
+      showError("Sesi pengguna tidak ditemukan atau nama kasir tidak tersedia. Silakan login ulang.");
       return;
     }
 
@@ -162,6 +162,7 @@ const SalesPage = () => {
       change: paymentDetails.change,
       remainingAmount: paymentDetails.remainingAmount,
       paymentMethod: paymentMethod,
+      kasirName: profile.full_name, // Pass kasirName
     };
 
     // --- Supabase Integration ---
@@ -355,7 +356,7 @@ const SalesPage = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Kasir:</span>
-                <span className="font-medium">{user?.email}</span>
+                <span className="font-medium">{profile?.full_name || 'N/A'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Customer:</span>

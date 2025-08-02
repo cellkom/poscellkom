@@ -19,6 +19,7 @@ import { useStock, Product } from "@/hooks/use-stock";
 import { useCustomers } from "@/hooks/use-customers";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatCurrency } from '@/lib/utils'; // Import from utils
 
 // --- Type Definitions ---
 type UsedPart = Product & { quantity: number };
@@ -35,13 +36,14 @@ type CompletedServiceTransaction = {
   paymentAmount: number;
   change: number;
   remainingAmount: number;
+  kasirName: string; // Add kasirName
 };
 
 const ServicePage = () => {
   const { products, updateStockQuantity } = useStock();
   const { customers } = useCustomers();
   const { serviceEntries, updateServiceEntry } = useServiceEntries();
-  const { user } = useAuth();
+  const { user, profile } = useAuth(); // Get profile for kasirName
   const [usedParts, setUsedParts] = useState<UsedPart[]>([]);
   const [serviceDescription, setServiceDescription] = useState('');
   const [serviceFee, setServiceFee] = useState(0);
@@ -54,8 +56,6 @@ const ServicePage = () => {
   const [lastTransaction, setLastTransaction] = useState<CompletedServiceTransaction | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
-
-  const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
   
   const formatNumberInput = (num: number): string => {
     if (num === 0) return '';
@@ -138,8 +138,8 @@ const ServicePage = () => {
       showError("Entri service tidak ditemukan.");
       return;
     }
-    if (!user) {
-      showError("Sesi pengguna tidak ditemukan. Silakan login ulang.");
+    if (!user || !profile?.full_name) { // Ensure user and kasir name are available
+      showError("Sesi pengguna tidak ditemukan atau nama kasir tidak tersedia. Silakan login ulang.");
       return;
     }
 
@@ -156,6 +156,7 @@ const ServicePage = () => {
       paymentAmount: paymentAmount,
       change: paymentDetails.change,
       remainingAmount: paymentDetails.remainingAmount,
+      kasirName: profile.full_name, // Pass kasirName
     };
 
     try {
@@ -383,7 +384,7 @@ const ServicePage = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Kasir:</span>
-                <span className="font-medium">{user?.email}</span>
+                <span className="font-medium">{profile?.full_name || 'N/A'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Customer:</span>

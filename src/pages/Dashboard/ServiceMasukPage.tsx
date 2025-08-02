@@ -41,6 +41,7 @@ interface ReceiptServiceEntry {
   deviceType: string;
   damageType: string;
   description: string;
+  kasirName: string; // Add kasirName
 }
 
 const initialState: ServiceEntryFormData = {
@@ -57,7 +58,7 @@ const newCustomerInitialState = { name: '', phone: '', address: '' };
 const ServiceMasukPage = () => {
   const { customers } = useCustomers();
   const { serviceEntries, loading, addServiceEntry, updateServiceEntry, deleteServiceEntry } = useServiceEntries();
-  const { user } = useAuth();
+  const { user, profile } = useAuth(); // Get profile for kasirName
 
   const [formData, setFormData] = useState(initialState);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -128,8 +129,8 @@ const ServiceMasukPage = () => {
       showError("Harap lengkapi semua field yang wajib diisi.");
       return;
     }
-    if (!user?.id) {
-      showError("Anda harus login untuk melakukan aksi ini.");
+    if (!user?.id || !profile?.full_name) { // Ensure user and kasir name are available
+      showError("Anda harus login untuk melakukan aksi ini atau nama kasir tidak tersedia.");
       return;
     }
 
@@ -172,6 +173,7 @@ const ServiceMasukPage = () => {
           deviceType: newEntry.device_type,
           damageType: newEntry.damage_type,
           description: newEntry.description,
+          kasirName: profile.full_name, // Pass kasirName
         };
         setLastEntry(receiptData);
         setIsFormOpen(false);
@@ -188,6 +190,10 @@ const ServiceMasukPage = () => {
   };
 
   const handleViewReceipt = (entry: ServiceEntryWithCustomer) => {
+    if (!profile?.full_name) {
+      showError("Nama kasir tidak tersedia. Silakan login ulang.");
+      return;
+    }
     const receiptData: ReceiptServiceEntry = {
       id: entry.id,
       date: new Date(entry.date),
@@ -197,6 +203,7 @@ const ServiceMasukPage = () => {
       deviceType: entry.device_type,
       damageType: entry.damage_type,
       description: entry.description,
+      kasirName: profile.full_name, // Pass kasirName
     };
     setLastEntry(receiptData);
     setIsReceiptOpen(true);
