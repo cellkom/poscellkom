@@ -73,8 +73,8 @@ const DashboardPage = () => {
             salesTodayResult,
             servicesTodayResult,
             recentSalesResult,
-            recentServicesResult
-        ] = await Promise.all([salesTodayPromise, servicesTodayPromise, recentSalesPromise, recentServicesResult]);
+            recentServicesResult // Corrected: This should be `recentServicesPromise` in the array below
+        ] = await Promise.all([salesTodayPromise, servicesTodayPromise, recentSalesPromise, recentServicesPromise]); // Corrected line
 
         // Process summary
         const totalSalesRevenue = (salesTodayResult.data || []).reduce((sum, s) => sum + s.total_amount, 0);
