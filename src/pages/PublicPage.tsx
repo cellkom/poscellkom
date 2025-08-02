@@ -3,18 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, Code, Image as ImageIcon } from "lucide-react";
-import { Link, useLocation } from "react-router-dom"; // Import useLocation
+import { Link, useLocation } from "react-router-dom";
 import { useStock } from "@/hooks/use-stock";
-import { useEffect } from "react"; // Import useEffect
+import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const PublicPage = () => {
   const { products, loading } = useStock();
-  const featuredProducts = products.slice(0, 4);
+  const { session, profile } = useAuth();
+  const location = useLocation();
+
+  const isMember = session && profile?.role === 'Member';
+  const displayedProducts = isMember ? products : products.slice(0, 4);
+
   const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
-  const location = useLocation(); // Get the current location object
-
-  // Effect to scroll to the element specified by the URL hash
   useEffect(() => {
     if (location.hash) {
       const element = document.getElementById(location.hash.substring(1));
@@ -22,7 +25,7 @@ const PublicPage = () => {
         element.scrollIntoView({ behavior: 'smooth' });
       }
     }
-  }, [location]); // Re-run when the location object changes (including hash)
+  }, [location]);
 
   const services = [
     {
@@ -110,12 +113,16 @@ const PublicPage = () => {
         <section id="products" className="py-16 md:py-24 bg-background">
           <div className="container px-4 md:px-6">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Produk & Sparepart Unggulan</h2>
-              <p className="mt-4 text-lg text-muted-foreground">Temukan komponen dan aksesoris berkualitas untuk perangkat Anda.</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+                {isMember ? "Semua Produk & Sparepart" : "Produk & Sparepart Unggulan"}
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                {isMember ? "Jelajahi semua koleksi kami yang tersedia." : "Temukan komponen dan aksesoris berkualitas untuk perangkat Anda."}
+              </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {loading ? (
-                Array.from({ length: 4 }).map((_, index) => (
+                Array.from({ length: isMember ? 8 : 4 }).map((_, index) => (
                   <Card key={index}>
                     <CardHeader className="p-0">
                       <Skeleton className="h-48 w-full" />
@@ -128,7 +135,7 @@ const PublicPage = () => {
                   </Card>
                 ))
               ) : (
-                featuredProducts.map((product) => (
+                displayedProducts.map((product) => (
                   <Card key={product.id} className="overflow-hidden group transition-shadow hover:shadow-lg">
                     <CardHeader className="p-0">
                       <div className="bg-muted aspect-square flex items-center justify-center overflow-hidden">
@@ -148,11 +155,13 @@ const PublicPage = () => {
                 ))
               )}
             </div>
-            <div className="text-center mt-12">
-              <Button asChild size="lg">
-                <Link to="/products">Lihat Semua Produk <ArrowRight className="ml-2 h-5 w-5" /></Link>
-              </Button>
-            </div>
+            {!isMember && (
+              <div className="text-center mt-12">
+                <Button asChild size="lg">
+                  <Link to="/products">Lihat Semua Produk <ArrowRight className="ml-2 h-5 w-5" /></Link>
+                </Button>
+              </div>
+            )}
           </div>
         </section>
 
