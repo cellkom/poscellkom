@@ -32,44 +32,16 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (authError) {
+    if (error) {
       showError("Email atau password salah.");
-      setLoading(false);
-      return;
     }
-
-    if (authData.user) {
-      // Verify the user is in the public.users table (i.e., they are a staff member)
-      const { count, error: profileError } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('id', authData.user.id);
-
-      if (profileError) {
-        showError(`Terjadi kesalahan saat verifikasi: ${profileError.message}`);
-        await supabase.auth.signOut();
-        setLoading(false);
-        return;
-      }
-
-      if (count === 0 || count === null) {
-        showError("Akun staf tidak ditemukan. Silakan login di halaman member jika Anda adalah member.");
-        await supabase.auth.signOut();
-        setLoading(false);
-        return;
-      }
-      
-      // Let AuthContext handle setting the session and profile.
-      // The useEffect will then navigate to the dashboard.
-    } else {
-      // Should not happen if authError is null, but as a safeguard
-      setLoading(false);
-    }
+    // Let the AuthContext and useEffect handle the rest.
+    setLoading(false);
   };
 
   return (

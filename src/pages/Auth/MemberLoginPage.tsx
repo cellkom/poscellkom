@@ -41,32 +41,15 @@ const MemberLoginPage = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: signInEmail,
       password: signInPassword,
     });
 
-    if (authError) {
+    if (error) {
       showError("Email atau password salah.");
-      setLoading(false);
-      return;
     }
-
-    if (authData.user) {
-      const { data: memberProfile, error: profileError } = await supabase
-        .from('members')
-        .select('id')
-        .eq('id', authData.user.id)
-        .single();
-
-      if (profileError || !memberProfile) {
-        showError("Akun member tidak ditemukan. Silakan login di halaman staf jika Anda adalah staf.");
-        await supabase.auth.signOut();
-        setLoading(false);
-        return;
-      }
-      // Let the useEffect handle navigation
-    }
+    // Let the AuthContext and useEffect handle the rest.
     setLoading(false);
   };
 
