@@ -54,11 +54,11 @@ const navItems: NavItem[] = [
     subItems: [
         { name: "Pelanggan", icon: Users, path: "/dashboard/data/customers" },
         { name: "Supplier", icon: Truck, path: "/dashboard/data/suppliers" },
+        { name: "Users", icon: Users, path: "/dashboard/users", adminOnly: true },
     ]
   },
   { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
   { name: "Manajemen Berita", icon: Newspaper, path: "/dashboard/news", adminOnly: true },
-  { name: "Manajemen User", icon: Users, path: "/dashboard/users", adminOnly: true },
 ];
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
