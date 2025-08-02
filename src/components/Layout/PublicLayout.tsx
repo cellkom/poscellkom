@@ -90,7 +90,13 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>{session.user.email}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {profile.role === 'Admin' && (
+                  <DropdownMenuItem asChild>
+                    <Link to={profileLink} className="flex items-center gap-2 cursor-pointer">
+                      <UserCircle className="h-4 w-4" />
+                      <span>Profil Saya</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  {(profile.role === 'Admin' || profile.role === 'Kasir') && (
                     <DropdownMenuItem asChild>
                       <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
                         <LayoutDashboard className="h-4 w-4" />
@@ -98,12 +104,6 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem asChild>
-                    <Link to={profileLink} className="flex items-center gap-2 cursor-pointer">
-                      <UserCircle className="h-4 w-4" />
-                      <span>Profil Saya</span>
-                    </Link>
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={signOut} className="cursor-pointer">
                     Logout
