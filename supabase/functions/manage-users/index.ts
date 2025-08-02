@@ -8,12 +8,14 @@ const corsHeaders = {
 
 // Function to verify if the user is an admin
 async function isAdmin(supabaseClient: SupabaseClient): Promise<boolean> {
+  console.log('Checking if user is admin...');
   try {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      console.error('Admin check failed: Not authenticated', userError);
+      console.error('Admin check failed: Not authenticated or user fetch error:', userError);
       return false;
     }
+    console.log('Authenticated user ID:', user.id);
 
     const { data: profile, error: profileError } = await supabaseClient
       .from('users')
@@ -22,13 +24,19 @@ async function isAdmin(supabaseClient: SupabaseClient): Promise<boolean> {
       .single();
 
     if (profileError) {
-      console.error('Admin check failed: Error fetching profile', profileError);
+      console.error('Admin check failed: Error fetching profile from public.users or no profile found:', profileError);
+      return false; // If there's an error or no profile, it's not an admin
+    }
+
+    if (!profile) { // Explicitly check if profile data is null
+      console.warn('Admin check failed: Profile data is null after query.');
       return false;
     }
 
+    console.log('User role from DB:', profile.role);
     return profile.role === 'Admin';
   } catch (e) {
-    console.error('Error in isAdmin check:', e);
+    console.error('Error in isAdmin check (catch block):', e);
     return false;
   }
 }
@@ -39,6 +47,7 @@ serve(async (req) => {
   }
 
   try {
+    // Create a Supabase client for the authenticated user
     const userSupabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -47,30 +56,39 @@ serve(async (req) => {
 
     const isUserAdmin = await isAdmin(userSupabaseClient);
     if (!isUserAdmin) {
+      console.warn('Request blocked: User is not an admin.');
       return new Response(JSON.stringify({ error: 'Forbidden: Not an admin' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
+    // Create a Supabase client with service role key for admin actions
     const adminSupabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     const { action, payload } = await req.json();
+    console.log('Edge Function Action:', action);
 
     switch (action) {
       case 'list': {
         const { data: { users }, error } = await adminSupabaseClient.auth.admin.listUsers();
-        if (error) throw error;
+        if (error) {
+          console.error('Error listing users:', error);
+          throw error;
+        }
 
         const userIds = users.map(u => u.id);
         const { data: profiles, error: profileError } = await adminSupabaseClient
           .from('users')
           .select('*')
           .in('id', userIds);
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Error fetching user profiles for list:', profileError);
+          throw profileError;
+        }
 
         const combinedData = users.map(user => {
           const profile = profiles.find(p => p.id === user.id);
@@ -103,12 +121,14 @@ serve(async (req) => {
 
         if (error) throw error;
 
-        if (role === 'Admin') {
-          const { error: updateError } = await adminSupabaseClient
-            .from('users')
-            .update({ role: 'Admin' })
-            .eq('id', data.user.id);
-          if (updateError) throw updateError;
+        // Ensure the user profile is created/updated in public.users table
+        const { error: upsertProfileError } = await adminSupabaseClient
+          .from('users')
+          .upsert({ id: data.user.id, full_name: full_name, role: role }); // Use upsert to handle cases where trigger might not fire or needs update
+        
+        if (upsertProfileError) {
+          console.error('Error upserting user profile after creation:', upsertProfileError);
+          // Decide if this should be a hard error or just log
         }
 
         return new Response(JSON.stringify(data.user), {
@@ -143,6 +163,17 @@ serve(async (req) => {
         const { error } = await adminSupabaseClient.auth.admin.deleteUser(id);
         if (error) throw error;
 
+        // Also delete from public.users table if it exists (handle cascade if not set up)
+        const { error: deleteProfileError } = await adminSupabaseClient
+          .from('users')
+          .delete()
+          .eq('id', id);
+        
+        if (deleteProfileError) {
+          console.error('Error deleting user profile from public.users:', deleteProfileError);
+          // Log but don't fail the main delete operation if auth.admin.deleteUser succeeded
+        }
+
         return new Response(JSON.stringify({ message: 'User deleted successfully' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
@@ -155,7 +186,7 @@ serve(async (req) => {
         });
     }
   } catch (error) {
-    console.error(error);
+    console.error('Edge Function execution error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
