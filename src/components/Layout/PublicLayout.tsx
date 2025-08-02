@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard, Code, Image as ImageIcon } from "lucide-react";
-import logoSrc from '/logo.png';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ReactNode, useEffect, useState } from "react";
@@ -17,6 +16,7 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSettings } from "@/contexts/SettingsContext";
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
@@ -24,6 +24,15 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
   const { cartCount } = useCart();
   const { articles, loading: newsLoading, fetchArticles } = useNews();
   const [latestArticles, setLatestArticles] = useState<NewsArticle[]>([]);
+  const { settings } = useSettings();
+
+  const logoSrc = settings.app_logo_url || '/logo.png';
+  const appTitle = settings.app_title || 'Cellkom.Store';
+  const appContactPhone = settings.app_contact_phone || '082285959441';
+  const appContactEmail = settings.app_contact_email || 'ckcellkom@gmail.com';
+  const appAddress = settings.app_address || 'Jorong Kampung Baru, Muaro Paiti, Kec. Kapur IX';
+  const socialInstagram = settings.social_instagram_url || '#';
+  const socialFacebook = settings.social_facebook_url || '#';
 
   useEffect(() => {
     fetchArticles();
@@ -52,10 +61,17 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link to={logoLink} className="flex items-center gap-2">
-            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-10 w-auto" />
+            <img src={logoSrc} alt="Logo" className="h-10 w-auto" />
             <div>
               <h1 className="text-lg md:text-xl font-bold font-poppins">
-                <span className="text-primary">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
+                {appTitle.includes('.') ? (
+                  <>
+                    <span className="text-primary">{appTitle.split('.')[0]}</span>
+                    <span className="font-semibold text-muted-foreground">.{appTitle.split('.')[1]}</span>
+                  </>
+                ) : (
+                  <span className="text-primary">{appTitle}</span>
+                )}
               </h1>
               <p className="hidden md:block text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
             </div>
@@ -228,9 +244,10 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="space-y-4">
               <Link to="/" className="flex items-center gap-3">
-                <img src={logoSrc} alt="Cellkom.Store Logo" className="h-8 w-auto" />
+                <img src={logoSrc} alt="Logo" className="h-8 w-auto" />
                 <span className="text-xl font-bold font-poppins">
-                  <span className="text-foreground">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
+                  <span className="text-foreground">{appTitle.split('.')[0]}</span>
+                  <span className="font-semibold text-muted-foreground">.{appTitle.split('.')[1]}</span>
                 </span>
               </Link>
               <p className="text-sm">
@@ -249,16 +266,16 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">Kontak</h3>
               <address className="space-y-2 text-sm not-italic">
-                <p>Jorong Kampung Baru, Muaro Paiti, Kec. Kapur IX</p>
-                <p>Email: <a href="mailto:ckcellkom@gmail.com" className="hover:text-primary transition-colors">ckcellkom@gmail.com</a></p>
-                <p>Telepon: <a href="tel:082285959441" className="hover:text-primary transition-colors">082285959441</a></p>
+                <p>{appAddress}</p>
+                <p>Email: <a href={`mailto:${appContactEmail}`} className="hover:text-primary transition-colors">{appContactEmail}</a></p>
+                <p>Telepon: <a href={`tel:${appContactPhone}`} className="hover:text-primary transition-colors">{appContactPhone}</a></p>
               </address>
             </div>
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">Ikuti Kami</h3>
               <p className="text-sm">Dapatkan info terbaru dan promo menarik.</p>
               <div className="flex space-x-4">
-                <a href="#" aria-label="Instagram" className="hover:text-primary transition-colors">
+                <a href={socialInstagram} aria-label="Instagram" className="hover:text-primary transition-colors">
                   <Instagram className="h-6 w-6" />
                 </a>
               </div>

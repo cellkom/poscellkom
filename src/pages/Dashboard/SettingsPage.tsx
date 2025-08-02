@@ -8,39 +8,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2, Upload } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { useSettings } from '@/contexts/SettingsContext';
 
 type AppSettings = {
   [key: string]: string;
 };
 
 const SettingsPage = () => {
+  const { settings: initialSettings, refreshSettings, loading: settingsLoading } = useSettings();
   const [settings, setSettings] = useState<AppSettings>({});
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      setLoading(true);
-      const { data, error } = await supabase.from('app_settings').select('key, value');
-      
-      if (error) {
-        toast.error('Gagal memuat pengaturan: ' + error.message);
-      } else {
-        const loadedSettings = data.reduce((acc, { key, value }) => {
-          if (value) acc[key] = value;
-          return acc;
-        }, {} as AppSettings);
-        setSettings(loadedSettings);
-        if (loadedSettings.app_logo_url) {
-          setLogoPreview(loadedSettings.app_logo_url);
-        }
+    if (!settingsLoading) {
+      setSettings(initialSettings);
+      if (initialSettings.app_logo_url) {
+        setLogoPreview(initialSettings.app_logo_url);
       }
-      setLoading(false);
-    };
-    fetchSettings();
-  }, []);
+    }
+  }, [initialSettings, settingsLoading]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -97,17 +85,16 @@ const SettingsPage = () => {
             toast.error('Gagal menyimpan pengaturan: ' + upsertError.message);
         } else {
             toast.success('Pengaturan berhasil disimpan!');
-            setSettings(prev => ({ ...prev, app_logo_url: logoUrl }));
+            await refreshSettings();
         }
     } else {
         toast.info("Tidak ada perubahan untuk disimpan.");
     }
 
-
     setSaving(false);
   };
 
-  if (loading) {
+  if (settingsLoading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
@@ -128,7 +115,7 @@ const SettingsPage = () => {
         <TabsList>
           <TabsTrigger value="general">Umum</TabsTrigger>
           <TabsTrigger value="contact">Kontak & Media Sosial</TabsTrigger>
-          <TabsTrigger value="homepage" disabled>Tampilan Halaman Utama</TabsTrigger>
+          <TabsTrigger value="homepage">Halaman Utama</TabsTrigger>
         </TabsList>
         <TabsContent value="general" className="mt-4">
           <Card>
@@ -200,6 +187,36 @@ const SettingsPage = () => {
                         </div>
                     </div>
                 </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="homepage" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pengaturan Halaman Utama</CardTitle>
+              <CardDescription>Sesuaikan konten yang tampil di halaman depan.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="homepage_hero_title">Judul Hero</Label>
+                <Input id="homepage_hero_title" value={settings.homepage_hero_title || ''} onChange={handleInputChange} placeholder="Solusi Total untuk Gadget & Komputer Anda" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="homepage_hero_subtitle">Subjudul Hero</Label>
+                <Textarea id="homepage_hero_subtitle" value={settings.homepage_hero_subtitle || ''} onChange={handleInputChange} placeholder="Dari perbaikan cepat hingga penjualan sparepart berkualitas..." />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="homepage_about_us_content">Konten Tentang Kami</Label>
+                <Textarea id="homepage_about_us_content" value={settings.homepage_about_us_content || ''} onChange={handleInputChange} placeholder="Cellkom.Store adalah..." rows={4} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="homepage_it_services_title">Judul Jasa IT</Label>
+                <Input id="homepage_it_services_title" value={settings.homepage_it_services_title || ''} onChange={handleInputChange} placeholder="Butuh Aplikasi Untuk Bisnis Anda?" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="homepage_it_services_content">Konten Jasa IT</Label>
+                <Textarea id="homepage_it_services_content" value={settings.homepage_it_services_content || ''} onChange={handleInputChange} placeholder="Selain layanan servis, tim IT kami juga siap..." />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
