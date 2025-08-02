@@ -51,11 +51,11 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
     <div className="bg-background text-foreground flex flex-col min-h-screen">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-          <Link to={logoLink} className="flex items-center gap-2 flex-shrink-0">
+          <Link to={logoLink} className="flex items-center gap-2">
             <img src={logoSrc} alt="Cellkom.Store Logo" className="h-10 w-auto" />
             <div>
-              <h1 className="text-base sm:text-lg md:text-xl font-bold font-poppins">
-                <span className="text-primary">Cellkom</span><span className="hidden xs:inline font-semibold text-muted-foreground">.Store</span>
+              <h1 className="text-lg md:text-xl font-bold font-poppins">
+                <span className="text-primary">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
               </h1>
               <p className="hidden md:block text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
             </div>
@@ -75,7 +75,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
             ))}
           </nav>
 
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-2">
             <ThemeToggle />
             
             <Sheet>
