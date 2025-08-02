@@ -12,53 +12,59 @@ import { Badge } from '@/components/ui/badge';
 import logoSrc from '/logo.png';
 
 const LoginPage = () => {
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    // This effect will run when the session is successfully set by handleSignIn
-    if (session) {
+    if (!authLoading && session) {
       navigate('/dashboard');
     }
-  }, [session, navigate]);
+  }, [session, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      const { data, error } = await supabase.functions.invoke('verify-staff-login', {
-        body: { email, password },
-      });
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      if (error) {
-        // This will catch network errors or function crashes
-        throw new Error(error.message);
-      }
-      
-      // The function itself returns errors in the data object with a specific status code
-      if (data.error) {
-        showError(data.error);
+    if (authError) {
+      showError("Email atau password salah.");
+      setLoading(false);
+      return;
+    }
+
+    if (authData.user) {
+      // Verify the user is in the public.users table (i.e., they are a staff member)
+      const { count, error: profileError } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('id', authData.user.id);
+
+      if (profileError) {
+        showError(`Terjadi kesalahan saat verifikasi: ${profileError.message}`);
+        await supabase.auth.signOut();
         setLoading(false);
         return;
       }
 
-      // If successful, the function returns a session object
-      const { data: sessionData, error: sessionError } = await supabase.auth.setSession(data.session);
-
-      if (sessionError) {
-        showError(`Gagal mengatur sesi: ${sessionError.message}`);
-      } else {
-        // The useEffect will now detect the new session and navigate
-        // No need to navigate() here
+      if (count === 0 || count === null) {
+        showError("Akun staf tidak ditemukan. Silakan login di halaman member jika Anda adalah member.");
+        await supabase.auth.signOut();
+        setLoading(false);
+        return;
       }
-
-    } catch (e: any) {
-      showError(e.message || 'Terjadi kesalahan saat mencoba login.');
-    } finally {
+      
+      // Let AuthContext handle setting the session and profile.
+      // The useEffect will then navigate to the dashboard.
+      // No need to call navigate() here directly.
+    } else {
+      // Should not happen if authError is null, but as a safeguard
       setLoading(false);
     }
   };
