@@ -69,9 +69,8 @@ const SettingsPage = () => {
       const fileExt = logoFile.name.split('.').pop();
       const fileName = `public/logo_${Date.now()}.${fileExt}`;
       
-      // Pastikan bucket 'app_assets' ada dan dapat diakses publik
       const { error: uploadError } = await supabase.storage
-        .from('app_assets')
+        .from('appassets')
         .upload(fileName, logoFile, {
           cacheControl: '3600',
           upsert: true,
@@ -83,7 +82,7 @@ const SettingsPage = () => {
         return;
       }
 
-      const { data: { publicUrl } } = supabase.storage.from('app_assets').getPublicUrl(fileName);
+      const { data: { publicUrl } } = supabase.storage.from('appassets').getPublicUrl(fileName);
       logoUrl = publicUrl;
     }
 
