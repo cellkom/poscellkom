@@ -167,7 +167,7 @@ const NewsFormPage: React.FC = () => {
           <CardTitle>{id ? "Formulir Edit Berita" : "Formulir Berita Baru"}</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading && id ? ( // Changed to ternary for conditional rendering
+          {loading && id ? (
             <div className="flex justify-center items-center h-32">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="ml-2">Memuat data berita...</p>
@@ -177,13 +177,13 @@ const NewsFormPage: React.FC = () => {
               <div>
                 <Label htmlFor="title">Judul Berita</Label>
                 <Input id="title" {...register("title")} className="mt-1" />
-                {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
+                {errors.title?.message && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
               </div>
 
               <div>
                 <Label htmlFor="content">Konten Berita</Label>
                 <Textarea id="content" {...register("content")} className="mt-1 min-h-[150px]" />
-                {errors.content && <p className="text-red-500 text-sm mt-1">{errors.content.message}</p>}
+                {errors.content?.message && <p className="text-red-500 text-sm mt-1">{errors.content.message}</p>}
               </div>
 
               <div>
@@ -195,7 +195,7 @@ const NewsFormPage: React.FC = () => {
                     <img src={currentImageUrl} alt="Current News Image" className="w-32 h-32 object-cover rounded-md mt-1" />
                   </div>
                 )}
-                {errors.image && <p className="text-red-500 text-sm mt-1">{errors.image.message}</p>}
+                {errors.image?.message && <p className="text-red-500 text-sm mt-1">{errors.image.message}</p>}
               </div>
 
               <div>
@@ -209,7 +209,7 @@ const NewsFormPage: React.FC = () => {
                     <SelectItem value="published">Dipublikasikan</SelectItem>
                   </SelectContent>
                 </Select>
-                {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status.message}</p>}
+                {errors.status?.message && <p className="text-red-500 text-sm mt-1">{errors.status.message}</p>}
               </div>
 
               <div>
@@ -236,7 +236,7 @@ const NewsFormPage: React.FC = () => {
                     />
                   </PopoverContent>
                 </Popover>
-                {errors.published_at && <p className="text-red-500 text-sm mt-1">{errors.published_at.message}</p>}
+                {errors.published_at?.message && <p className="text-red-500 text-sm mt-1">{errors.published_at.message}</p>}
               </div>
 
               <div>
@@ -254,7 +254,7 @@ const NewsFormPage: React.FC = () => {
                 </Button>
               </div>
             </form>
-          ) : null}
+          )}
         </CardContent>
       </Card>
     </>
