@@ -2,22 +2,21 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, Loader2, Image as ImageIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { PlusCircle, Edit, Trash2, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { showSuccess, showError } from "@/utils/toast";
+import { showError } from "@/utils/toast";
 import { format } from "date-fns";
 import { useNews, NewsArticle } from "@/hooks/use-news";
 
 const NewsManagementPage = () => {
   const { user } = useAuth();
-  const { articles, loading, fetchArticles, uploadNewsImage } = useNews();
+  const { articles, loading, fetchArticles, uploadNewsImage, addArticle, updateArticle, deleteArticle } = useNews();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
@@ -83,26 +82,27 @@ const NewsManagementPage = () => {
     let imageUrl = editingArticle?.image_url || null;
     if (imageFile) {
       imageUrl = await uploadNewsImage(imageFile);
+      if (!imageUrl) {
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     const payload = {
       ...formData,
       image_url: imageUrl,
       author_id: user.id,
-      published_at: formData.status === 'published' ? new Date().toISOString() : null,
+      published_at: formData.status === 'published' ? (editingArticle?.published_at || new Date().toISOString()) : null,
     };
 
-    let error;
+    let success;
     if (editingArticle) {
-      ({ error } = await supabase.from('news').update(payload).eq('id', editingArticle.id));
+      success = await updateArticle(editingArticle.id, payload);
     } else {
-      ({ error } = await supabase.from('news').insert(payload));
+      success = await addArticle(payload as any);
     }
 
-    if (error) {
-      showError(`Gagal menyimpan berita: ${error.message}`);
-    } else {
-      showSuccess(`Berita berhasil ${editingArticle ? 'diperbarui' : 'ditambahkan'}.`);
+    if (success) {
       setIsDialogOpen(false);
       fetchArticles(true);
     }
@@ -111,11 +111,8 @@ const NewsManagementPage = () => {
 
   const handleDelete = async (articleId: string) => {
     if (window.confirm("Anda yakin ingin menghapus berita ini?")) {
-      const { error } = await supabase.from('news').delete().eq('id', articleId);
-      if (error) {
-        showError(`Gagal menghapus: ${error.message}`);
-      } else {
-        showSuccess("Berita berhasil dihapus.");
+      const success = await deleteArticle(articleId);
+      if (success) {
         fetchArticles(true);
       }
     }

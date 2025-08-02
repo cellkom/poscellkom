@@ -82,5 +82,32 @@ export const useNews = () => {
     return publicUrl;
   };
 
-  return { articles, loading, fetchArticles, getArticleBySlug, uploadNewsImage };
+  const addArticle = async (payload: Omit<NewsArticle, 'id' | 'created_at' | 'updated_at' | 'author_name'>) => {
+    const { data, error } = await supabase.from('news').insert(payload).select().single();
+    if (error) {
+      showError(`Gagal menambah berita: ${error.message}`);
+      return null;
+    }
+    return data;
+  };
+
+  const updateArticle = async (id: string, payload: Partial<Omit<NewsArticle, 'id' | 'created_at' | 'updated_at' | 'author_name'>>) => {
+    const { data, error } = await supabase.from('news').update(payload).eq('id', id).select().single();
+    if (error) {
+      showError(`Gagal memperbarui berita: ${error.message}`);
+      return null;
+    }
+    return data;
+  };
+
+  const deleteArticle = async (id: string) => {
+    const { error } = await supabase.from('news').delete().eq('id', id);
+    if (error) {
+      showError(`Gagal menghapus berita: ${error.message}`);
+      return false;
+    }
+    return true;
+  };
+
+  return { articles, loading, fetchArticles, getArticleBySlug, uploadNewsImage, addArticle, updateArticle, deleteArticle };
 };
