@@ -1,177 +1,113 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone } from "lucide-react";
+import { Menu, ChevronDown } from "lucide-react";
 import logoSrc from '/logo.png';
-import { useIsMobile } from "@/hooks/use-mobile";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { ReactNode } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/contexts/CartContext";
-import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThemeToggle } from "../ThemeToggle";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-const PublicLayout = ({ children }: { children: ReactNode }) => {
-  const isMobile = useIsMobile();
-  const { session, profile, signOut } = useAuth();
-  const { cartCount } = useCart();
+interface NavLink {
+  name: string;
+  href?: string;
+  isDropdown?: boolean;
+  subItems?: { name: string; href: string }[];
+}
 
-  const navLinks = [
-    { name: "Layanan", href: "/#services", icon: Wrench },
-    { name: "Toko", href: "/products", icon: ShoppingCart },
-    { name: "Tentang Kami", href: "/#about", icon: Info },
-    { name: "Kontak", href: "/#contact", icon: Phone },
-  ];
+const navLinks: NavLink[] = [
+  { name: "Home", href: "/" },
+  { 
+    name: "Layanan", 
+    isDropdown: true,
+    subItems: [
+      { name: "Service", href: "/layanan/service" },
+      { name: "IT", href: "/layanan/it" }
+    ]
+  },
+  { name: "Tentang Kami", href: "/#about" },
+  { name: "Kontak", href: "/#contact" },
+];
 
+const PublicLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="bg-background text-foreground flex flex-col min-h-screen">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-10 w-auto" />
-            <div>
-              <h1 className="text-lg md:text-xl font-bold font-poppins">
-                <span className="text-primary">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
-              </h1>
-              <p className="hidden md:block text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
+    <div className="flex min-h-screen w-full flex-col">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
+        <div className="container flex h-16 items-center justify-between">
+          <Link to="/" className="flex items-center gap-3">
+            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-12 w-auto" />
+            <div className="hidden md:block">
+              <h1 className="text-lg font-bold text-primary font-poppins">Cellkom.Store</h1>
+              <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
             </div>
           </Link>
-          
-          <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
             {navLinks.map(link => (
-              <Link key={link.name} to={link.href.startsWith('/#') ? link.href : `/${link.href.split('/').pop()}`} className="text-muted-foreground transition-colors hover:text-primary">
-                {link.name}
-              </Link>
+              link.isDropdown ? (
+                <DropdownMenu key={link.name}>
+                  <DropdownMenuTrigger className="flex items-center text-muted-foreground transition-colors hover:text-primary focus:outline-none">
+                    {link.name}
+                    <ChevronDown className="relative top-[1px] ml-1 h-4 w-4 transition duration-200" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {link.subItems?.map(subItem => (
+                      <DropdownMenuItem key={subItem.name} asChild>
+                        <Link to={subItem.href}>{subItem.name}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link key={link.name} to={link.href!} className="text-muted-foreground transition-colors hover:text-primary">
+                  {link.name}
+                </Link>
+              )
             ))}
           </nav>
-
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-6 w-6" />
-              {cartCount > 0 && (
-                <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center rounded-full p-0 text-xs">
-                  {cartCount}
-                </Badge>
-              )}
-              <span className="sr-only">Keranjang Belanja</span>
+            <Button asChild>
+              <Link to="/login">Login</Link>
             </Button>
-
-            {session && profile ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name} />
-                      <AvatarFallback>{profile.full_name?.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{profile.email}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/member-profile">Profil Saya</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={signOut} className="cursor-pointer">
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button variant="ghost" size="icon" asChild>
-                <Link to="/member-login" aria-label="Halaman Login">
-                  <UserCircle className="h-6 w-6" />
-                  <span className="sr-only">Buka halaman login</span>
-                </Link>
-              </Button>
-            )}
-
-            {isMobile && (
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-6 w-6" />
-                    <span className="sr-only">Buka menu navigasi</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right">
-                  <nav className="grid gap-6 text-lg font-medium mt-8">
-                    {navLinks.map(link => (
-                      <Link key={link.name} to={link.href} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
-                        <link.icon className="h-6 w-6" />
-                        {link.name}
-                      </Link>
-                    ))}
-                  </nav>
-                </SheetContent>
-              </Sheet>
-            )}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="md:hidden">
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Toggle navigation menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                <nav className="grid gap-6 text-lg font-medium">
+                  <Link to="/" className="flex items-center gap-2 text-lg font-semibold mb-4">
+                    <img src={logoSrc} alt="Cellkom.Store Logo" className="h-10 w-auto" />
+                    <span className="sr-only">Cellkom.Store</span>
+                  </Link>
+                  {navLinks.map(link => (
+                     link.isDropdown ? (
+                        <div key={link.name} className="flex flex-col">
+                           <span className="text-muted-foreground">{link.name}</span>
+                           <div className="pl-4 mt-2 space-y-4">
+                            {link.subItems?.map(subItem => (
+                              <Link key={subItem.name} to={subItem.href} className="block text-muted-foreground hover:text-primary">
+                                {subItem.name}
+                              </Link>
+                            ))}
+                           </div>
+                        </div>
+                      ) : (
+                        <Link key={link.name} to={link.href!} className="text-muted-foreground hover:text-primary">
+                          {link.name}
+                        </Link>
+                      )
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
-
       <main className="flex-grow">{children}</main>
-
-      <footer id="contact" className="bg-background text-muted-foreground pt-16 pb-8 border-t">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-              Segera Kunjungi Store Kami
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              Kami siap membantu Anda dengan layanan terbaik.
-            </p>
-            <div className="mt-6 flex justify-center">
-              <div className="w-24 h-1 bg-primary rounded-full"></div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="space-y-4">
-              <Link to="/" className="flex items-center gap-3">
-                <img src={logoSrc} alt="Cellkom.Store Logo" className="h-8 w-auto" />
-                <span className="text-xl font-bold font-poppins">
-                  <span className="text-foreground">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
-                </span>
-              </Link>
-              <p className="text-sm">
-                Pusat Servis HP dan Komputer Terpercaya. Cepat, Profesional, dan Bergaransi.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-foreground">Navigasi</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a href="/#services" className="hover:text-primary transition-colors">Layanan</a></li>
-                <li><Link to="/products" className="hover:text-primary transition-colors">Toko</Link></li>
-                <li><a href="/#about" className="hover:text-primary transition-colors">Tentang Kami</a></li>
-                <li><a href="/#news" className="hover:text-primary transition-colors">Berita</a></li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-foreground">Kontak</h3>
-              <address className="space-y-2 text-sm not-italic">
-                <p>Jorong Kampung Baru, Muaro Paiti, Kec. Kapur IX</p>
-                <p>Email: <a href="mailto:ckcellkom@gmail.com" className="hover:text-primary transition-colors">ckcellkom@gmail.com</a></p>
-                <p>Telepon: <a href="tel:082285959441" className="hover:text-primary transition-colors">082285959441</a></p>
-              </address>
-            </div>
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-foreground">Ikuti Kami</h3>
-              <p className="text-sm">Dapatkan info terbaru dan promo menarik.</p>
-              <div className="flex space-x-4">
-                <a href="#" aria-label="Instagram" className="hover:text-primary transition-colors">
-                  <Instagram className="h-6 w-6" />
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="border-t border-border mt-12">
-          <div className="container mx-auto px-4 md:px-6 py-4 text-center text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Cellkomtech. All Rights Reserved.
-          </div>
+      <footer className="border-t">
+        <div className="container py-6 text-center text-sm text-muted-foreground">
+          © {new Date().getFullYear()} Cellkom.Store. All rights reserved.
         </div>
       </footer>
     </div>
