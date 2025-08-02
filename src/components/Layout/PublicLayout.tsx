@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone } from "lucide-react";
+import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper } from "lucide-react";
 import logoSrc from '/logo.png';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -20,6 +20,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
   const navLinks = [
     { name: "Layanan", href: "/#services", icon: Wrench },
     { name: "Toko", href: "/products", icon: ShoppingCart },
+    { name: "Berita", href: "/news", icon: Newspaper },
     { name: "Tentang Kami", href: "/#about", icon: Info },
     { name: "Kontak", href: "/#contact", icon: Phone },
   ];
@@ -40,7 +41,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
           
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
             {navLinks.map(link => (
-              <Link key={link.name} to={link.href.startsWith('/#') ? link.href : `/${link.href.split('/').pop()}`} className="text-muted-foreground transition-colors hover:text-primary">
+              <Link key={link.name} to={link.href} className="text-muted-foreground transition-colors hover:text-primary">
                 {link.name}
               </Link>
             ))}

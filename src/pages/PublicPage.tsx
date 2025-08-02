@@ -166,17 +166,6 @@ const PublicPage = () => {
             </div>
           </div>
         </section>
-
-        {/* News Section */}
-        <section id="news" className="py-16 md:py-24 bg-secondary/50">
-          <div className="container px-4 md:px-6">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Berita & Update</h2>
-              <p className="mt-4 text-lg text-muted-foreground">Informasi dan berita terbaru dari kami.</p>
-              <p className="mt-4 text-muted-foreground">Segera hadir...</p>
-            </div>
-          </div>
-        </section>
       </main>
     </PublicLayout>
   );

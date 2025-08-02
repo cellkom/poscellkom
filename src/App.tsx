@@ -11,6 +11,8 @@ import LoginPage from './pages/Auth/LoginPage';
 import MemberLoginPage from './pages/Auth/MemberLoginPage';
 import PublicPage from './pages/PublicPage';
 import ProductsPage from './pages/ProductsPage';
+import NewsPage from './pages/NewsPage';
+import NewsDetailPage from './pages/NewsDetailPage';
 import MemberProfilePage from './pages/MemberProfilePage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import StockPage from './pages/Dashboard/StockPage';
@@ -25,6 +27,7 @@ import SalesReportPage from './pages/Dashboard/Reports/SalesReportPage';
 import ServiceReportPage from './pages/Dashboard/Reports/ServiceReportPage';
 import TodayReportPage from './pages/Dashboard/Reports/TodayReportPage';
 import UsersPage from './pages/Dashboard/UsersPage';
+import NewsManagementPage from './pages/Dashboard/NewsManagementPage';
 import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
 import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
 import NotFound from './pages/NotFound';
@@ -41,6 +44,8 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/member-login" element={<MemberLoginPage />} />
               <Route path="/products" element={<ProductsPage />} />
+              <Route path="/news" element={<NewsPage />} />
+              <Route path="/news/:slug" element={<NewsDetailPage />} />
               
               <Route element={<MemberRoute />}>
                 <Route path="/member-profile" element={<MemberProfilePage />} />
@@ -64,6 +69,7 @@ function App() {
                 
                 <Route element={<AdminRoute />}>
                   <Route path="/dashboard/users" element={<UsersPage />} />
+                  <Route path="/dashboard/news" element={<NewsManagementPage />} />
                 </Route>
               </Route>
 
