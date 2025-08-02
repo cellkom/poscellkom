@@ -126,8 +126,7 @@ const NewsManagementPage: React.FC = () => {
         <Button onClick={fetchNews} className="mt-4">Coba Lagi</Button>
       </div>
     );
-  );
-  }
+  } // Removed extra closing parenthesis and semicolon here
 
   return (
     <>

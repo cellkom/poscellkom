@@ -167,13 +167,12 @@ const NewsFormPage: React.FC = () => {
           <CardTitle>{id ? "Formulir Edit Berita" : "Formulir Berita Baru"}</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading && id && (
+          {loading && id ? ( // Changed to ternary for conditional rendering
             <div className="flex justify-center items-center h-32">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="ml-2">Memuat data berita...</p>
             </div>
-          )}
-          {!loading || !id ? (
+          ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
                 <Label htmlFor="title">Judul Berita</Label>
@@ -255,7 +254,7 @@ const NewsFormPage: React.FC = () => {
                 </Button>
               </div>
             </form>
-          ) : null}
+          )}
         </CardContent>
       </Card>
     </>
