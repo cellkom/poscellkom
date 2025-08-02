@@ -6,7 +6,8 @@ import { useCart } from "@/contexts/CartContext";
 import { format } from 'date-fns';
 import { ShoppingCart, Minus, Plus, Trash2, XCircle } from "lucide-react";
 import { Link } from 'react-router-dom';
-import { formatCurrency } from '@/lib/utils'; // Import from utils
+
+const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
 const CartSidebar = () => {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();

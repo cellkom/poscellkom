@@ -6,11 +6,11 @@ import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight,
 import { Link, useLocation } from "react-router-dom"; // Import useLocation
 import { useStock } from "@/hooks/use-stock";
 import { useEffect } from "react"; // Import useEffect
-import { formatCurrency } from '@/lib/utils'; // Import from utils
 
 const PublicPage = () => {
   const { products, loading } = useStock();
   const featuredProducts = products.slice(0, 4);
+  const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
   const location = useLocation(); // Get the current location object
 

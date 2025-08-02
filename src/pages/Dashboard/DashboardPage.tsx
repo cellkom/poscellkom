@@ -10,7 +10,10 @@ import { useServiceEntries } from "@/hooks/use-service-entries";
 import { useInstallments } from "@/hooks/use-installments";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfToday, endOfToday } from "date-fns";
-import { formatCurrency } from '@/lib/utils'; // Import from utils
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+};
 
 const getStatusBadgeVariant = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -73,8 +76,8 @@ const DashboardPage = () => {
             salesTodayResult,
             servicesTodayResult,
             recentSalesResult,
-            recentServicesResult // Corrected: This should be `recentServicesPromise` in the array below
-        ] = await Promise.all([salesTodayPromise, servicesTodayPromise, recentSalesPromise, recentServicesPromise]); // Corrected line
+            recentServicesResult
+        ] = await Promise.all([salesTodayPromise, servicesTodayPromise, recentSalesPromise, recentServicesPromise]);
 
         // Process summary
         const totalSalesRevenue = (salesTodayResult.data || []).reduce((sum, s) => sum + s.total_amount, 0);

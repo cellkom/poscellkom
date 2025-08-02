@@ -12,7 +12,6 @@ interface ServiceEntry {
   deviceType: string;
   damageType: string;
   description: string;
-  kasirName: string; // Add kasirName prop
 }
 
 interface ReceiptProps {
@@ -35,7 +34,6 @@ const ServiceMasukReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ entry },
       <div className="my-2 py-1 text-xs space-y-1">
         <div className="flex justify-between"><span>No. Service:</span> <span>SVC-{entry.id}</span></div>
         <div className="flex justify-between"><span>Tanggal:</span> <span>{format(entry.date, 'dd/MM/yy HH:mm')}</span></div>
-        <div className="flex justify-between"><span>Kasir:</span> <span>{entry.kasirName}</span></div>
       </div>
 
       <div className="border-t border-dashed border-black my-2 py-2 text-xs space-y-1">

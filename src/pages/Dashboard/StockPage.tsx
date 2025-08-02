@@ -13,7 +13,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { PlusCircle, Search, Edit, Trash2, RefreshCw, PlusSquare, ChevronsUpDown, Check, Calendar as CalendarIcon, Image as ImageIcon } from "lucide-react";
 import Barcode from "@/components/Barcode";
 import { showSuccess, showError } from "@/utils/toast";
-import { cn, formatCurrency } from "@/lib/utils"; // Import formatCurrency
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useSuppliers } from "@/hooks/use-suppliers";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +53,10 @@ const StockPage = () => {
       (item.barcode && item.barcode.toLowerCase().includes(term))
     );
   });
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+  };
 
   const handleGenerateBarcode = () => {
     const generated = Math.floor(1000000000000 + Math.random() * 9000000000000).toString();

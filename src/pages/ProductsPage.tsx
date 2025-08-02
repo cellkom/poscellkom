@@ -1,4 +1,3 @@
-import React, { useState, useMemo } from "react";
 import PublicLayout from "@/components/Layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,15 +6,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStock } from "@/hooks/use-stock";
 import { ShoppingCart, Search, Loader2, Image as ImageIcon } from "lucide-react";
+import { useState, useMemo } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
-import { formatCurrency } from '@/lib/utils'; // Import from utils
 
 const ProductsPage = () => {
   const { products, loading } = useStock();
   const { addToCart } = useCart();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+
+  const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
   const categories = useMemo(() => {
     const uniqueCategories = new Set<string>();
@@ -89,6 +90,7 @@ const ProductsPage = () => {
                   <Skeleton className="h-5 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />
                   <Skeleton className="h-6 w-1/3 mt-2" />
+                  <Skeleton className="h-10 w-full mt-4" />
                 </CardContent>
               </Card>
             ))}

@@ -8,7 +8,8 @@ import { useInstallments } from "@/hooks/use-installments";
 import { startOfToday, endOfToday } from "date-fns";
 import { Banknote, ShoppingCart, Wrench, Clock, ArrowRight, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from '@/lib/utils'; // Import from utils
+
+const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
 const ReportsPage = () => {
   const { serviceEntries } = useServiceEntries();

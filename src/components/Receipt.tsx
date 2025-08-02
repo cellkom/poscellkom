@@ -2,7 +2,8 @@ import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import Barcode from '@/components/Barcode';
-import { formatCurrency } from '@/lib/utils'; // Import from utils
+
+const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
 interface ReceiptProps {
   transaction: {
@@ -23,14 +24,13 @@ interface ReceiptProps {
     paymentAmount: number;
     change: number;
     remainingAmount: number;
-    kasirName: string; // Add kasirName prop
   };
 }
 
 const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }, ref) => {
   if (!transaction) return null;
 
-  const { id: transactionId, items, summary, customerName, paymentMethod, date, paymentAmount, change, remainingAmount, kasirName } = transaction;
+  const { id: transactionId, items, summary, customerName, paymentMethod, date, paymentAmount, change, remainingAmount } = transaction;
 
   return (
     <div ref={ref} id="receipt-print-area" className="bg-white text-black p-4 font-mono max-w-sm mx-auto border rounded-lg">
@@ -47,7 +47,7 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ transaction }, ref) 
           <span>{format(date, 'dd/MM/yy HH:mm')}</span>
         </div>
         <div className="flex justify-between">
-          <span>Kasir: {kasirName}</span>
+          <span>Kasir: admin</span>
           <span>Pelanggan: {customerName}</span>
         </div>
       </div>

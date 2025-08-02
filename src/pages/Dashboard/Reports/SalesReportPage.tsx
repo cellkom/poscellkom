@@ -12,7 +12,8 @@ import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Calendar as CalendarIcon, Printer, Receipt, DollarSign, TrendingUp, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from '@/lib/utils'; // Import from utils
+
+const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
 interface SaleTransactionItem {
   quantity: number;

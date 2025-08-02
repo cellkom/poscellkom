@@ -14,7 +14,8 @@ import { id } from "date-fns/locale";
 import { showSuccess, showError } from "@/utils/toast";
 import { DollarSign, History, Loader2, PlusCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { formatCurrency } from '@/lib/utils'; // Import from utils
+
+const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
 const InstallmentPage = () => {
   const { user } = useAuth();
