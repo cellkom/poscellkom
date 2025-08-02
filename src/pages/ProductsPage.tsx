@@ -91,8 +91,9 @@ const ProductsPage = () => {
                   <Skeleton className="h-6 w-1/3 mt-2" />
                 </CardContent>
               </Card>
-            ))
-          ) : (
+            ))}
+          </div>
+        ) : (
           <>
             {filteredProducts.length === 0 ? (
               <div className="text-center text-muted-foreground py-16">
