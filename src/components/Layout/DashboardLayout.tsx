@@ -22,6 +22,7 @@ interface NavSubItem {
     name: string;
     icon: IconType;
     path: string;
+    adminOnly?: boolean;
 }
 
 interface NavItem {
@@ -29,6 +30,7 @@ interface NavItem {
     icon: IconType;
     path: string;
     subItems?: NavSubItem[];
+    adminOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -38,7 +40,7 @@ const navItems: NavItem[] = [
   { 
     name: "Transaksi", 
     icon: Receipt,
-    path: "/dashboard/transaction", // Base path for active state
+    path: "/dashboard/transaction",
     subItems: [
         { name: "Penjualan", icon: ShoppingCart, path: "/dashboard/transaction/sales" },
         { name: "Jasa Service", icon: Wrench, path: "/dashboard/transaction/service" },
@@ -52,78 +54,81 @@ const navItems: NavItem[] = [
     subItems: [
         { name: "Pelanggan", icon: Users, path: "/dashboard/data/customers" },
         { name: "Supplier", icon: Truck, path: "/dashboard/data/suppliers" },
-        { name: "Users", icon: Users, path: "/dashboard/data/users" },
+        { name: "Users", icon: Users, path: "/dashboard/data/users", adminOnly: true },
     ]
   },
   { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
-  { name: "Manajemen Berita", icon: Newspaper, path: "/dashboard/news" },
+  { name: "Manajemen Berita", icon: Newspaper, path: "/dashboard/news", adminOnly: true },
 ];
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const isMobile = useIsMobile();
   const location = useLocation();
   const { profile, signOut } = useAuth();
+  const isAdmin = profile?.role === 'Admin';
 
   const renderNavLinks = (isMobileNav = false) => {
-    const nav = navItems.map((item) => {
-      if (item.subItems) {
-        const visibleSubItems = item.subItems;
-        if (visibleSubItems.length === 0) return null;
+    const nav = navItems
+      .filter(item => !item.adminOnly || isAdmin)
+      .map((item) => {
+        if (item.subItems) {
+          const visibleSubItems = item.subItems.filter(sub => !sub.adminOnly || isAdmin);
+          if (visibleSubItems.length === 0) return null;
 
-        return isMobileNav ? (
-          <Collapsible key={item.name}>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between hover:bg-background/20">
-                <div className="flex items-center gap-2">
-                  <item.icon className="h-4 w-4" />
-                  {item.name}
-                </div>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pl-6 space-y-1 mt-1">
-              {visibleSubItems.map(subItem => (
-                <Button key={subItem.name} variant="ghost" asChild className="w-full justify-start hover:bg-background/20">
-                  <Link to={subItem.path} className="flex items-center gap-2">
-                    <subItem.icon className="h-4 w-4" />
-                    {subItem.name}
-                  </Link>
+          return isMobileNav ? (
+            <Collapsible key={item.name}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between hover:bg-background/20">
+                  <div className="flex items-center gap-2">
+                    <item.icon className="h-4 w-4" />
+                    {item.name}
+                  </div>
+                  <ChevronDown className="h-4 w-4" />
                 </Button>
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
-        ) : (
-          <DropdownMenu key={item.name}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className={cn("hover:bg-primary-foreground/10", location.pathname.startsWith(item.path) && "bg-primary-foreground/10")}>
-                <item.icon className="h-4 w-4 mr-2" />
-                {item.name}
-                <ChevronDown className="h-4 w-4 ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {visibleSubItems.map(subItem => (
-                <DropdownMenuItem key={subItem.name} asChild>
-                  <Link to={subItem.path} className="flex items-center gap-2 cursor-pointer">
-                    <subItem.icon className="h-4 w-4" />
-                    {subItem.name}
-                  </Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      }
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-6 space-y-1 mt-1">
+                {visibleSubItems.map(subItem => (
+                  <Button key={subItem.name} variant="ghost" asChild className="w-full justify-start hover:bg-background/20">
+                    <Link to={subItem.path} className="flex items-center gap-2">
+                      <subItem.icon className="h-4 w-4" />
+                      {subItem.name}
+                    </Link>
+                  </Button>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          ) : (
+            <DropdownMenu key={item.name}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className={cn("hover:bg-primary-foreground/10", location.pathname.startsWith(item.path) && "bg-primary-foreground/10")}>
+                  <item.icon className="h-4 w-4 mr-2" />
+                  {item.name}
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {visibleSubItems.map(subItem => (
+                  <DropdownMenuItem key={subItem.name} asChild>
+                    <Link to={subItem.path} className="flex items-center gap-2 cursor-pointer">
+                      <subItem.icon className="h-4 w-4" />
+                      {subItem.name}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        }
 
-      return (
-        <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname === item.path && "bg-primary-foreground/10", isMobileNav && "justify-start")}>
-          <Link to={item.path!} className="flex items-center gap-2">
-            <item.icon className="h-4 w-4" />
-            {item.name}
-          </Link>
-        </Button>
-      );
-    });
+        return (
+          <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname === item.path && "bg-primary-foreground/10", isMobileNav && "justify-start")}>
+            <Link to={item.path!} className="flex items-center gap-2">
+              <item.icon className="h-4 w-4" />
+              {item.name}
+            </Link>
+          </Button>
+        );
+      });
     return nav;
   };
 
