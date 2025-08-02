@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -123,7 +122,7 @@ const NewsManagementPage = () => {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <Card>
         <CardHeader className="flex flex-row justify-between items-center">
           <CardTitle>Manajemen Berita</CardTitle>
@@ -196,7 +195,7 @@ const NewsManagementPage = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 };
 

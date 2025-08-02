@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback } from "react";
-import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -229,7 +228,7 @@ const ServiceMasukPage = () => {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Data Service Masuk</CardTitle>
@@ -382,7 +381,7 @@ const ServiceMasukPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 };
 

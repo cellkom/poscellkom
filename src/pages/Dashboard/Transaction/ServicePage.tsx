@@ -1,5 +1,4 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -270,193 +269,191 @@ const ServicePage = () => {
   }, [serviceEntries]);
 
   return (
-    <DashboardLayout>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><ClipboardList className="h-5 w-5" /> Pilih Service Masuk</CardTitle></CardHeader>
-            <CardContent>
-              <Select onValueChange={handleSelectService} value={selectedServiceId || ''}>
-                <SelectTrigger><SelectValue placeholder="Pilih dari daftar service yang sedang berjalan..." /></SelectTrigger>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className="lg:col-span-2 space-y-6">
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2"><ClipboardList className="h-5 w-5" /> Pilih Service Masuk</CardTitle></CardHeader>
+          <CardContent>
+            <Select onValueChange={handleSelectService} value={selectedServiceId || ''}>
+              <SelectTrigger><SelectValue placeholder="Pilih dari daftar service yang sedang berjalan..." /></SelectTrigger>
+              <SelectContent>
+                {pendingServices.length > 0 ? (
+                  pendingServices.map(s => (
+                    <SelectItem key={s.id} value={s.id}>
+                      SVC-{s.id} - {s.customerName} ({s.device_type})
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-sm text-muted-foreground">Tidak ada service yang sedang berjalan.</div>
+                )}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Detail Service</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="customer">Customer</Label>
+              <Input id="customer" value={selectedServiceEntry?.customerName || 'Pilih service terlebih dahulu'} disabled />
+            </div>
+            <div>
+              <Label htmlFor="description">Deskripsi Service</Label>
+              <Textarea id="description" placeholder="Deskripsi akan terisi otomatis jika memilih service dari daftar di atas" value={serviceDescription} onChange={(e) => setServiceDescription(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="serviceFee">Biaya Jasa Service</Label>
+              <Input id="serviceFee" type="number" placeholder="0" value={serviceFee || ''} onChange={(e) => setServiceFee(Number(e.target.value))} />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row justify-between items-center">
+            <CardTitle>Sparepart yang Digunakan</CardTitle>
+            <Dialog open={isItemDialogOpen} onOpenChange={setIsItemDialogOpen}>
+              <DialogTrigger asChild><Button variant="outline"><PlusCircle className="h-4 w-4 mr-2" /> Tambah Sparepart</Button></DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader><DialogTitle>Pilih Sparepart</DialogTitle></DialogHeader>
+                <Command>
+                  <CommandInput placeholder="Cari nama, kode, atau barcode..." />
+                  <CommandList>
+                    <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
+                    <CommandGroup>
+                      {products.filter(item => item.stock > 0).map(item => (
+                        <CommandItem key={item.id} value={`${item.name} ${item.id} ${item.barcode}`} onSelect={() => handleAddPart(item)} className="flex justify-between items-center cursor-pointer">
+                          <div>
+                            <p className="font-medium">{item.name}</p>
+                            <p className="text-sm text-muted-foreground font-mono">{item.barcode}</p>
+                            <p className="text-sm text-muted-foreground">Stok: {item.stock} | {formatCurrency(item.retailPrice)}</p>
+                          </div>
+                          <Button variant="outline" size="sm">Pilih</Button>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </DialogContent>
+            </Dialog>
+          </CardHeader>
+          <CardContent>
+            {usedParts.length === 0 ? (
+              <div className="text-center py-8 text-gray-500"><p>Belum ada sparepart yang ditambahkan.</p></div>
+            ) : (
+              <Table>
+                <TableHeader><TableRow><TableHead>Barang</TableHead><TableHead className="w-[120px]">Jumlah</TableHead><TableHead className="text-right">Harga</TableHead><TableHead className="w-[50px]"></TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {usedParts.map(item => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}><Minus className="h-4 w-4" /></Button>
+                          <Input type="number" value={item.quantity} onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value) || 0)} className="w-14 text-center" />
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}><Plus className="h-4 w-4" /></Button>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">{formatCurrency(item.retailPrice * item.quantity)}</TableCell>
+                      <TableCell><Button variant="ghost" size="icon" onClick={() => handleUpdateQuantity(item.id, 0)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      <div className="space-y-6">
+        <Card className="bg-slate-900 text-slate-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 border-b border-slate-700 pb-4">
+              <Wrench className="h-5 w-5" />
+              Info Transaksi
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-400">No. Service:</span>
+              <span className="font-medium font-mono">{selectedServiceId ? `SVC-${selectedServiceId}` : '-'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Sparepart:</span>
+              <span className="font-medium">{usedParts.length} jenis</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Kasir:</span>
+              <span className="font-medium">{user?.email}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Customer:</span>
+              <span className="font-medium">{selectedServiceEntry?.customerName || '-'}</span>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Pembayaran & Status</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Metode Pembayaran</Label>
+              <RadioGroup value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)} className="flex items-center gap-4 mt-2">
+                <div className="flex items-center space-x-2"><RadioGroupItem value="tunai" id="tunai" /><Label htmlFor="tunai">Tunai</Label></div>
+                <div className="flex items-center space-x-2"><RadioGroupItem value="cicilan" id="cicilan" /><Label htmlFor="cicilan">Cicilan</Label></div>
+              </RadioGroup>
+            </div>
+            <div>
+              <Label htmlFor="status">Status Service</Label>
+              <Select value={status} onValueChange={(value: ServiceStatus) => setStatus(value)}>
+                <SelectTrigger id="status"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {pendingServices.length > 0 ? (
-                    pendingServices.map(s => (
-                      <SelectItem key={s.id} value={s.id}>
-                        SVC-{s.id} - {s.customerName} ({s.device_type})
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-sm text-muted-foreground">Tidak ada service yang sedang berjalan.</div>
-                  )}
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Proses">Proses</SelectItem>
+                  <SelectItem value="Selesai">Selesai</SelectItem>
+                  <SelectItem value="Sudah Diambil">Sudah Diambil</SelectItem>
+                  <SelectItem value="Gagal/Cancel">Gagal/Cancel</SelectItem>
                 </SelectContent>
               </Select>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Detail Service</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="customer">Customer</Label>
-                <Input id="customer" value={selectedServiceEntry?.customerName || 'Pilih service terlebih dahulu'} disabled />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Total Biaya</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between"><span>Biaya Service:</span> <span className="font-medium">{formatCurrency(serviceFee)}</span></div>
+            <div className="flex justify-between"><span>Biaya Sparepart:</span> <span className="font-medium">{formatCurrency(summary.sparepartCost)}</span></div>
+            <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2"><span>Total:</span> <span>{formatCurrency(summary.total)}</span></div>
+            <div className="flex justify-between text-sm text-muted-foreground"><span>Modal Sparepart:</span> <span>{formatCurrency(summary.sparepartModal)}</span></div>
+            <div className="flex justify-between text-lg font-bold text-primary"><span>Laba:</span> <span>{formatCurrency(summary.profit)}</span></div>
+            
+            <div className="border-t pt-4 space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="paymentAmount" className="text-base">Jumlah Bayar:</Label>
+                <Input
+                  id="paymentAmount"
+                  type="text"
+                  value={formatNumberInput(paymentAmount)}
+                  onChange={handlePaymentAmountChange}
+                  className="w-40 text-right text-lg"
+                  placeholder="0"
+                />
               </div>
-              <div>
-                <Label htmlFor="description">Deskripsi Service</Label>
-                <Textarea id="description" placeholder="Deskripsi akan terisi otomatis jika memilih service dari daftar di atas" value={serviceDescription} onChange={(e) => setServiceDescription(e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="serviceFee">Biaya Jasa Service</Label>
-                <Input id="serviceFee" type="number" placeholder="0" value={serviceFee || ''} onChange={(e) => setServiceFee(Number(e.target.value))} />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row justify-between items-center">
-              <CardTitle>Sparepart yang Digunakan</CardTitle>
-              <Dialog open={isItemDialogOpen} onOpenChange={setIsItemDialogOpen}>
-                <DialogTrigger asChild><Button variant="outline"><PlusCircle className="h-4 w-4 mr-2" /> Tambah Sparepart</Button></DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader><DialogTitle>Pilih Sparepart</DialogTitle></DialogHeader>
-                  <Command>
-                    <CommandInput placeholder="Cari nama, kode, atau barcode..." />
-                    <CommandList>
-                      <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
-                      <CommandGroup>
-                        {products.filter(item => item.stock > 0).map(item => (
-                          <CommandItem key={item.id} value={`${item.name} ${item.id} ${item.barcode}`} onSelect={() => handleAddPart(item)} className="flex justify-between items-center cursor-pointer">
-                            <div>
-                              <p className="font-medium">{item.name}</p>
-                              <p className="text-sm text-muted-foreground font-mono">{item.barcode}</p>
-                              <p className="text-sm text-muted-foreground">Stok: {item.stock} | {formatCurrency(item.retailPrice)}</p>
-                            </div>
-                            <Button variant="outline" size="sm">Pilih</Button>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            <CardContent>
-              {usedParts.length === 0 ? (
-                <div className="text-center py-8 text-gray-500"><p>Belum ada sparepart yang ditambahkan.</p></div>
-              ) : (
-                <Table>
-                  <TableHeader><TableRow><TableHead>Barang</TableHead><TableHead className="w-[120px]">Jumlah</TableHead><TableHead className="text-right">Harga</TableHead><TableHead className="w-[50px]"></TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {usedParts.map(item => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}><Minus className="h-4 w-4" /></Button>
-                            <Input type="number" value={item.quantity} onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value) || 0)} className="w-14 text-center" />
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}><Plus className="h-4 w-4" /></Button>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">{formatCurrency(item.retailPrice * item.quantity)}</TableCell>
-                        <TableCell><Button variant="ghost" size="icon" onClick={() => handleUpdateQuantity(item.id, 0)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              {paymentDetails.change > 0 && (
+                <div className="flex justify-between text-primary"><span>Kembalian:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.change)}</span></div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-        <div className="space-y-6">
-          <Card className="bg-slate-900 text-slate-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 border-b border-slate-700 pb-4">
-                <Wrench className="h-5 w-5" />
-                Info Transaksi
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-400">No. Service:</span>
-                <span className="font-medium font-mono">{selectedServiceId ? `SVC-${selectedServiceId}` : '-'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Sparepart:</span>
-                <span className="font-medium">{usedParts.length} jenis</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Kasir:</span>
-                <span className="font-medium">{user?.email}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Customer:</span>
-                <span className="font-medium">{selectedServiceEntry?.customerName || '-'}</span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Pembayaran & Status</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Metode Pembayaran</Label>
-                <RadioGroup value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)} className="flex items-center gap-4 mt-2">
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="tunai" id="tunai" /><Label htmlFor="tunai">Tunai</Label></div>
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="cicilan" id="cicilan" /><Label htmlFor="cicilan">Cicilan</Label></div>
-                </RadioGroup>
-              </div>
-              <div>
-                <Label htmlFor="status">Status Service</Label>
-                <Select value={status} onValueChange={(value: ServiceStatus) => setStatus(value)}>
-                  <SelectTrigger id="status"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Proses">Proses</SelectItem>
-                    <SelectItem value="Selesai">Selesai</SelectItem>
-                    <SelectItem value="Sudah Diambil">Sudah Diambil</SelectItem>
-                    <SelectItem value="Gagal/Cancel">Gagal/Cancel</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Total Biaya</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between"><span>Biaya Service:</span> <span className="font-medium">{formatCurrency(serviceFee)}</span></div>
-              <div className="flex justify-between"><span>Biaya Sparepart:</span> <span className="font-medium">{formatCurrency(summary.sparepartCost)}</span></div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2"><span>Total:</span> <span>{formatCurrency(summary.total)}</span></div>
-              <div className="flex justify-between text-sm text-muted-foreground"><span>Modal Sparepart:</span> <span>{formatCurrency(summary.sparepartModal)}</span></div>
-              <div className="flex justify-between text-lg font-bold text-primary"><span>Laba:</span> <span>{formatCurrency(summary.profit)}</span></div>
-              
-              <div className="border-t pt-4 space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="paymentAmount" className="text-base">Jumlah Bayar:</Label>
-                  <Input
-                    id="paymentAmount"
-                    type="text"
-                    value={formatNumberInput(paymentAmount)}
-                    onChange={handlePaymentAmountChange}
-                    className="w-40 text-right text-lg"
-                    placeholder="0"
-                  />
-                </div>
-                {paymentDetails.change > 0 && (
-                  <div className="flex justify-between text-primary"><span>Kembalian:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.change)}</span></div>
-                )}
-                {paymentDetails.remainingAmount > 0 && (
-                  <div className="flex justify-between text-destructive"><span>Sisa Bayar:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.remainingAmount)}</span></div>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button size="lg" className="w-full" onClick={handleProcessService} disabled={!selectedServiceId || isProcessing}>
-                {isProcessing ? (
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                ) : (
-                  <Banknote className="h-5 w-5 mr-2" />
-                )}
-                {isProcessing ? 'Memproses...' : 'Proses & Cetak Nota'}
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
+              {paymentDetails.remainingAmount > 0 && (
+                <div className="flex justify-between text-destructive"><span>Sisa Bayar:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.remainingAmount)}</span></div>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button size="lg" className="w-full" onClick={handleProcessService} disabled={!selectedServiceId || isProcessing}>
+              {isProcessing ? (
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              ) : (
+                <Banknote className="h-5 w-5 mr-2" />
+              )}
+              {isProcessing ? 'Memproses...' : 'Proses & Cetak Nota'}
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
 
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
@@ -472,7 +469,7 @@ const ServicePage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </div>
   );
 };
 

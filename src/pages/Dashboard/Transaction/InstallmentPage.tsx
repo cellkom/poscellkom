@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -66,7 +65,7 @@ const InstallmentPage = () => {
   const activeInstallments = installments.filter(i => i.status === 'Belum Lunas');
 
   return (
-    <DashboardLayout>
+    <>
       <Card>
         <CardHeader className="flex flex-row justify-between items-center">
           <div>
@@ -192,7 +191,7 @@ const InstallmentPage = () => {
           )}
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 };
 

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -128,7 +127,7 @@ const UsersPage = () => {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -233,7 +232,7 @@ const UsersPage = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 };
 

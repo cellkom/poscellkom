@@ -1,5 +1,4 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -80,7 +79,7 @@ const CustomerPage = () => {
   );
 
   return (
-    <DashboardLayout>
+    <>
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -144,7 +143,7 @@ const CustomerPage = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 };
 

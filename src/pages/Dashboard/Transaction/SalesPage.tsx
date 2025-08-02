@@ -1,6 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
-import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -269,179 +268,177 @@ const SalesPage = () => {
   }, [isReceiptOpen, lastTransaction, handlePrint]);
 
   return (
-    <DashboardLayout>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row justify-between items-center">
-              <CardTitle>Pilih Barang</CardTitle>
-              <Dialog open={isItemDialogOpen} onOpenChange={setIsItemDialogOpen}>
-                <DialogTrigger asChild><Button variant="outline">Cari Barang</Button></DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader><DialogTitle>Pilih Barang</DialogTitle></DialogHeader>
-                  <Command>
-                    <CommandInput placeholder="Cari nama, kode, atau barcode..." />
-                    <CommandList>
-                      <CommandEmpty>
-                        <div className="text-center py-4">
-                          <p className="text-sm text-muted-foreground">Barang tidak ditemukan.</p>
-                          <Button variant="link" asChild className="mt-2">
-                            <Link to="/dashboard/stock">
-                              <PlusCircle className="mr-2 h-4 w-4" />
-                              Tambah Barang Baru di Halaman Stok
-                            </Link>
-                          </Button>
-                        </div>
-                      </CommandEmpty>
-                      <CommandGroup>
-                        {products.filter(item => item.stock > 0).map(item => (
-                          <CommandItem key={item.id} value={`${item.name} ${item.id} ${item.barcode}`} onSelect={() => handleAddToCart(item)} className="flex justify-between items-center cursor-pointer">
-                            <div>
-                              <p className="font-medium">{item.name}</p>
-                              <p className="text-sm text-muted-foreground font-mono">{item.barcode}</p>
-                              <p className="text-sm text-muted-foreground">Stok: {item.stock} | {formatCurrency(item.retailPrice)}</p>
-                            </div>
-                            <Button variant="outline" size="sm">Pilih</Button>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            <CardContent>
-              {cart.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <ShoppingCart className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-2">Keranjang belanja masih kosong</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader><TableRow><TableHead>Barang</TableHead><TableHead className="w-[120px]">Jumlah</TableHead><TableHead className="text-right">Harga</TableHead><TableHead className="w-[50px]"></TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {cart.map(item => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}><Minus className="h-4 w-4" /></Button>
-                            <Input type="number" value={item.quantity} onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value) || 0)} className="w-14 text-center" />
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}><Plus className="h-4 w-4" /></Button>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className="lg:col-span-2 space-y-6">
+        <Card>
+          <CardHeader className="flex flex-row justify-between items-center">
+            <CardTitle>Pilih Barang</CardTitle>
+            <Dialog open={isItemDialogOpen} onOpenChange={setIsItemDialogOpen}>
+              <DialogTrigger asChild><Button variant="outline">Cari Barang</Button></DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader><DialogTitle>Pilih Barang</DialogTitle></DialogHeader>
+                <Command>
+                  <CommandInput placeholder="Cari nama, kode, atau barcode..." />
+                  <CommandList>
+                    <CommandEmpty>
+                      <div className="text-center py-4">
+                        <p className="text-sm text-muted-foreground">Barang tidak ditemukan.</p>
+                        <Button variant="link" asChild className="mt-2">
+                          <Link to="/dashboard/stock">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Tambah Barang Baru di Halaman Stok
+                          </Link>
+                        </Button>
+                      </div>
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {products.filter(item => item.stock > 0).map(item => (
+                        <CommandItem key={item.id} value={`${item.name} ${item.id} ${item.barcode}`} onSelect={() => handleAddToCart(item)} className="flex justify-between items-center cursor-pointer">
+                          <div>
+                            <p className="font-medium">{item.name}</p>
+                            <p className="text-sm text-muted-foreground font-mono">{item.barcode}</p>
+                            <p className="text-sm text-muted-foreground">Stok: {item.stock} | {formatCurrency(item.retailPrice)}</p>
                           </div>
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">{formatCurrency((customerType === 'reseller' ? item.resellerPrice : item.retailPrice) * item.quantity)}</TableCell>
-                        <TableCell><Button variant="ghost" size="icon" onClick={() => handleUpdateQuantity(item.id, 0)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-        <div className="space-y-6">
-          <Card className="bg-slate-900 text-slate-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 border-b border-slate-700 pb-4">
-                <Tag className="h-5 w-5" />
-                Info Transaksi
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Item:</span>
-                <span className="font-medium">{cart.length} produk</span>
+                          <Button variant="outline" size="sm">Pilih</Button>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </DialogContent>
+            </Dialog>
+          </CardHeader>
+          <CardContent>
+            {cart.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <ShoppingCart className="mx-auto h-12 w-12 text-gray-400" />
+                <p className="mt-2">Keranjang belanja masih kosong</p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Kasir:</span>
-                <span className="font-medium">{user?.email}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Customer:</span>
-                <span className="font-medium">{selectedCustomerName || 'Umum'}</span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Customer & Pembayaran</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Tipe Customer</Label>
-                <RadioGroup value={customerType} onValueChange={(value: CustomerType) => setCustomerType(value)} className="flex items-center gap-4 mt-2">
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="umum" id="umum" /><Label htmlFor="umum">Umum</Label></div>
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="reseller" id="reseller" /><Label htmlFor="reseller">Reseller</Label></div>
-                </RadioGroup>
-              </div>
-              <div>
-                <Label htmlFor="customer">Pilih Customer</Label>
-                <div className="flex gap-2">
-                  <Select value={selectedCustomerId || ''} onValueChange={setSelectedCustomerId}>
-                    <SelectTrigger id="customer"><SelectValue placeholder="Pilih dari daftar" /></SelectTrigger>
-                    <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
-                    <DialogTrigger asChild><Button variant="outline" size="icon"><UserPlus className="h-4 w-4" /></Button></DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                      <DialogHeader><DialogTitle>Tambah Customer Baru</DialogTitle></DialogHeader>
-                      <form onSubmit={handleCustomerSubmit}>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="name" className="text-right">Nama</Label><Input id="name" value={newCustomer.name} onChange={(e) => setNewCustomer(p => ({ ...p, name: e.target.value }))} className="col-span-3" /></div>
-                          <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="phone" className="text-right">Telepon</Label><Input id="phone" value={newCustomer.phone} onChange={(e) => setNewCustomer(p => ({ ...p, phone: e.target.value }))} className="col-span-3" /></div>
-                          <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="address" className="text-right">Alamat</Label><Input id="address" value={newCustomer.address} onChange={(e) => setNewCustomer(p => ({ ...p, address: e.target.value }))} className="col-span-3" /></div>
+            ) : (
+              <Table>
+                <TableHeader><TableRow><TableHead>Barang</TableHead><TableHead className="w-[120px]">Jumlah</TableHead><TableHead className="text-right">Harga</TableHead><TableHead className="w-[50px]"></TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {cart.map(item => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}><Minus className="h-4 w-4" /></Button>
+                          <Input type="number" value={item.quantity} onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value) || 0)} className="w-14 text-center" />
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}><Plus className="h-4 w-4" /></Button>
                         </div>
-                        <DialogFooter><Button type="submit">Simpan</Button></DialogFooter>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                </div>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">{formatCurrency((customerType === 'reseller' ? item.resellerPrice : item.retailPrice) * item.quantity)}</TableCell>
+                      <TableCell><Button variant="ghost" size="icon" onClick={() => handleUpdateQuantity(item.id, 0)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      <div className="space-y-6">
+        <Card className="bg-slate-900 text-slate-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 border-b border-slate-700 pb-4">
+              <Tag className="h-5 w-5" />
+              Info Transaksi
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-400">Item:</span>
+              <span className="font-medium">{cart.length} produk</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Kasir:</span>
+              <span className="font-medium">{user?.email}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Customer:</span>
+              <span className="font-medium">{selectedCustomerName || 'Umum'}</span>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Customer & Pembayaran</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Tipe Customer</Label>
+              <RadioGroup value={customerType} onValueChange={(value: CustomerType) => setCustomerType(value)} className="flex items-center gap-4 mt-2">
+                <div className="flex items-center space-x-2"><RadioGroupItem value="umum" id="umum" /><Label htmlFor="umum">Umum</Label></div>
+                <div className="flex items-center space-x-2"><RadioGroupItem value="reseller" id="reseller" /><Label htmlFor="reseller">Reseller</Label></div>
+              </RadioGroup>
+            </div>
+            <div>
+              <Label htmlFor="customer">Pilih Customer</Label>
+              <div className="flex gap-2">
+                <Select value={selectedCustomerId || ''} onValueChange={setSelectedCustomerId}>
+                  <SelectTrigger id="customer"><SelectValue placeholder="Pilih dari daftar" /></SelectTrigger>
+                  <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                </Select>
+                <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
+                  <DialogTrigger asChild><Button variant="outline" size="icon"><UserPlus className="h-4 w-4" /></Button></DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader><DialogTitle>Tambah Customer Baru</DialogTitle></DialogHeader>
+                    <form onSubmit={handleCustomerSubmit}>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="name" className="text-right">Nama</Label><Input id="name" value={newCustomer.name} onChange={(e) => setNewCustomer(p => ({ ...p, name: e.target.value }))} className="col-span-3" /></div>
+                        <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="phone" className="text-right">Telepon</Label><Input id="phone" value={newCustomer.phone} onChange={(e) => setNewCustomer(p => ({ ...p, phone: e.target.value }))} className="col-span-3" /></div>
+                        <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="address" className="text-right">Alamat</Label><Input id="address" value={newCustomer.address} onChange={(e) => setNewCustomer(p => ({ ...p, address: e.target.value }))} className="col-span-3" /></div>
+                      </div>
+                      <DialogFooter><Button type="submit">Simpan</Button></DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </div>
-              <div>
-                <Label>Metode Pembayaran</Label>
-                <RadioGroup value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)} className="flex items-center gap-4 mt-2">
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="tunai" id="tunai" /><Label htmlFor="tunai">Tunai</Label></div>
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="cicilan" id="cicilan" /><Label htmlFor="cicilan">Cicilan</Label></div>
-                </RadioGroup>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Total Belanja</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between"><span>Subtotal:</span> <span className="font-medium">{formatCurrency(summary.subtotal)}</span></div>
+            </div>
+            <div>
+              <Label>Metode Pembayaran</Label>
+              <RadioGroup value={paymentMethod} onValueChange={(value: PaymentMethod) => setPaymentMethod(value)} className="flex items-center gap-4 mt-2">
+                <div className="flex items-center space-x-2"><RadioGroupItem value="tunai" id="tunai" /><Label htmlFor="tunai">Tunai</Label></div>
+                <div className="flex items-center space-x-2"><RadioGroupItem value="cicilan" id="cicilan" /><Label htmlFor="cicilan">Cicilan</Label></div>
+              </RadioGroup>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Total Belanja</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between"><span>Subtotal:</span> <span className="font-medium">{formatCurrency(summary.subtotal)}</span></div>
+            <div className="flex justify-between items-center">
+              <Label htmlFor="discount">Diskon:</Label>
+              <Input id="discount" type="number" value={discount || ''} onChange={(e) => setDiscount(Number(e.target.value))} className="w-32 text-right" placeholder="0" />
+            </div>
+            <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2"><span>Total:</span> <span>{formatCurrency(summary.total)}</span></div>
+            <div className="flex justify-between text-sm text-muted-foreground"><span>Modal:</span> <span>{formatCurrency(summary.modal)}</span></div>
+            <div className="flex justify-between text-lg font-bold text-primary"><span>Laba:</span> <span>{formatCurrency(summary.profit)}</span></div>
+            
+            <div className="border-t pt-4 space-y-2">
               <div className="flex justify-between items-center">
-                <Label htmlFor="discount">Diskon:</Label>
-                <Input id="discount" type="number" value={discount || ''} onChange={(e) => setDiscount(Number(e.target.value))} className="w-32 text-right" placeholder="0" />
+                <Label htmlFor="paymentAmount" className="text-base">Jumlah Bayar:</Label>
+                <Input
+                  id="paymentAmount"
+                  type="text"
+                  value={formatNumberInput(paymentAmount)}
+                  onChange={handlePaymentAmountChange}
+                  className="w-40 text-right text-lg"
+                  placeholder="0"
+                />
               </div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2"><span>Total:</span> <span>{formatCurrency(summary.total)}</span></div>
-              <div className="flex justify-between text-sm text-muted-foreground"><span>Modal:</span> <span>{formatCurrency(summary.modal)}</span></div>
-              <div className="flex justify-between text-lg font-bold text-primary"><span>Laba:</span> <span>{formatCurrency(summary.profit)}</span></div>
-              
-              <div className="border-t pt-4 space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="paymentAmount" className="text-base">Jumlah Bayar:</Label>
-                  <Input
-                    id="paymentAmount"
-                    type="text"
-                    value={formatNumberInput(paymentAmount)}
-                    onChange={handlePaymentAmountChange}
-                    className="w-40 text-right text-lg"
-                    placeholder="0"
-                  />
-                </div>
-                {paymentDetails.change > 0 && (
-                  <div className="flex justify-between text-primary"><span>Kembalian:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.change)}</span></div>
-                )}
-                {paymentDetails.remainingAmount > 0 && (
-                  <div className="flex justify-between text-destructive"><span>Sisa Bayar:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.remainingAmount)}</span></div>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button size="lg" className="w-full" onClick={handleProcessTransaction}><Banknote className="h-5 w-5 mr-2" /> Proses & Cetak Nota</Button>
-            </CardFooter>
-          </Card>
-        </div>
+              {paymentDetails.change > 0 && (
+                <div className="flex justify-between text-primary"><span>Kembalian:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.change)}</span></div>
+              )}
+              {paymentDetails.remainingAmount > 0 && (
+                <div className="flex justify-between text-destructive"><span>Sisa Bayar:</span> <span className="font-bold text-xl">{formatCurrency(paymentDetails.remainingAmount)}</span></div>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button size="lg" className="w-full" onClick={handleProcessTransaction}><Banknote className="h-5 w-5 mr-2" /> Proses & Cetak Nota</Button>
+          </CardFooter>
+        </Card>
       </div>
 
       {/* Receipt Dialog */}
@@ -458,7 +455,7 @@ const SalesPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </div>
   );
 };
 

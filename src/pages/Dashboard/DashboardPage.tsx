@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -124,120 +123,118 @@ const DashboardPage = () => {
   const pageLoading = loading || servicesLoading || installmentsLoading;
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Stat Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {pageLoading ? (
-            Array.from({ length: 4 }).map((_, index) => (
-              <Card key={index}>
+    <div className="space-y-6">
+      {/* Stat Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {pageLoading ? (
+          Array.from({ length: 4 }).map((_, index) => (
+            <Card key={index}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-2/3" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-1/2" />
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <>
+            <Link to="/dashboard/reports/today">
+              <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <Skeleton className="h-4 w-2/3" />
+                  <CardTitle className="text-sm font-medium">Pendapatan Hari Ini</CardTitle>
+                  <DollarSign className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-8 w-1/2" />
+                  <div className="text-2xl font-bold">{formatCurrency(summary.revenueToday)}</div>
                 </CardContent>
               </Card>
-            ))
-          ) : (
-            <>
-              <Link to="/dashboard/reports/today">
-                <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Pendapatan Hari Ini</CardTitle>
-                    <DollarSign className="h-4 w-4 text-green-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(summary.revenueToday)}</div>
-                  </CardContent>
-                </Card>
-              </Link>
-              <Link to="/dashboard/reports/today">
-                <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Transaksi Hari Ini</CardTitle>
-                    <Receipt className="h-4 w-4 text-blue-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{summary.transactionsToday} Transaksi</div>
-                  </CardContent>
-                </Card>
-              </Link>
-              <Link to="/dashboard/transaction/installments">
-                <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Piutang</CardTitle>
-                    <CreditCard className="h-4 w-4 text-orange-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(totalReceivables)}</div>
-                  </CardContent>
-                </Card>
-              </Link>
-              <Link to="/dashboard/services-in-progress">
-                <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Servis Dalam Proses</CardTitle>
-                    <Wrench className="h-4 w-4 text-indigo-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{servicesInProgress} Servis</div>
-                  </CardContent>
-                </Card>
-              </Link>
-            </>
-          )}
-        </div>
-
-        {/* Recent Activities Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Activity className="h-5 w-5" />Aktivitas Terbaru</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>No. Transaksi</TableHead>
-                  <TableHead>Pelanggan</TableHead>
-                  <TableHead>Jenis</TableHead>
-                  <TableHead>Detail</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pageLoading ? (
-                  <TableRow><TableCell colSpan={6} className="h-48 text-center">Memuat aktivitas terbaru...</TableCell></TableRow>
-                ) : activities.length > 0 ? (
-                  activities.map((activity) => (
-                    <TableRow key={activity.id}>
-                      <TableCell className="font-mono">{activity.transactionNumber}</TableCell>
-                      <TableCell className="font-medium">{activity.customer}</TableCell>
-                      <TableCell>
-                        <Badge variant={activity.type === 'Penjualan' ? 'default' : 'secondary'} className="flex items-center gap-1 w-fit">
-                          {activity.type === 'Penjualan' ? <ShoppingCart className="h-3 w-3" /> : <Wrench className="h-3 w-3" />}
-                          {activity.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{activity.detail}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusBadgeVariant(activity.status)}>
-                          {activity.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">{formatCurrency(activity.total)}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow><TableCell colSpan={6} className="h-48 text-center">Tidak ada aktivitas terbaru.</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+            </Link>
+            <Link to="/dashboard/reports/today">
+              <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Transaksi Hari Ini</CardTitle>
+                  <Receipt className="h-4 w-4 text-blue-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{summary.transactionsToday} Transaksi</div>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/dashboard/transaction/installments">
+              <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Piutang</CardTitle>
+                  <CreditCard className="h-4 w-4 text-orange-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(totalReceivables)}</div>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/dashboard/services-in-progress">
+              <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Servis Dalam Proses</CardTitle>
+                  <Wrench className="h-4 w-4 text-indigo-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{servicesInProgress} Servis</div>
+                </CardContent>
+              </Card>
+            </Link>
+          </>
+        )}
       </div>
-    </DashboardLayout>
+
+      {/* Recent Activities Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Activity className="h-5 w-5" />Aktivitas Terbaru</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>No. Transaksi</TableHead>
+                <TableHead>Pelanggan</TableHead>
+                <TableHead>Jenis</TableHead>
+                <TableHead>Detail</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pageLoading ? (
+                <TableRow><TableCell colSpan={6} className="h-48 text-center">Memuat aktivitas terbaru...</TableCell></TableRow>
+              ) : activities.length > 0 ? (
+                activities.map((activity) => (
+                  <TableRow key={activity.id}>
+                    <TableCell className="font-mono">{activity.transactionNumber}</TableCell>
+                    <TableCell className="font-medium">{activity.customer}</TableCell>
+                    <TableCell>
+                      <Badge variant={activity.type === 'Penjualan' ? 'default' : 'secondary'} className="flex items-center gap-1 w-fit">
+                        {activity.type === 'Penjualan' ? <ShoppingCart className="h-3 w-3" /> : <Wrench className="h-3 w-3" />}
+                        {activity.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{activity.detail}</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(activity.status)}>
+                        {activity.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{formatCurrency(activity.total)}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow><TableCell colSpan={6} className="h-48 text-center">Tidak ada aktivitas terbaru.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

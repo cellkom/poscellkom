@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import DashboardLayout from "@/components/Layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -66,7 +65,7 @@ const AddInstallmentPage = () => {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="max-w-2xl mx-auto">
         <div className="mb-4">
             <Button asChild variant="outline">
@@ -153,7 +152,7 @@ const AddInstallmentPage = () => {
         onOpenChange={setIsAddCustomerDialogOpen}
         onCustomerAdded={handleCustomerAdded}
       />
-    </DashboardLayout>
+    </>
   );
 };
 
