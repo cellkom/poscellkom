@@ -7,19 +7,11 @@ import { Link, useLocation } from "react-router-dom";
 import { useStock } from "@/hooks/use-stock";
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSettings } from "@/contexts/SettingsContext";
 
 const PublicPage = () => {
   const { products, loading } = useStock();
   const { session, profile } = useAuth();
   const location = useLocation();
-  const { settings } = useSettings();
-
-  const heroTitle = settings.homepage_hero_title || "Solusi Total untuk Gadget & Komputer Anda";
-  const heroSubtitle = settings.homepage_hero_subtitle || "Dari perbaikan cepat hingga penjualan sparepart berkualitas, kami siap melayani semua kebutuhan teknologi Anda dengan profesional.";
-  const aboutUsContent = settings.homepage_about_us_content || "Cellkom.Store adalah pusat layanan terpadu untuk perbaikan dan penjualan sparepart smartphone, komputer, dan laptop. Berdiri sejak tahun 2024, kami berkomitmen untuk memberikan solusi teknologi yang cepat, andal, dan terjangkau bagi masyarakat.";
-  const itServicesTitle = settings.homepage_it_services_title || "Butuh Aplikasi Untuk Bisnis Anda?";
-  const itServicesContent = settings.homepage_it_services_content || "Selain layanan servis, tim IT kami juga siap membantu mengembangkan solusi digital untuk bisnis Anda. Dapatkan aplikasi custom seperti sistem kasir, manajemen inventaris, atau website profil yang modern dan fungsional.";
 
   const isMember = session && profile?.role === 'Member';
   const displayedProducts = isMember ? products : products.slice(0, 4);
@@ -78,10 +70,10 @@ const PublicPage = () => {
         <section className="py-20 md:py-32 text-center">
           <div className="container px-4 md:px-6">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-primary to-orange-400">
-              {heroTitle}
+              Solusi Total untuk Gadget & Komputer Anda
             </h1>
             <p className="max-w-3xl mx-auto text-lg text-muted-foreground mb-8">
-              {heroSubtitle}
+              Dari perbaikan cepat hingga penjualan sparepart berkualitas, kami siap melayani semua kebutuhan teknologi Anda dengan profesional.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>
@@ -179,7 +171,7 @@ const PublicPage = () => {
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tentang Kami</h2>
               <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
-                {aboutUsContent}
+                Cellkom.Store adalah pusat layanan terpadu untuk perbaikan dan penjualan sparepart smartphone, komputer, dan laptop. Berdiri sejak tahun 2024, kami berkomitmen untuk memberikan solusi teknologi yang cepat, andal, dan terjangkau bagi masyarakat.
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-12 text-center mt-16">
@@ -202,9 +194,9 @@ const PublicPage = () => {
                 <Code className="inline-block h-4 w-4 mr-2" />
                 Jasa Pembuatan Aplikasi
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{itServicesTitle}</h2>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Butuh Aplikasi Untuk Bisnis Anda?</h2>
               <p className="mt-4 text-lg text-muted-foreground">
-                {itServicesContent}
+                Selain layanan servis, tim IT kami juga siap membantu mengembangkan solusi digital untuk bisnis Anda. Dapatkan aplikasi custom seperti sistem kasir, manajemen inventaris, atau website profil yang modern dan fungsional.
               </p>
               <div className="mt-8">
                 <Button size="lg" asChild>

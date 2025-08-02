@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
-import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,52 +7,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Function to handle preflight requests
-const handleOptions = () => new Response(null, { headers: corsHeaders });
-
-// Function to create a Supabase client for the user making the request
-const createSupabaseClient = (req: Request): SupabaseClient => {
-  return createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
-  );
-};
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return handleOptions();
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // 1. Check for required environment variables
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error('Missing Supabase environment variables.');
-    }
+    // Pengecekan admin dihapus sesuai permintaan.
+    // Sekarang, setiap pengguna yang terautentikasi dapat memanggil fungsi ini.
+    // Gunakan service_role_key untuk melakukan operasi admin.
+    const adminSupabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    // 2. Create user and admin clients
-    const supabaseClient = createSupabaseClient(req);
-    const adminSupabaseClient = createClient(supabaseUrl, serviceRoleKey);
-
-    // 3. Check user authentication and role
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !user) {
-      throw new Error('User not authenticated.');
-    }
-
-    const { data: profile, error: profileError } = await adminSupabaseClient
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !profile || profile.role !== 'Admin') {
-      throw new Error('User is not authorized to perform this action.');
-    }
-    
-    // 4. Process the request
     const { action, payload } = await req.json();
 
     switch (action) {
@@ -98,8 +66,6 @@ serve(async (req) => {
 
         if (error) throw error;
 
-        // The handle_new_user trigger should set the role to 'Kasir' by default.
-        // We only need to update it if the role is 'Admin'.
         if (role === 'Admin') {
           const { error: updateError } = await adminSupabaseClient
             .from('users')
@@ -115,8 +81,8 @@ serve(async (req) => {
       }
       case 'update': {
         const { id, role, full_name } = payload;
-        if (!id || !role || !full_name) {
-          return new Response(JSON.stringify({ error: 'Missing user ID, role, or full name' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        if (!id || !role) {
+          return new Response(JSON.stringify({ error: 'Missing user ID or role' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
         const { error } = await adminSupabaseClient
@@ -152,7 +118,7 @@ serve(async (req) => {
         });
     }
   } catch (error) {
-    console.error("Edge function error:", error.message);
+    console.error(error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
