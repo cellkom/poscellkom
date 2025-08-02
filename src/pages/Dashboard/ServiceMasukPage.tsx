@@ -2,13 +2,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useServiceEntries } from "@/hooks/useServiceEntries";
+import { useServiceEntries } from "@/hooks/use-service-entries"; // Corrected import path
 import { Eye, Printer, Trash2 } from "lucide-react";
 import { useState } from "react";
 import ReceiptModal from "@/components/modals/ReceiptModal";
-import { ServiceEntry } from "@/types";
-import { supabase } from "@/integrations/supabase";
-import toast from "react-hot-toast";
+import { ServiceEntry } from "@/hooks/use-service-entries"; // Corrected import path
+import { supabase } from "@/integrations/supabase/client"; // Corrected import path
+import { showSuccess, showError } from "@/utils/toast"; // Import from utils/toast
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,17 +22,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-type Status = 'Pending' | 'In Progress' | 'Completed' | 'Cancelled';
+type Status = 'Pending' | 'Proses' | 'Selesai' | 'Gagal/Cancel' | 'Sudah Diambil'; // Updated to match ServiceEntry status types
 
 const getStatusBadgeVariant = (status: Status) => {
   switch (status) {
     case 'Pending':
       return 'secondary';
-    case 'In Progress':
+    case 'Proses':
       return 'default';
-    case 'Completed':
-      return 'success';
-    case 'Cancelled':
+    case 'Selesai':
+    case 'Sudah Diambil':
+      return 'default'; // Changed to default for completed/taken
+    case 'Gagal/Cancel':
       return 'destructive';
     default:
       return 'outline';
@@ -40,7 +41,7 @@ const getStatusBadgeVariant = (status: Status) => {
 };
 
 const ServiceMasukPage = () => {
-  const { serviceEntries, isLoading, error, refetch } = useServiceEntries();
+  const { serviceEntries, loading: isLoading, deleteServiceEntry, updateServiceEntry } = useServiceEntries(); // Use hooks directly
   const [selectedEntry, setSelectedEntry] = useState<ServiceEntry | null>(null);
   const [isReceiptModalOpen, setReceiptModalOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<ServiceEntry | null>(null);
@@ -53,36 +54,19 @@ const ServiceMasukPage = () => {
   const handleDelete = async () => {
     if (!entryToDelete) return;
 
-    const { error } = await supabase
-      .from('service_entries')
-      .delete()
-      .eq('id', entryToDelete.id);
-
-    if (error) {
-      toast.error(`Gagal menghapus data: ${error.message}`);
-    } else {
-      toast.success('Data berhasil dihapus.');
-      refetch();
+    const success = await deleteServiceEntry(entryToDelete.id);
+    if (success) {
       setEntryToDelete(null);
     }
   };
 
-  const handleServiceInfoChange = async (id: any, service_info: string) => {
-    const { error } = await supabase
-      .from('service_entries')
-      .update({ service_info })
-      .eq('id', id);
-
-    if (error) {
-      toast.error(`Gagal memperbarui status: ${error.message}`);
-    } else {
-      toast.success('Status berhasil diperbarui.');
-      refetch();
-    }
+  const handleServiceInfoChange = async (id: string, service_info: string) => {
+    const updated = await updateServiceEntry(id, { service_info });
+    // The useServiceEntries hook will automatically refetch and update state
   };
 
   if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error loading data: {error.message}</div>;
+  // No need for a separate error state here, useServiceEntries handles toasts for errors
 
   return (
     <>
@@ -107,10 +91,10 @@ const ServiceMasukPage = () => {
               {serviceEntries.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell>{entry.id}</TableCell>
-                  <TableCell>{entry.customers?.name || 'N/A'}</TableCell>
+                  <TableCell>{entry.customerName || 'N/A'}</TableCell>
                   <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
                   <TableCell>{entry.device_type}</TableCell>
-                  <TableCell><Badge variant={getStatusBadgeVariant(entry.status as Status)}>{entry.status}</Badge></TableCell>
+                  <TableCell><Badge variant={getStatusBadgeVariant(entry.status)}>{entry.status}</Badge></TableCell>
                   <TableCell>
                     <Select
                       value={entry.service_info || ''}
