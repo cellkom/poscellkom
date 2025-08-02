@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
+import MemberRoute from './components/MemberRoute';
 import { Toaster } from './components/ui/sonner';
 import { ThemeProvider } from './components/ThemeProvider';
 
@@ -10,6 +11,7 @@ import LoginPage from './pages/Auth/LoginPage';
 import MemberLoginPage from './pages/Auth/MemberLoginPage';
 import PublicPage from './pages/PublicPage';
 import ProductsPage from './pages/ProductsPage';
+import MemberProfilePage from './pages/MemberProfilePage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import StockPage from './pages/Dashboard/StockPage';
 import SalesPage from './pages/Dashboard/Transaction/SalesPage';
@@ -40,6 +42,10 @@ function App() {
               <Route path="/member-login" element={<MemberLoginPage />} />
               <Route path="/products" element={<ProductsPage />} />
               
+              <Route element={<MemberRoute />}>
+                <Route path="/member-profile" element={<MemberProfilePage />} />
+              </Route>
+
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/dashboard/stock" element={<StockPage />} />
