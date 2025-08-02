@@ -11,6 +11,7 @@ import { useCart } from "@/contexts/CartContext";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import CartSidebar from "@/components/CartSidebar"; // Import the new component
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
@@ -58,15 +59,22 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-6 w-6" />
-              {cartCount > 0 && (
-                <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center rounded-full p-0 text-xs">
-                  {cartCount}
-                </Badge>
-              )}
-              <span className="sr-only">Keranjang Belanja</span>
-            </Button>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <ShoppingCart className="h-6 w-6" />
+                  {cartCount > 0 && (
+                    <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center rounded-full p-0 text-xs">
+                      {cartCount}
+                    </Badge>
+                  )}
+                  <span className="sr-only">Keranjang Belanja</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full sm:max-w-sm p-0">
+                <CartSidebar />
+              </SheetContent>
+            </Sheet>
 
             {session && profile ? (
               <DropdownMenu>
