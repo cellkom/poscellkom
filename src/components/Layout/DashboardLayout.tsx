@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, Outlet } from "react-router-dom"; // Import Outlet
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -13,7 +13,7 @@ const navItems = [
   },
   {
     name: "Produk",
-    path: "/dashboard/products",
+    path: "/dashboard/stock", // Corrected path to stock
     icon: Package,
   },
   {
@@ -27,7 +27,7 @@ const navItems = [
     icon: Wrench,
   },
   {
-    name: "Manajemen Berita", // New navigation item
+    name: "Manajemen Berita",
     path: "/dashboard/news",
     icon: Newspaper,
   },
@@ -38,13 +38,10 @@ const navItems = [
   },
 ];
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-}
-
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+// Removed DashboardLayoutProps interface as children are handled by Outlet
+const DashboardLayout: React.FC = () => { // Removed children from props
   const location = useLocation();
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNav] = useState(false); // Renamed state variable for consistency
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -72,7 +69,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       </div>
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-          <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
+          <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNav}>
             <SheetTrigger asChild>
               <Button
                 variant="outline"
@@ -90,7 +87,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                   <span className="sr-only">POS System</span>
                 </Link>
                 {navItems.map((item) => (
-                  <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname === item.path && "bg-primary-foreground/10", "justify-start")} onClick={() => setIsMobileNavOpen(false)}>
+                  <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname === item.path && "bg-primary-foreground/10", "justify-start")} onClick={() => setIsMobileNav(false)}>
                     <Link to={item.path!} className="flex items-center gap-2">
                       <item.icon className="h-4 w-4" />
                       {item.name}
@@ -106,7 +103,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           {/* User menu or other header actions */}
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-          {children}
+          <Outlet /> {/* Render nested routes here */}
         </main>
       </div>
     </div>

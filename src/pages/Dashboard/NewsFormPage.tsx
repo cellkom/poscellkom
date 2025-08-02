@@ -254,7 +254,7 @@ const NewsFormPage: React.FC = () => {
                 </Button>
               </div>
             </form>
-          )}
+          ) : null}
         </CardContent>
       </Card>
     </>
