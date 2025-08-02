@@ -42,9 +42,16 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
           
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
             {navLinks.map(link => (
-              <Link key={link.name} to={link.href} className="text-muted-foreground transition-colors hover:text-primary">
-                {link.name}
-              </Link>
+              // Use <a> tag for hash links to enable smooth scrolling
+              link.href.startsWith('/#') ? (
+                <a key={link.name} href={link.href} className="text-muted-foreground transition-colors hover:text-primary">
+                  {link.name}
+                </a>
+              ) : (
+                <Link key={link.name} to={link.href} className="text-muted-foreground transition-colors hover:text-primary">
+                  {link.name}
+                </Link>
+              )
             ))}
           </nav>
 
@@ -114,10 +121,18 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                 <SheetContent side="right">
                   <nav className="grid gap-6 text-lg font-medium mt-8">
                     {navLinks.map(link => (
-                      <Link key={link.name} to={link.href} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
-                        <link.icon className="h-6 w-6" />
-                        {link.name}
-                      </Link>
+                      // Use <a> tag for hash links in mobile nav as well
+                      link.href.startsWith('/#') ? (
+                        <a key={link.name} href={link.href} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
+                          <link.icon className="h-6 w-6" />
+                          {link.name}
+                        </a>
+                      ) : (
+                        <Link key={link.name} to={link.href} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
+                          <link.icon className="h-6 w-6" />
+                          {link.name}
+                        </Link>
+                      )
                     ))}
                   </nav>
                 </SheetContent>
