@@ -24,7 +24,6 @@ interface ServiceEntry {
   description: string;
   status: ServiceStatus;
   date: string;
-  service_info: string | null;
   customers: {
     name: string;
   } | null;
@@ -184,12 +183,6 @@ const ServiceTrackingPage = () => {
                   <Label className="text-sm text-muted-foreground">Keluhan</Label>
                   <p className="font-medium">{serviceData.description}</p>
                 </div>
-                {serviceData.service_info && (
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <Label className="text-sm text-blue-800 font-semibold">Informasi Terbaru</Label>
-                    <p className="font-medium text-blue-900">{serviceData.service_info}</p>
-                  </div>
-                )}
               </CardContent>
               <CardFooter>
                 <p className="text-xs text-muted-foreground">
