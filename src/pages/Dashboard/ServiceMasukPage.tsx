@@ -29,6 +29,7 @@ interface ServiceEntryFormData {
   deviceType: string;
   damageType: string;
   description: string;
+  service_info: string;
 }
 
 interface ReceiptServiceEntry {
@@ -49,6 +50,7 @@ const initialState: ServiceEntryFormData = {
   deviceType: '',
   damageType: '',
   description: '',
+  service_info: '',
 };
 
 const newCustomerInitialState = { name: '', phone: '', address: '' };
@@ -113,6 +115,7 @@ const ServiceMasukPage = () => {
         deviceType: entry.device_type,
         damageType: entry.damage_type,
         description: entry.description,
+        service_info: entry.service_info || '',
       });
     } else {
       setEditingEntry(null);
@@ -140,6 +143,7 @@ const ServiceMasukPage = () => {
         device_type: formData.deviceType,
         damage_type: formData.damageType,
         description: formData.description,
+        service_info: formData.service_info,
       });
       if (updated) {
         setIsFormOpen(false);
@@ -159,6 +163,7 @@ const ServiceMasukPage = () => {
         device_type: formData.deviceType,
         damage_type: formData.damageType,
         description: formData.description,
+        service_info: formData.service_info,
       });
 
       if (newEntry) {
@@ -243,12 +248,13 @@ const ServiceMasukPage = () => {
                 <TableHead>Pelanggan</TableHead>
                 <TableHead>Perangkat</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Info Status</TableHead>
                 <TableHead className="text-center">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center h-24">Memuat data...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center h-24">Memuat data...</TableCell></TableRow>
               ) : serviceEntries.length > 0 ? (
                 serviceEntries.map((entry) => (
                   <TableRow key={entry.id}>
@@ -257,6 +263,7 @@ const ServiceMasukPage = () => {
                     <TableCell>{entry.customerName}</TableCell>
                     <TableCell>{entry.device_type}</TableCell>
                     <TableCell><Badge variant={getStatusBadgeVariant(entry.status)}>{entry.status}</Badge></TableCell>
+                    <TableCell>{entry.service_info || '-'}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center gap-2">
                         <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleViewReceipt(entry)}>
@@ -277,7 +284,7 @@ const ServiceMasukPage = () => {
                   </TableRow>
                 ))
               ) : (
-                <TableRow><TableCell colSpan={6} className="text-center h-24">Belum ada data service masuk.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center h-24">Belum ada data service masuk.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -339,6 +346,10 @@ const ServiceMasukPage = () => {
               <div>
                 <Label htmlFor="description">Deskripsi / Kelengkapan</Label>
                 <Textarea id="description" placeholder="Deskripsikan keluhan dan kelengkapan" value={formData.description} onChange={(e) => handleInputChange('description', e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="service_info">Info Status</Label>
+                <Textarea id="service_info" placeholder="Contoh: Menunggu sparepart LCD" value={formData.service_info} onChange={(e) => handleInputChange('service_info', e.target.value)} />
               </div>
             </div>
             <DialogFooter className="p-4 pt-0">
