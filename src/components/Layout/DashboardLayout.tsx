@@ -58,7 +58,7 @@ const navItems: NavItem[] = [
   },
   { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
   { name: "Manajemen Berita", icon: Newspaper, path: "/dashboard/news" },
-  { name: "Pengaturan", icon: Settings, path: "/dashboard/settings" },
+  { name: "Manajemen Aplikasi", icon: Settings, path: "/dashboard/settings" },
 ];
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
@@ -196,7 +196,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                     Profile
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard/settings" className="cursor-pointer">
+                    Manajemen Aplikasi
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut} className="cursor-pointer">
                   Log out
