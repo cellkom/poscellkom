@@ -7,7 +7,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useStock } from "@/hooks/use-stock";
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSettings } from "@/hooks/use-settings";
+import { useSettings } from "@/contexts/SettingsContext";
 
 const PublicPage = () => {
   const { products, loading } = useStock();

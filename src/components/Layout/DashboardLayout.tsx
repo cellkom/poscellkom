@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSettings } from "@/hooks/use-settings";
+import { useSettings } from "@/contexts/SettingsContext";
 import type { ReactNode, ForwardRefExoticComponent, RefAttributes } from "react";
 import type { LucideProps } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
