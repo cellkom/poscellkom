@@ -39,13 +39,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .eq('id', currentUser.id)
       .single();
 
-    if (staffProfile) {
-      return staffProfile;
-    }
-    // PGRST116 berarti tidak ada baris yang ditemukan, yang diharapkan jika pengguna adalah anggota.
-    // Kami hanya mencatat kesalahan lain.
     if (staffError && staffError.code !== 'PGRST116') {
       console.error("Error fetching staff profile:", staffError);
+      throw staffError;
+    }
+    if (staffProfile) {
+      return staffProfile;
     }
 
     // Jika bukan staf, coba ambil dari tabel 'members'
@@ -55,13 +54,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .eq('id', currentUser.id)
       .single();
 
+    if (memberError && memberError.code !== 'PGRST116') {
+      console.error("Error fetching member profile:", memberError);
+      throw memberError;
+    }
     if (memberProfile) {
       return { ...memberProfile, role: 'Member', email: currentUser.email };
     }
-    if (memberError && memberError.code !== 'PGRST116') {
-      console.error("Error fetching member profile:", memberError);
-    }
 
+    console.warn(`No profile found for user ${currentUser.id}. This might happen if the user was created but the profile trigger failed.`);
     return null;
   }, []);
 
@@ -70,12 +71,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     await supabase.auth.signOut();
     
-    // Atur ulang state secara manual untuk memastikan pembaruan UI segera dan mencegah race condition.
     setSession(null);
     setUser(null);
     setProfile(null);
 
-    // Navigasi berdasarkan peran sebelum dibersihkan.
     if (lastRole === 'Admin' || lastRole === 'Kasir') {
       navigate('/login');
     } else {
@@ -91,6 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user, fetchProfile]);
 
   useEffect(() => {
+    setLoading(true);
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       try {
         setSession(session);
@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setProfile(null);
         }
       } catch (e) {
-        console.error("Error in onAuthStateChange handler:", e);
+        console.error("Error handling auth state change:", e);
         setProfile(null);
       } finally {
         setLoading(false);
