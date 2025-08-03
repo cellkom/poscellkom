@@ -148,6 +148,7 @@ const ServiceMasukPage = () => {
                       <SelectContent>
                         <SelectItem value="Sedang proses">Sedang proses</SelectItem>
                         <SelectItem value="Telah Selesai">Telah Selesai</SelectItem>
+                        <SelectItem value="Gagal/Cancel">Gagal/Cancel</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>
