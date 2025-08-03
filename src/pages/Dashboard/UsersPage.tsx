@@ -12,8 +12,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { showSuccess, showError } from "@/utils/toast";
 import { format } from "date-fns";
 import { useUsers, UserProfile } from "@/hooks/use-users"; // Import the new useUsers hook
-import { AddUserDialog } from "@/components/user/AddUserDialog"; // Import AddUserDialog
-import { EditUserDialog } from "@/components/user/EditUserDialog"; // Import EditUserDialog
+import { AddUserDialog } from "@/components/user/AddUserDialog.tsx"; // Import AddUserDialog
+import { EditUserDialog } from "@/components/user/EditUserDialog.tsx"; // Import EditUserDialog
 import {
   AlertDialog,
   AlertDialogAction,
