@@ -46,7 +46,7 @@ export const useCustomers = () => {
                         setCustomers(prev => prev.map(c => c.id === payload.new.id ? payload.new as Customer : c));
                     }
                     if (payload.eventType === 'DELETE') {
-                        setCustomers(prev => prev.filter(c => c.id !== (payload.old as Customer).id));
+                        setCustomers(prev => prev.filter(c => c.id !== (payload.old as { id: string }).id));
                     }
                 }
             )
@@ -70,9 +70,42 @@ export const useCustomers = () => {
             return null;
         }
         showSuccess("Pelanggan baru berhasil ditambahkan!");
-        // The realtime subscription will call fetchCustomers, so no manual update needed.
         return data;
     };
 
-    return { customers, loading, addCustomer };
+    const updateCustomer = async (id: string, updatedData: Partial<Omit<Customer, 'id' | 'created_at'>>) => {
+        const { data, error } = await supabase
+            .from('customers')
+            .update(updatedData)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) {
+            showError(`Gagal memperbarui pelanggan: ${error.message}`);
+            return null;
+        }
+        showSuccess("Data pelanggan berhasil diperbarui!");
+        return data;
+    };
+
+    const deleteCustomer = async (id: string) => {
+        const { error } = await supabase
+            .from('customers')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            if (error.message.includes('violates foreign key constraint')) {
+                showError("Gagal menghapus: Pelanggan ini memiliki riwayat transaksi dan tidak dapat dihapus.");
+            } else {
+                showError(`Gagal menghapus pelanggan: ${error.message}`);
+            }
+            return false;
+        }
+        showSuccess("Pelanggan berhasil dihapus!");
+        return true;
+    };
+
+    return { customers, loading, addCustomer, updateCustomer, deleteCustomer };
 };

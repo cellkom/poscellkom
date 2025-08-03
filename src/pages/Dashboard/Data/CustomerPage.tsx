@@ -7,11 +7,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Search, Edit, Trash2, Users } from "lucide-react";
 import { useCustomers, Customer } from "@/hooks/use-customers";
-import { supabase } from "@/integrations/supabase/client";
-import { showSuccess, showError } from "@/utils/toast";
+import { showError } from "@/utils/toast";
 
 const CustomerPage = () => {
-  const { customers, loading } = useCustomers();
+  const { customers, loading, addCustomer, updateCustomer, deleteCustomer } = useCustomers();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -34,42 +33,21 @@ const CustomerPage = () => {
       return;
     }
 
-    let error;
+    let success;
     if (editingCustomer) {
-      // Update existing customer
-      const { error: updateError } = await supabase
-        .from('customers')
-        .update({ name: formData.name, phone: formData.phone, address: formData.address })
-        .eq('id', editingCustomer.id);
-      error = updateError;
+      success = await updateCustomer(editingCustomer.id, { name: formData.name, phone: formData.phone || null, address: formData.address || null });
     } else {
-      // Add new customer
-      const { error: insertError } = await supabase
-        .from('customers')
-        .insert({ name: formData.name, phone: formData.phone, address: formData.address });
-      error = insertError;
+      success = await addCustomer({ name: formData.name, phone: formData.phone || null, address: formData.address || null });
     }
 
-    if (error) {
-      showError(`Gagal menyimpan data: ${error.message}`);
-    } else {
-      showSuccess(`Data pelanggan berhasil ${editingCustomer ? 'diperbarui' : 'ditambahkan'}.`);
+    if (success) {
       setIsDialogOpen(false);
     }
   };
 
   const handleDelete = async (customerId: string) => {
     if (window.confirm("Apakah Anda yakin ingin menghapus pelanggan ini? Aksi ini tidak dapat dibatalkan.")) {
-      const { error } = await supabase.from('customers').delete().eq('id', customerId);
-      if (error) {
-        if (error.message.includes('violates foreign key constraint')) {
-            showError("Gagal menghapus: Pelanggan ini memiliki riwayat transaksi (penjualan/servis) dan tidak dapat dihapus.");
-        } else {
-            showError(`Gagal menghapus: ${error.message}`);
-        }
-      } else {
-        showSuccess("Pelanggan berhasil dihapus.");
-      }
+      await deleteCustomer(customerId);
     }
   };
 
