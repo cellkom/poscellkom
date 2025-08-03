@@ -53,6 +53,7 @@ const navItems: NavItem[] = [
         { name: "Pelanggan", icon: Users, path: "/dashboard/data/customers" },
         { name: "Supplier", icon: Truck, path: "/dashboard/data/suppliers" },
         { name: "Users", icon: Users, path: "/dashboard/data/users" },
+        { name: "Members", icon: UserCircle, path: "/dashboard/data/members" },
     ]
   },
   { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
@@ -67,7 +68,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const renderNavLinks = (isMobileNav = false) => {
     const nav = navItems.map((item) => {
       if (item.subItems) {
-        const visibleSubItems = item.subItems;
+        const visibleSubItems = item.subItems.filter(subItem => {
+            if (subItem.path === '/dashboard/data/users' || subItem.path === '/dashboard/data/members') {
+                return profile?.role === 'Admin';
+            }
+            return true;
+        });
         if (visibleSubItems.length === 0) return null;
 
         return isMobileNav ? (
@@ -113,6 +119,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </DropdownMenuContent>
           </DropdownMenu>
         );
+      }
+
+      if (item.path === '/dashboard/reports' || item.path === '/dashboard/news') {
+          if (profile?.role !== 'Admin') return null;
       }
 
       return (
