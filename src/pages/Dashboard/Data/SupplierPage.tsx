@@ -7,11 +7,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Search, Edit, Trash2, Truck } from "lucide-react";
 import { useSuppliers, Supplier } from "@/hooks/use-suppliers";
-import { supabase } from "@/integrations/supabase/client";
-import { showSuccess, showError } from "@/utils/toast";
+import { showError } from "@/utils/toast";
 
 const SupplierPage = () => {
-  const { suppliers, loading } = useSuppliers();
+  const { suppliers, loading, addSupplier, updateSupplier, deleteSupplier } = useSuppliers();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
@@ -34,38 +33,21 @@ const SupplierPage = () => {
       return;
     }
 
-    let error;
+    let success;
     if (editingSupplier) {
-      // Update existing supplier
-      const { error: updateError } = await supabase
-        .from('suppliers')
-        .update({ name: formData.name, phone: formData.phone, address: formData.address })
-        .eq('id', editingSupplier.id);
-      error = updateError;
+      success = await updateSupplier(editingSupplier.id, { name: formData.name, phone: formData.phone || null, address: formData.address || null });
     } else {
-      // Add new supplier
-      const { error: insertError } = await supabase
-        .from('suppliers')
-        .insert({ name: formData.name, phone: formData.phone, address: formData.address });
-      error = insertError;
+      success = await addSupplier({ name: formData.name, phone: formData.phone || null, address: formData.address || null });
     }
 
-    if (error) {
-      showError(`Gagal menyimpan data: ${error.message}`);
-    } else {
-      showSuccess(`Data supplier berhasil ${editingSupplier ? 'diperbarui' : 'ditambahkan'}.`);
+    if (success) {
       setIsDialogOpen(false);
     }
   };
 
   const handleDelete = async (supplierId: string) => {
     if (window.confirm("Apakah Anda yakin ingin menghapus supplier ini?")) {
-      const { error } = await supabase.from('suppliers').delete().eq('id', supplierId);
-      if (error) {
-        showError(`Gagal menghapus: ${error.message}`);
-      } else {
-        showSuccess("Supplier berhasil dihapus.");
-      }
+      await deleteSupplier(supplierId);
     }
   };
 
