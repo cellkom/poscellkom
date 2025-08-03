@@ -17,7 +17,7 @@ import { useNews, NewsArticle } from "@/hooks/use-news";
 
 const NewsManagementPage = () => {
   const { user } = useAuth();
-  const { articles, loading, fetchArticles, uploadNewsImage } = useNews();
+  const { articles, loading, fetchArticles, addArticle, updateArticle, deleteArticle } = useNews(); // Destructure new functions
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
@@ -80,44 +80,34 @@ const NewsManagementPage = () => {
     }
 
     setIsSubmitting(true);
-    let imageUrl = editingArticle?.image_url || null;
-    if (imageFile) {
-      imageUrl = await uploadNewsImage(imageFile);
-    }
-
-    const payload = {
-      ...formData,
-      image_url: imageUrl,
-      author_id: user.id,
+    
+    const articlePayload = {
+      title: formData.title,
+      content: formData.content,
+      slug: formData.slug,
+      status: formData.status,
       published_at: formData.status === 'published' ? new Date().toISOString() : null,
+      author_id: user.id,
     };
 
-    let error;
+    let success = false;
     if (editingArticle) {
-      ({ error } = await supabase.from('news').update(payload).eq('id', editingArticle.id));
+      success = await updateArticle(editingArticle.id, articlePayload, imageFile);
     } else {
-      ({ error } = await supabase.from('news').insert(payload));
+      success = await addArticle(articlePayload, imageFile);
     }
 
-    if (error) {
-      showError(`Gagal menyimpan berita: ${error.message}`);
-    } else {
-      showSuccess(`Berita berhasil ${editingArticle ? 'diperbarui' : 'ditambahkan'}.`);
-      setIsDialogOpen(false);
-      fetchArticles(true);
-    }
     setIsSubmitting(false);
+    if (success) {
+      setIsDialogOpen(false);
+      // fetchArticles(true) is already called inside the hook's add/update methods
+    }
   };
 
   const handleDelete = async (articleId: string) => {
     if (window.confirm("Anda yakin ingin menghapus berita ini?")) {
-      const { error } = await supabase.from('news').delete().eq('id', articleId);
-      if (error) {
-        showError(`Gagal menghapus: ${error.message}`);
-      } else {
-        showSuccess("Berita berhasil dihapus.");
-        fetchArticles(true);
-      }
+      await deleteArticle(articleId);
+      // fetchArticles(true) is already called inside the hook's delete method
     }
   };
 
