@@ -12,8 +12,6 @@ import PublicPage from './pages/PublicPage';
 import ProductsPage from './pages/ProductsPage';
 import MemberProfilePage from './pages/MemberProfilePage';
 import ServiceTrackingPage from './pages/ServiceTrackingPage';
-import NewsPage from './pages/NewsPage'; // New import
-import NewsDetailPage from './pages/NewsDetailPage'; // New import
 
 // Auth Pages
 import LoginPage from './pages/Auth/LoginPage';
@@ -36,7 +34,6 @@ import TodayReportPage from './pages/Dashboard/Reports/TodayReportPage';
 import UserProfilePage from './pages/UserProfilePage';
 import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
 import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
-import NewsManagementPage from './pages/Dashboard/NewsManagementPage'; // New import
 
 interface ProtectedRouteProps {
   children: JSX.Element;
@@ -70,8 +67,6 @@ function App() {
               {/* Public & Auth Routes */}
               <Route path="/" element={<PublicPage />} />
               <Route path="/products" element={<ProductsPage />} />
-              <Route path="/news" element={<NewsPage />} /> {/* New public route */}
-              <Route path="/news/:slug" element={<NewsDetailPage />} /> {/* New public detail route */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/member-login" element={<MemberLoginPage />} />
               <Route path="/tracking" element={<ServiceTrackingPage />} />
@@ -112,13 +107,15 @@ function App() {
               <Route path="/dashboard/data/customers" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><CustomerPage /></DashboardLayout></ProtectedRoute>} />
               <Route path="/dashboard/data/suppliers" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><SupplierPage /></DashboardLayout></ProtectedRoute>} />
               <Route path="/dashboard/data/users" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><UsersPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/dashboard/data/news" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><NewsManagementPage /></DashboardLayout></ProtectedRoute>} /> {/* New admin route */}
 
               {/* Reports */}
               <Route path="/dashboard/reports" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><ReportsPage /></DashboardLayout></ProtectedRoute>} />
               <Route path="/dashboard/reports/today" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><TodayReportPage /></DashboardLayout></ProtectedRoute>} />
               <Route path="/dashboard/reports/sales" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><SalesReportPage /></DashboardLayout></ProtectedRoute>} />
               <Route path="/dashboard/reports/service" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><ServiceReportPage /></DashboardLayout></ProtectedRoute>} />
+
+              {/* Other Admin Routes */}
+              {/* <Route path="/dashboard/news" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><NewsManagementPage /></DashboardLayout></ProtectedRoute>} /> */}
 
             </Routes>
             <Toaster />
