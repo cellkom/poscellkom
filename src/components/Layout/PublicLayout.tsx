@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, LayoutDashboard } from "lucide-react";
+import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, LayoutDashboard, Newspaper } from "lucide-react"; // Added Newspaper icon
 import logoSrc from '/logo.png';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ReactNode, useEffect, useState } from "react";
@@ -21,7 +21,8 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
   const navLinks = [
     { name: "Layanan Servis", href: "/#services", icon: Wrench },
     { name: "Produk", href: "/products", icon: ShoppingCart },
-    { name: "Jasa Aplikasi", href: "/#it-services", icon: Phone }, // Changed icon from Code to Phone for consistency with contact
+    { name: "Berita", href: "/news", icon: Newspaper }, // New menu item
+    { name: "Jasa Aplikasi", href: "/#it-services", icon: Phone },
     { name: "Tentang Kami", href: "/#about", icon: Info },
     { name: "Kontak", href: "/#contact", icon: Phone },
   ];
@@ -179,6 +180,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
               <ul className="space-y-2 text-sm">
                 <li><a href="/#services" className="hover:text-primary transition-colors">Layanan</a></li>
                 <li><Link to="/products" className="hover:text-primary transition-colors">Toko</Link></li>
+                <li><Link to="/news" className="hover:text-primary transition-colors">Berita</Link></li> {/* New footer link */}
                 <li><a href="/#about" className="hover:text-primary transition-colors">Tentang Kami</a></li>
               </ul>
             </div>
