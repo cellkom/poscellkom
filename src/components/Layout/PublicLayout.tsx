@@ -21,7 +21,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
   const navLinks = [
     { name: "Layanan Servis", href: "/#services", icon: Wrench },
     { name: "Produk", href: "/products", icon: ShoppingCart },
-    { name: "Jasa Aplikasi", href: "/#it-services", icon: Phone },
+    { name: "Jasa Aplikasi", href: "/#it-services", icon: Phone }, // Changed icon from Code to Phone for consistency with contact
     { name: "Tentang Kami", href: "/#about", icon: Info },
     { name: "Kontak", href: "/#contact", icon: Phone },
   ];
