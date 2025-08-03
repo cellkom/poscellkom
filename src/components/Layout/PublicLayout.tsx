@@ -238,16 +238,16 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">Kontak</h3>
               <address className="space-y-2 text-sm not-italic">
-                <p>Jorong Kampung Baru, Muaro Paiti, Kec. Kapur IX</p>
-                <p>Email: <a href="mailto:ckcellkom@gmail.com" className="hover:text-primary transition-colors">ckcellkom@gmail.com</a></p>
-                <p>Telepon: <a href="tel:082285959441" className="hover:text-primary transition-colors">082285959441</a></p>
+                <p>{settings.contactAddress || 'Jorong Kampung Baru, Muaro Paiti, Kec. Kapur IX'}</p>
+                <p>Email: <a href={`mailto:${settings.contactEmail}`} className="hover:text-primary transition-colors">{settings.contactEmail || 'ckcellkom@gmail.com'}</a></p>
+                <p>Telepon: <a href={`tel:${settings.contactPhone}`} className="hover:text-primary transition-colors">{settings.contactPhone || '082285959441'}</a></p>
               </address>
             </div>
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">Ikuti Kami</h3>
               <p className="text-sm">Dapatkan info terbaru dan promo menarik.</p>
               <div className="flex space-x-4">
-                <a href="#" aria-label="Instagram" className="hover:text-primary transition-colors">
+                <a href={settings.socialInstagram || '#'} aria-label="Instagram" className="hover:text-primary transition-colors">
                   <Instagram className="h-6 w-6" />
                 </a>
               </div>
@@ -256,7 +256,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
         </div>
         <div className="border-t border-border mt-12">
           <div className="container mx-auto px-4 md:px-6 py-4 text-center text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Cellkomtech. All Rights Reserved.
+            {settings.footerCopyright || `© ${new Date().getFullYear()} Cellkomtech. All Rights Reserved.`}
           </div>
         </div>
       </footer>

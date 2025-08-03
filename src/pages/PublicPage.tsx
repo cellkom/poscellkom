@@ -7,10 +7,12 @@ import { Link, useLocation } from "react-router-dom";
 import { useStock } from "@/hooks/use-stock";
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSettings } from "@/hooks/use-settings";
 
 const PublicPage = () => {
   const { products, loading } = useStock();
   const { session, profile } = useAuth();
+  const { settings } = useSettings();
   const location = useLocation();
 
   const isMember = session && profile?.role === 'Member';
@@ -70,10 +72,10 @@ const PublicPage = () => {
         <section className="py-20 md:py-32 text-center">
           <div className="container px-4 md:px-6">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-primary to-orange-400">
-              Solusi Total untuk Gadget & Komputer Anda
+              {settings.heroTitle || "Solusi Total untuk Gadget & Komputer Anda"}
             </h1>
             <p className="max-w-3xl mx-auto text-lg text-muted-foreground mb-8">
-              Dari perbaikan cepat hingga penjualan sparepart berkualitas, kami siap melayani semua kebutuhan teknologi Anda dengan profesional.
+              {settings.heroSubtitle || "Dari perbaikan cepat hingga penjualan sparepart berkualitas, kami siap melayani semua kebutuhan teknologi Anda dengan profesional."}
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button size="lg" asChild>
@@ -174,7 +176,7 @@ const PublicPage = () => {
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tentang Kami</h2>
               <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
-                Cellkom.Store adalah pusat layanan terpadu untuk perbaikan dan penjualan sparepart smartphone, komputer, dan laptop. Berdiri sejak tahun 2024, kami berkomitmen untuk memberikan solusi teknologi yang cepat, andal, dan terjangkau bagi masyarakat.
+                {settings.aboutUsContent || "Cellkom.Store adalah pusat layanan terpadu untuk perbaikan dan penjualan sparepart smartphone, komputer, dan laptop. Berdiri sejak tahun 2024, kami berkomitmen untuk memberikan solusi teknologi yang cepat, andal, dan terjangkau bagi masyarakat."}
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-12 text-center mt-16">

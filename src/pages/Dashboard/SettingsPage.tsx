@@ -9,7 +9,18 @@ import { Loader2, Upload } from "lucide-react";
 
 const SettingsPage = () => {
   const { settings, loading, updateSettings, uploadLogo } = useSettings();
-  const [formData, setFormData] = useState({ appName: '', appDescription: '' });
+  const [formData, setFormData] = useState({
+    appName: '',
+    appDescription: '',
+    heroTitle: '',
+    heroSubtitle: '',
+    aboutUsContent: '',
+    contactAddress: '',
+    contactEmail: '',
+    contactPhone: '',
+    socialInstagram: '',
+    footerCopyright: '',
+  });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,10 +30,23 @@ const SettingsPage = () => {
       setFormData({
         appName: settings.appName || '',
         appDescription: settings.appDescription || '',
+        heroTitle: settings.heroTitle || '',
+        heroSubtitle: settings.heroSubtitle || '',
+        aboutUsContent: settings.aboutUsContent || '',
+        contactAddress: settings.contactAddress || '',
+        contactEmail: settings.contactEmail || '',
+        contactPhone: settings.contactPhone || '',
+        socialInstagram: settings.socialInstagram || '',
+        footerCopyright: settings.footerCopyright || '',
       });
       setLogoPreview(settings.logoUrl || null);
     }
   }, [settings]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -32,7 +56,7 @@ const SettingsPage = () => {
     }
   };
 
-  const handleTextSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     await updateSettings(formData);
@@ -53,10 +77,10 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Manajemen Aplikasi</h1>
-        <p className="text-muted-foreground">Ubah informasi dasar yang ditampilkan di seluruh aplikasi.</p>
+        <p className="text-muted-foreground">Ubah informasi dasar dan konten yang ditampilkan di seluruh aplikasi.</p>
       </div>
 
       <Card>
@@ -64,52 +88,101 @@ const SettingsPage = () => {
           <CardTitle>Informasi Umum</CardTitle>
           <CardDescription>Atur nama dan deskripsi aplikasi Anda.</CardDescription>
         </CardHeader>
-        <form onSubmit={handleTextSubmit}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="appName">Nama Aplikasi</Label>
-              <Input id="appName" value={formData.appName} onChange={(e) => setFormData(p => ({ ...p, appName: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="appDescription">Deskripsi Singkat</Label>
-              <Textarea id="appDescription" value={formData.appDescription} onChange={(e) => setFormData(p => ({ ...p, appDescription: e.target.value }))} />
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Simpan Informasi
-            </Button>
-          </CardFooter>
-        </form>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="appName">Nama Aplikasi</Label>
+            <Input id="appName" value={formData.appName} onChange={handleInputChange} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="appDescription">Deskripsi Singkat</Label>
+            <Textarea id="appDescription" value={formData.appDescription} onChange={handleInputChange} />
+          </div>
+        </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Konten Halaman Utama</CardTitle>
+          <CardDescription>Atur teks yang muncul di bagian atas (hero) dan bagian "Tentang Kami".</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="heroTitle">Judul Hero</Label>
+            <Input id="heroTitle" value={formData.heroTitle} onChange={handleInputChange} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="heroSubtitle">Subjudul Hero</Label>
+            <Textarea id="heroSubtitle" value={formData.heroSubtitle} onChange={handleInputChange} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="aboutUsContent">Konten "Tentang Kami"</Label>
+            <Textarea id="aboutUsContent" value={formData.aboutUsContent} onChange={handleInputChange} rows={5} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Informasi Kontak & Footer</CardTitle>
+          <CardDescription>Atur detail kontak dan teks yang muncul di bagian bawah (footer) halaman.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="contactAddress">Alamat</Label>
+            <Input id="contactAddress" value={formData.contactAddress} onChange={handleInputChange} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="contactEmail">Email</Label>
+              <Input id="contactEmail" type="email" value={formData.contactEmail} onChange={handleInputChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contactPhone">Telepon</Label>
+              <Input id="contactPhone" value={formData.contactPhone} onChange={handleInputChange} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="socialInstagram">URL Instagram</Label>
+            <Input id="socialInstagram" placeholder="https://instagram.com/username" value={formData.socialInstagram} onChange={handleInputChange} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="footerCopyright">Teks Copyright Footer</Label>
+            <Input id="footerCopyright" value={formData.footerCopyright} onChange={handleInputChange} />
+          </div>
+        </CardContent>
+      </Card>
+      
       <Card>
         <CardHeader>
           <CardTitle>Logo Aplikasi</CardTitle>
           <CardDescription>Unggah logo baru. Logo akan ditampilkan di header utama.</CardDescription>
         </CardHeader>
-        <form onSubmit={handleLogoSubmit}>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-6">
-              <div className="w-24 h-24 bg-muted rounded-md flex items-center justify-center">
-                {logoPreview ? <img src={logoPreview} alt="Logo Preview" className="h-full w-full object-contain" /> : <span className="text-xs text-muted-foreground">No Logo</span>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="logoFile">Pilih file logo (PNG/JPG)</Label>
-                <Input id="logoFile" type="file" accept="image/png, image/jpeg" onChange={handleFileChange} />
-              </div>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-6">
+            <div className="w-24 h-24 bg-muted rounded-md flex items-center justify-center">
+              {logoPreview ? <img src={logoPreview} alt="Logo Preview" className="h-full w-full object-contain" /> : <span className="text-xs text-muted-foreground">No Logo</span>}
             </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" disabled={!logoFile || isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-              Unggah Logo
-            </Button>
-          </CardFooter>
-        </form>
+            <div className="space-y-2">
+              <Label htmlFor="logoFile">Pilih file logo (PNG/JPG)</Label>
+              <Input id="logoFile" type="file" accept="image/png, image/jpeg" onChange={handleFileChange} />
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button type="button" onClick={handleLogoSubmit} disabled={!logoFile || isSubmitting}>
+            {isSubmitting && !logoFile ? null : isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+            Unggah Logo
+          </Button>
+        </CardFooter>
       </Card>
-    </div>
+
+      <div className="flex justify-end">
+        <Button type="submit" size="lg" disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Simpan Semua Perubahan
+        </Button>
+      </div>
+    </form>
   );
 };
 
