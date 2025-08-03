@@ -29,55 +29,58 @@ import NewsManagementPage from "./pages/Dashboard/NewsManagementPage";
 import NewsFormPage from "./pages/Dashboard/NewsFormPage";
 import ProtectedRoute from "./components/ProtectedRoute"; // Assuming ProtectedRoute exists
 import { AuthProvider } from "./contexts/AuthContext"; // Import AuthProvider
+import { CartProvider } from "./contexts/CartContext"; // Import CartProvider
 
 function App() {
   return (
     <Router>
-      <AuthProvider> {/* AuthProvider moved inside Router */}
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<PublicPage />} />
-          <Route path="/products" element={<ProductsPage />} />
-          <Route path="/news" element={<NewsPage />} />
-          <Route path="/news/:slug" element={<NewsDetailPage />} />
-          <Route path="/track-service" element={<ServiceTrackingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/member-login" element={<MemberLoginPage />} />
-          
-          {/* Protected Routes for Members */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/member-profile" element={<MemberProfilePage />} />
-          </Route>
-
-          {/* Protected Routes for Staff/Admin (Dashboard) */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<DashboardPage />} />
-              <Route path="stock" element={<StockPage />} /> {/* Renamed from products to stock */}
-              <Route path="customers" element={<CustomerPage />} />
-              <Route path="suppliers" element={<SupplierPage />} /> {/* Added SupplierPage */}
-              <Route path="service-masuk" element={<ServiceMasukPage />} />
-              <Route path="transaction/sales" element={<SalesPage />} /> {/* Added SalesPage */}
-              <Route path="transaction/service" element={<ServicePage />} /> {/* Added ServicePage */}
-              <Route path="transaction/installments" element={<InstallmentPage />} /> {/* Added InstallmentPage */}
-              <Route path="transaction/add-installment" element={<AddInstallmentPage />} /> {/* Added AddInstallmentPage */}
-              <Route path="reports" element={<SalesReportPage />} /> {/* Changed to SalesReportPage, assuming it's the main reports page */}
-              <Route path="reports/sales" element={<SalesReportPage />} />
-              <Route path="reports/service" element={<ServiceReportPage />} />
-              <Route path="reports/today" element={<TodayReportPage />} />
-              <Route path="services-in-progress" element={<ServicesInProgressPage />} />
-              <Route path="users" element={<UsersPage />} /> {/* Added UsersPage */}
-              <Route path="news" element={<NewsManagementPage />} />
-              <Route path="news/new" element={<NewsFormPage />} />
-              <Route path="news/edit/:id" element={<NewsFormPage />} />
-              <Route path="profile" element={<UserProfilePage />} /> {/* Staff profile page */}
-              {/* Removed settings route as it's not provided */}
+      <AuthProvider>
+        <CartProvider> {/* CartProvider ditambahkan di sini */}
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<PublicPage />} />
+            <Route path="/products" element={<ProductsPage />} />
+            <Route path="/news" element={<NewsPage />} />
+            <Route path="/news/:slug" element={<NewsDetailPage />} />
+            <Route path="/track-service" element={<ServiceTrackingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/member-login" element={<MemberLoginPage />} />
+            
+            {/* Protected Routes for Members */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/member-profile" element={<MemberProfilePage />} />
             </Route>
-          </Route>
 
-          {/* Catch-all route for 404 */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            {/* Protected Routes for Staff/Admin (Dashboard) */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route index element={<DashboardPage />} />
+                <Route path="stock" element={<StockPage />} /> {/* Renamed from products to stock */}
+                <Route path="customers" element={<CustomerPage />} />
+                <Route path="suppliers" element={<SupplierPage />} /> {/* Added SupplierPage */}
+                <Route path="service-masuk" element={<ServiceMasukPage />} />
+                <Route path="transaction/sales" element={<SalesPage />} /> {/* Added SalesPage */}
+                <Route path="transaction/service" element={<ServicePage />} /> {/* Added ServicePage */}
+                <Route path="transaction/installments" element={<InstallmentPage />} /> {/* Added InstallmentPage */}
+                <Route path="transaction/add-installment" element={<AddInstallmentPage />} /> {/* Added AddInstallmentPage */}
+                <Route path="reports" element={<SalesReportPage />} /> {/* Changed to SalesReportPage, assuming it's the main reports page */}
+                <Route path="reports/sales" element={<SalesReportPage />} />
+                <Route path="reports/service" element={<ServiceReportPage />} />
+                <Route path="reports/today" element={<TodayReportPage />} />
+                <Route path="services-in-progress" element={<ServicesInProgressPage />} />
+                <Route path="users" element={<UsersPage />} /> {/* Added UsersPage */}
+                <Route path="news" element={<NewsManagementPage />} />
+                <Route path="news/new" element={<NewsFormPage />} />
+                <Route path="news/edit/:id" element={<NewsFormPage />} />
+                <Route path="profile" element={<UserProfilePage />} /> {/* Staff profile page */}
+                {/* Removed settings route as it's not provided */}
+              </Route>
+            </Route>
+
+            {/* Catch-all route for 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </CartProvider>
       </AuthProvider>
     </Router>
   );
