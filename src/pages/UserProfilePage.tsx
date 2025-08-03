@@ -1,12 +1,49 @@
+import { useState } from 'react';
 import PublicLayout from "@/components/Layout/PublicLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Mail, Shield } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { User, Mail, Shield, Loader2 } from "lucide-react";
+import { supabase } from '@/integrations/supabase/client';
+import { showSuccess, showError } from '@/utils/toast';
 
 const UserProfilePage = () => {
   const { profile, session, loading } = useAuth();
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!password || !confirmPassword) {
+      showError("Harap isi kedua kolom password.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      showError("Password tidak cocok.");
+      return;
+    }
+    if (password.length < 6) {
+      showError("Password minimal harus 6 karakter.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.updateUser({ password: password });
+    setIsSubmitting(false);
+
+    if (error) {
+      showError(`Gagal mengubah password: ${error.message}`);
+    } else {
+      showSuccess("Password berhasil diubah!");
+      setPassword('');
+      setConfirmPassword('');
+    }
+  };
 
   if (loading) {
     return (
@@ -43,7 +80,7 @@ const UserProfilePage = () => {
 
   return (
     <PublicLayout>
-      <div className="container mx-auto px-4 py-8 md:py-12 max-w-2xl">
+      <div className="container mx-auto px-4 py-8 md:py-12 max-w-2xl space-y-6">
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Profil Saya</CardTitle>
@@ -83,6 +120,43 @@ const UserProfilePage = () => {
               </div>
             </div>
           </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">Ubah Password</CardTitle>
+            <CardDescription>Masukkan password baru Anda di bawah ini.</CardDescription>
+          </CardHeader>
+          <form onSubmit={handlePasswordChange}>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Password Baru</Label>
+                <Input 
+                  id="new-password" 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Minimal 6 karakter"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Konfirmasi Password Baru</Label>
+                <Input 
+                  id="confirm-password" 
+                  type="password" 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Ulangi password baru"
+                />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Simpan Password Baru
+              </Button>
+            </CardFooter>
+          </form>
         </Card>
       </div>
     </PublicLayout>
