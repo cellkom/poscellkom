@@ -22,6 +22,7 @@ interface NavSubItem {
     name: string;
     icon: IconType;
     path: string;
+    roles: string[];
 }
 
 interface NavItem {
@@ -29,34 +30,37 @@ interface NavItem {
     icon: IconType;
     path: string;
     subItems?: NavSubItem[];
+    roles: string[];
 }
 
 const navItems: NavItem[] = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { name: "Stok", icon: Package, path: "/dashboard/stock" },
-  { name: "Service Masuk", icon: ClipboardPlus, path: "/dashboard/service-masuk" },
+  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard", roles: ['Admin', 'Kasir'] },
+  { name: "Stok", icon: Package, path: "/dashboard/stock", roles: ['Admin', 'Kasir'] },
+  { name: "Service Masuk", icon: ClipboardPlus, path: "/dashboard/service-masuk", roles: ['Admin', 'Kasir'] },
   { 
     name: "Transaksi", 
     icon: Receipt,
-    path: "/dashboard/transaction", // Base path for active state
+    path: "/dashboard/transaction",
+    roles: ['Admin', 'Kasir'],
     subItems: [
-        { name: "Penjualan", icon: ShoppingCart, path: "/dashboard/transaction/sales" },
-        { name: "Jasa Service", icon: Wrench, path: "/dashboard/transaction/service" },
-        { name: "Kelola Cicilan", icon: CreditCard, path: "/dashboard/transaction/installments" },
+        { name: "Penjualan", icon: ShoppingCart, path: "/dashboard/transaction/sales", roles: ['Admin', 'Kasir'] },
+        { name: "Jasa Service", icon: Wrench, path: "/dashboard/transaction/service", roles: ['Admin', 'Kasir'] },
+        { name: "Kelola Cicilan", icon: CreditCard, path: "/dashboard/transaction/installments", roles: ['Admin', 'Kasir'] },
     ]
   },
   { 
     name: "Data", 
     icon: Database, 
     path: "/dashboard/data",
+    roles: ['Admin', 'Kasir'],
     subItems: [
-        { name: "Pelanggan", icon: Users, path: "/dashboard/data/customers" },
-        { name: "Supplier", icon: Truck, path: "/dashboard/data/suppliers" },
-        { name: "Users", icon: Users, path: "/dashboard/data/users" },
+        { name: "Pelanggan", icon: Users, path: "/dashboard/data/customers", roles: ['Admin', 'Kasir'] },
+        { name: "Supplier", icon: Truck, path: "/dashboard/data/suppliers", roles: ['Admin', 'Kasir'] },
+        { name: "Users", icon: Users, path: "/dashboard/data/users", roles: ['Admin'] },
     ]
   },
-  { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
-  { name: "Manajemen Berita", icon: Newspaper, path: "/dashboard/news" },
+  { name: "Laporan", icon: FileText, path: "/dashboard/reports", roles: ['Admin'] },
+  { name: "Manajemen Berita", icon: Newspaper, path: "/dashboard/news", roles: ['Admin'] },
 ];
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
@@ -65,9 +69,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { profile, signOut } = useAuth();
 
   const renderNavLinks = (isMobileNav = false) => {
-    const nav = navItems.map((item) => {
+    const userRole = profile?.role;
+    if (!userRole) return null;
+
+    const filteredNavItems = navItems.filter(item => item.roles.includes(userRole));
+
+    const nav = filteredNavItems.map((item) => {
       if (item.subItems) {
-        const visibleSubItems = item.subItems;
+        const visibleSubItems = item.subItems.filter(subItem => subItem.roles.includes(userRole));
         if (visibleSubItems.length === 0) return null;
 
         return isMobileNav ? (
