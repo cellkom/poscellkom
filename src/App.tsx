@@ -10,6 +10,8 @@ import DashboardLayout from './components/Layout/DashboardLayout';
 // Public Pages
 import PublicPage from './pages/PublicPage';
 import ProductsPage from './pages/ProductsPage';
+import NewsPage from './pages/NewsPage';
+import NewsDetailPage from './pages/NewsDetailPage';
 import MemberProfilePage from './pages/MemberProfilePage';
 import ServiceTrackingPage from './pages/ServiceTrackingPage';
 
@@ -31,6 +33,7 @@ import ReportsPage from './pages/Dashboard/ReportsPage';
 import SalesReportPage from './pages/Dashboard/Reports/SalesReportPage';
 import ServiceReportPage from './pages/Dashboard/Reports/ServiceReportPage';
 import TodayReportPage from './pages/Dashboard/Reports/TodayReportPage';
+import NewsManagementPage from './pages/Dashboard/NewsManagementPage';
 import UserProfilePage from './pages/UserProfilePage';
 import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
 import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
@@ -67,6 +70,8 @@ function App() {
               {/* Public & Auth Routes */}
               <Route path="/" element={<PublicPage />} />
               <Route path="/products" element={<ProductsPage />} />
+              <Route path="/news" element={<NewsPage />} />
+              <Route path="/news/:slug" element={<NewsDetailPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/member-login" element={<MemberLoginPage />} />
               <Route path="/tracking" element={<ServiceTrackingPage />} />
@@ -115,7 +120,7 @@ function App() {
               <Route path="/dashboard/reports/service" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><ServiceReportPage /></DashboardLayout></ProtectedRoute>} />
 
               {/* Other Admin Routes */}
-              {/* <Route path="/dashboard/news" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><NewsManagementPage /></DashboardLayout></ProtectedRoute>} /> */}
+              <Route path="/dashboard/news" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><NewsManagementPage /></DashboardLayout></ProtectedRoute>} />
 
             </Routes>
             <Toaster />

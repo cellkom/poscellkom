@@ -39,9 +39,7 @@ serve(async (req) => {
         description,
         status,
         date,
-        service_info,
-        info_date,
-        customers ( name, phone )
+        customers ( name )
       `)
       .eq('id', serviceId)
       .single()

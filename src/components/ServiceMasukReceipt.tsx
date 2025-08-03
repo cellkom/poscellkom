@@ -12,8 +12,6 @@ interface ServiceEntry {
   deviceType: string;
   damageType: string;
   description: string;
-  serviceInfo: string; // New field
-  infoDate: Date | null; // New field
 }
 
 interface ReceiptProps {
@@ -50,12 +48,6 @@ const ServiceMasukReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ entry },
         <div>Tipe: {entry.deviceType}</div>
         <div>Kerusakan: {entry.damageType}</div>
         <div>Deskripsi: {entry.description}</div>
-      </div>
-
-      <div className="border-t border-dashed border-black my-2 py-2 text-xs space-y-1">
-        <p className="font-bold">STATUS SERVICE:</p>
-        <div>Info: {entry.serviceInfo}</div>
-        <div>Tanggal Info: {entry.infoDate ? format(entry.infoDate, 'dd/MM/yy HH:mm') : '-'}</div>
       </div>
 
       <div className="text-center text-xs mt-4">
