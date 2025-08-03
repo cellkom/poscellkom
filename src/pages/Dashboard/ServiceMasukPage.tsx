@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useServiceEntries } from "@/hooks/use-service-entries";
-import { Eye, Printer, Trash2 } from "lucide-react";
+import { Eye, Printer, Trash2, CalendarIcon, PlusCircle, Edit } from "lucide-react";
 import { useState } from "react";
 import ReceiptModal from "@/components/modals/ReceiptModal";
 import { ServiceEntryWithCustomer } from "@/hooks/use-service-entries";
@@ -21,6 +21,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { AddServiceEntryDialog } from "@/components/service/AddServiceEntryDialog";
+import { EditServiceEntryDialog } from "@/components/service/EditServiceEntryDialog";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth to get current user ID
 
 type Status = 'Pending' | 'Proses' | 'Selesai' | 'Gagal/Cancel' | 'Sudah Diambil';
 
@@ -41,10 +49,15 @@ const getStatusBadgeVariant = (status: Status) => {
 };
 
 const ServiceMasukPage = () => {
-  const { serviceEntries, loading: isLoading, deleteServiceEntry, updateServiceEntry } = useServiceEntries();
+  const { serviceEntries, loading: isLoading, deleteServiceEntry, updateServiceEntry, fetchServiceEntries } = useServiceEntries();
+  const { user } = useAuth(); // Get current user for kasir_id
   const [selectedEntry, setSelectedEntry] = useState<ServiceEntryWithCustomer | null>(null);
   const [isReceiptModalOpen, setReceiptModalOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<ServiceEntryWithCustomer | null>(null);
+
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<ServiceEntryWithCustomer | null>(null);
 
   const handleViewReceipt = (entry: ServiceEntryWithCustomer) => {
     setSelectedEntry(entry);
@@ -65,13 +78,42 @@ const ServiceMasukPage = () => {
     // The useServiceEntries hook will automatically refetch and update state
   };
 
+  const handleInfoDateChange = async (id: string, date: Date | undefined) => {
+    if (date) {
+      const updated = await updateServiceEntry(id, { info_date: date.toISOString() });
+      // The useServiceEntries hook will automatically refetch and update state
+    } else {
+      // If date is undefined (e.g., cleared), set info_date to null
+      const updated = await updateServiceEntry(id, { info_date: null });
+    }
+  };
+
+  const handleEdit = (entry: ServiceEntryWithCustomer) => {
+    setEditingEntry(entry);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleAddSuccess = () => {
+    setIsAddDialogOpen(false);
+    fetchServiceEntries(); // Refresh data after adding
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditDialogOpen(false);
+    setEditingEntry(null);
+    fetchServiceEntries(); // Refresh data after editing
+  };
+
   if (isLoading) return <div>Loading...</div>;
 
   return (
     <>
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row justify-between items-center">
           <CardTitle>Service Masuk</CardTitle>
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Tambah Data Servis
+          </Button>
         </CardHeader>
         <CardContent>
           <Table>
@@ -79,10 +121,11 @@ const ServiceMasukPage = () => {
               <TableRow>
                 <TableHead>No. Servis</TableHead>
                 <TableHead>Pelanggan</TableHead>
-                <TableHead>Tanggal</TableHead>
+                <TableHead>Tanggal Masuk</TableHead>
                 <TableHead>Tipe</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Info Status</TableHead>
+                <TableHead>Tanggal Info</TableHead>
                 <TableHead className="text-center">Aksi</TableHead>
               </TableRow>
             </TableHeader>
@@ -105,13 +148,41 @@ const ServiceMasukPage = () => {
                       <SelectContent>
                         <SelectItem value="Sedang proses">Sedang proses</SelectItem>
                         <SelectItem value="Telah Selesai">Telah Selesai</SelectItem>
+                        <SelectItem value="Gagal/Cancel">Gagal/Cancel</SelectItem>
                       </SelectContent>
                     </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-[180px] justify-start text-left font-normal",
+                            !entry.info_date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {entry.info_date ? format(new Date(entry.info_date), "dd MMM yyyy", { locale: id }) : <span>Pilih tanggal</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={entry.info_date ? new Date(entry.info_date) : undefined}
+                          onSelect={(date) => handleInfoDateChange(entry.id, date)}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center gap-2">
                       <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleViewReceipt(entry)}>
                         <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleEdit(entry)}>
+                        <Edit className="h-4 w-4" />
                       </Button>
                       <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => window.print()}>
                         <Printer className="h-4 w-4" />
@@ -150,6 +221,17 @@ const ServiceMasukPage = () => {
           entry={selectedEntry}
         />
       )}
+      <AddServiceEntryDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSuccess={handleAddSuccess}
+      />
+      <EditServiceEntryDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSuccess={handleEditSuccess}
+        entry={editingEntry}
+      />
     </>
   );
 };

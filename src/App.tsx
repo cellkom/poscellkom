@@ -21,7 +21,7 @@ import MemberLoginPage from './pages/Auth/MemberLoginPage';
 
 // Dashboard Pages
 import DashboardPage from './pages/Dashboard/DashboardPage';
-import UsersPage from './pages/Dashboard/UsersPage';
+import UsersPage from './pages/Dashboard/UsersPage'; // Use the existing UsersPage
 import CustomerPage from './pages/Dashboard/Data/CustomerPage';
 import SupplierPage from './pages/Dashboard/Data/SupplierPage';
 import StockPage from './pages/Dashboard/StockPage';
@@ -33,10 +33,11 @@ import ReportsPage from './pages/Dashboard/ReportsPage';
 import SalesReportPage from './pages/Dashboard/Reports/SalesReportPage';
 import ServiceReportPage from './pages/Dashboard/Reports/ServiceReportPage';
 import TodayReportPage from './pages/Dashboard/Reports/TodayReportPage';
-import NewsManagementPage from './pages/Dashboard/NewsManagementPage';
+// import NewsManagementPage from './pages/Dashboard/NewsManagementPage'; // Keep this if it's a separate feature
 import UserProfilePage from './pages/UserProfilePage';
 import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
 import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
+import NewsManagementPage from './pages/Dashboard/NewsManagementPage'; // Ensure this is imported if it's still needed
 
 interface ProtectedRouteProps {
   children: JSX.Element;
@@ -111,7 +112,7 @@ function App() {
               {/* Data Management */}
               <Route path="/dashboard/data/customers" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><CustomerPage /></DashboardLayout></ProtectedRoute>} />
               <Route path="/dashboard/data/suppliers" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><SupplierPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/dashboard/data/users" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><UsersPage /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/dashboard/data/users" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><UsersPage /></DashboardLayout></ProtectedRoute>} /> {/* Point to UsersPage */}
 
               {/* Reports */}
               <Route path="/dashboard/reports" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><ReportsPage /></DashboardLayout></ProtectedRoute>} />
