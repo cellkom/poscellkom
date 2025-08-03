@@ -34,64 +34,68 @@ const LoginPage = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+      if (error) {
+        showError("Email atau password salah.");
+        return;
+      }
 
-    if (error) {
-      showError("Email atau password salah.");
-      setLoading(false);
-      return;
-    }
-
-    if (data.user) {
-      // Check for staff profile
-      const { data: staffProfile } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', data.user.id)
-        .single();
-
-      if (staffProfile) {
-        // User is a staff member, redirect to dashboard
-        navigate('/dashboard');
-      } else {
-        // Not a staff member, check if they are a member
-        const { data: memberProfile } = await supabase
-          .from('members')
+      if (data.user) {
+        // Check for staff profile
+        const { data: staffProfile } = await supabase
+          .from('users')
           .select('id')
           .eq('id', data.user.id)
           .single();
-        
-        if (memberProfile) {
-          showError("Akun ini adalah akun Member. Silakan gunakan halaman login Member.");
-          await supabase.auth.signOut();
-        } else {
-          // This is an orphan auth user. Let's create a profile for them.
-          // This is a fallback to fix data integrity issues, like an admin created without a profile.
-          console.warn("User profile not found. Creating a new staff profile as a fallback.");
-          const { error: insertError } = await supabase
-            .from('users')
-            .insert({
-              id: data.user.id,
-              full_name: data.user.email, // Use email as a default name
-              role: 'Admin', // Default to Admin for this recovery path
-            });
 
-          if (insertError) {
-            showError("Gagal mengkonfigurasi profil pengguna. Silakan hubungi support.");
-            console.error("Profile creation fallback error:", insertError);
+        if (staffProfile) {
+          // User is a staff member, redirect to dashboard
+          navigate('/dashboard');
+        } else {
+          // Not a staff member, check if they are a member
+          const { data: memberProfile } = await supabase
+            .from('members')
+            .select('id')
+            .eq('id', data.user.id)
+            .single();
+          
+          if (memberProfile) {
+            showError("Akun ini adalah akun Member. Silakan gunakan halaman login Member.");
             await supabase.auth.signOut();
           } else {
-            showSuccess("Profil pengguna berhasil dikonfigurasi. Mengarahkan ke dashboard.");
-            navigate('/dashboard');
+            // This is an orphan auth user. Let's create a profile for them.
+            // This is a fallback to fix data integrity issues, like an admin created without a profile.
+            console.warn("User profile not found. Creating a new staff profile as a fallback.");
+            const { error: insertError } = await supabase
+              .from('users')
+              .insert({
+                id: data.user.id,
+                full_name: data.user.email, // Use email as a default name
+                role: 'Admin', // Default to Admin for this recovery path
+              });
+
+            if (insertError) {
+              showError("Gagal mengkonfigurasi profil pengguna. Silakan hubungi support.");
+              console.error("Profile creation fallback error:", insertError);
+              await supabase.auth.signOut();
+            } else {
+              showSuccess("Profil pengguna berhasil dikonfigurasi. Mengarahkan ke dashboard.");
+              navigate('/dashboard');
+            }
           }
         }
       }
+    } catch (err) {
+      console.error("Sign in error:", err);
+      showError("Terjadi kesalahan saat login.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

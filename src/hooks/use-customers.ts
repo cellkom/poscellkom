@@ -40,7 +40,10 @@ export const useCustomers = () => {
                 { event: '*', schema: 'public', table: 'customers' },
                 (payload) => {
                     if (payload.eventType === 'INSERT') {
-                        setCustomers(prev => [...prev, payload.new as Customer].sort((a, b) => a.name.localeCompare(b.name)));
+                        setCustomers(prev => {
+                            if (prev.some(c => c.id === payload.new.id)) return prev;
+                            return [...prev, payload.new as Customer].sort((a, b) => a.name.localeCompare(b.name))
+                        });
                     }
                     if (payload.eventType === 'UPDATE') {
                         setCustomers(prev => prev.map(c => c.id === payload.new.id ? payload.new as Customer : c));
@@ -70,6 +73,8 @@ export const useCustomers = () => {
             return null;
         }
         showSuccess("Pelanggan baru berhasil ditambahkan!");
+        // Manually update state for immediate UI feedback
+        setCustomers(prev => [...prev, data as Customer].sort((a, b) => a.name.localeCompare(b.name)));
         return data;
     };
 
