@@ -21,6 +21,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
 
 type Status = 'Pending' | 'Proses' | 'Selesai' | 'Gagal/Cancel' | 'Sudah Diambil';
 
@@ -79,10 +81,11 @@ const ServiceMasukPage = () => {
               <TableRow>
                 <TableHead>No. Servis</TableHead>
                 <TableHead>Pelanggan</TableHead>
-                <TableHead>Tanggal</TableHead>
+                <TableHead>Tanggal Masuk</TableHead>
                 <TableHead>Tipe</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Info Status</TableHead>
+                <TableHead>Tanggal Info</TableHead> {/* New column */}
                 <TableHead className="text-center">Aksi</TableHead>
               </TableRow>
             </TableHeader>
@@ -107,6 +110,9 @@ const ServiceMasukPage = () => {
                         <SelectItem value="Telah Selesai">Telah Selesai</SelectItem>
                       </SelectContent>
                     </Select>
+                  </TableCell>
+                  <TableCell> {/* New TableCell for Tanggal Info */}
+                    {entry.updated_at ? format(new Date(entry.updated_at), 'dd MMM yyyy, HH:mm', { locale: id }) : '-'}
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center gap-2">
