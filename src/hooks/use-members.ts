@@ -41,6 +41,20 @@ export const useMembers = () => {
 
   useEffect(() => {
     fetchMembers();
+    const membersChannel = supabase
+      .channel('members-profile-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'members' },
+        () => {
+          fetchMembers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(membersChannel);
+    };
   }, [fetchMembers]);
 
   const updateMember = async (id: string, updates: Partial<Omit<MemberProfile, 'id' | 'email' | 'created_at' | 'role'>>) => {

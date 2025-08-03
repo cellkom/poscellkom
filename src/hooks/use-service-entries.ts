@@ -53,6 +53,20 @@ export const useServiceEntries = () => {
 
   useEffect(() => {
     fetchServiceEntries();
+    const channel = supabase
+      .channel('service-entries-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'service_entries' },
+        () => {
+          fetchServiceEntries();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchServiceEntries]);
 
   const addServiceEntry = async (newEntry: Omit<ServiceEntry, 'id' | 'created_at' | 'info_date'>) => {

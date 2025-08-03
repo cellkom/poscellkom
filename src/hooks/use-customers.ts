@@ -38,8 +38,16 @@ export const useCustomers = () => {
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'customers' },
-                () => {
-                    fetchCustomers();
+                (payload) => {
+                    if (payload.eventType === 'INSERT') {
+                        setCustomers(prev => [...prev, payload.new as Customer].sort((a, b) => a.name.localeCompare(b.name)));
+                    }
+                    if (payload.eventType === 'UPDATE') {
+                        setCustomers(prev => prev.map(c => c.id === payload.new.id ? payload.new as Customer : c));
+                    }
+                    if (payload.eventType === 'DELETE') {
+                        setCustomers(prev => prev.filter(c => c.id !== (payload.old as Customer).id));
+                    }
                 }
             )
             .subscribe();

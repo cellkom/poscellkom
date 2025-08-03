@@ -43,6 +43,20 @@ export const useUsers = () => {
 
   useEffect(() => {
     fetchUsers();
+    const usersChannel = supabase
+      .channel('users-profile-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'users' },
+        () => {
+          fetchUsers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(usersChannel);
+    };
   }, [fetchUsers]);
 
   const addUser = async (email: string, password: string, full_name: string, role: 'Admin' | 'Kasir') => {

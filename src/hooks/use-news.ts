@@ -48,6 +48,25 @@ export const useNews = () => {
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('news-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'news' },
+        () => {
+          // Refetch with adminMode false for public pages.
+          // Admin page will trigger its own fetch with adminMode=true.
+          fetchArticles(false);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchArticles]);
+
   const getArticleBySlug = async (slug: string): Promise<NewsArticle | null> => {
     setLoading(true);
     const { data, error } = await supabase

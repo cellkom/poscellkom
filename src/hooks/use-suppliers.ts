@@ -38,8 +38,16 @@ export const useSuppliers = () => {
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'suppliers' },
-                () => {
-                    fetchSuppliers();
+                (payload) => {
+                    if (payload.eventType === 'INSERT') {
+                        setSuppliers(prev => [...prev, payload.new as Supplier].sort((a, b) => a.name.localeCompare(b.name)));
+                    }
+                    if (payload.eventType === 'UPDATE') {
+                        setSuppliers(prev => prev.map(s => s.id === payload.new.id ? payload.new as Supplier : s));
+                    }
+                    if (payload.eventType === 'DELETE') {
+                        setSuppliers(prev => prev.filter(s => s.id !== (payload.old as Supplier).id));
+                    }
                 }
             )
             .subscribe();
