@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from './components/ThemeProvider';
 
 // Layouts
-import DashboardLayout from './components/Layout/DashboardLayout';
+import { DashboardLayout } from './components/Layout/DashboardLayout'; // Changed import to named export
 
 // Public Pages
 import PublicPage from './pages/PublicPage';
