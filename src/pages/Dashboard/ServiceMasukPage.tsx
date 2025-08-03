@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useServiceEntries } from "@/hooks/use-service-entries";
-import { Eye, Printer, Trash2 } from "lucide-react";
+import { Eye, Printer, Trash2, CalendarIcon } from "lucide-react";
 import { useState } from "react";
 import ReceiptModal from "@/components/modals/ReceiptModal";
 import { ServiceEntryWithCustomer } from "@/hooks/use-service-entries";
@@ -23,6 +23,9 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 type Status = 'Pending' | 'Proses' | 'Selesai' | 'Gagal/Cancel' | 'Sudah Diambil';
 
@@ -65,6 +68,16 @@ const ServiceMasukPage = () => {
   const handleServiceInfoChange = async (id: string, service_info: string) => {
     const updated = await updateServiceEntry(id, { service_info });
     // The useServiceEntries hook will automatically refetch and update state
+  };
+
+  const handleInfoDateChange = async (id: string, date: Date | undefined) => {
+    if (date) {
+      const updated = await updateServiceEntry(id, { info_date: date.toISOString() });
+      // The useServiceEntries hook will automatically refetch and update state
+    } else {
+      // If date is undefined (e.g., cleared), set info_date to null
+      const updated = await updateServiceEntry(id, { info_date: null });
+    }
   };
 
   if (isLoading) return <div>Loading...</div>;
@@ -111,8 +124,29 @@ const ServiceMasukPage = () => {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell> {/* New TableCell for Tanggal Info */}
-                    {entry.updated_at ? format(new Date(entry.updated_at), 'dd MMM yyyy, HH:mm', { locale: id }) : '-'}
+                  <TableCell>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-[180px] justify-start text-left font-normal",
+                            !entry.info_date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {entry.info_date ? format(new Date(entry.info_date), "dd MMM yyyy", { locale: id }) : <span>Pilih tanggal</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={entry.info_date ? new Date(entry.info_date) : undefined}
+                          onSelect={(date) => handleInfoDateChange(entry.id, date)}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center gap-2">
