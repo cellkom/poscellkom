@@ -78,8 +78,12 @@ export const useNews = () => {
       showError(`Gagal mengunggah gambar: ${error.message}`);
       return null;
     }
-    const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(data.path);
-    return publicUrl;
+    if (!data?.path) {
+      showError('Gagal mendapatkan path gambar setelah unggah.');
+      return null;
+    }
+    const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(data.path);
+    return urlData.publicUrl;
   };
 
   return { articles, loading, fetchArticles, getArticleBySlug, uploadNewsImage };

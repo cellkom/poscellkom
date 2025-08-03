@@ -80,33 +80,38 @@ const NewsManagementPage = () => {
     }
 
     setIsSubmitting(true);
-    let imageUrl = editingArticle?.image_url || null;
-    if (imageFile) {
-      imageUrl = await uploadNewsImage(imageFile);
-    }
+    try {
+      let imageUrl = editingArticle?.image_url || null;
+      if (imageFile) {
+        imageUrl = await uploadNewsImage(imageFile);
+      }
 
-    const payload = {
-      ...formData,
-      image_url: imageUrl,
-      author_id: user.id,
-      published_at: formData.status === 'published' ? new Date().toISOString() : null,
-    };
+      const payload = {
+        ...formData,
+        image_url: imageUrl,
+        author_id: user.id,
+        published_at: formData.status === 'published' ? new Date().toISOString() : null,
+      };
 
-    let error;
-    if (editingArticle) {
-      ({ error } = await supabase.from('news').update(payload).eq('id', editingArticle.id));
-    } else {
-      ({ error } = await supabase.from('news').insert(payload));
-    }
+      let error;
+      if (editingArticle) {
+        ({ error } = await supabase.from('news').update(payload).eq('id', editingArticle.id));
+      } else {
+        ({ error } = await supabase.from('news').insert(payload));
+      }
 
-    if (error) {
-      showError(`Gagal menyimpan berita: ${error.message}`);
-    } else {
+      if (error) {
+        throw error;
+      }
+
       showSuccess(`Berita berhasil ${editingArticle ? 'diperbarui' : 'ditambahkan'}.`);
       setIsDialogOpen(false);
       fetchArticles(true);
+    } catch (error: any) {
+      showError(`Gagal menyimpan berita: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   const handleDelete = async (articleId: string) => {
