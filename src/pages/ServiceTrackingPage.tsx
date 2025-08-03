@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } => "react";
 import PublicLayout from "@/components/Layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -170,14 +170,30 @@ const ServiceTrackingPage = () => {
                     <p className="font-medium">{serviceData.device_type}</p>
                   </div>
                   <div>
+                    <Label className="text-sm text-muted-foreground">Jenis Kerusakan</Label>
+                    <p className="font-medium">{serviceData.damage_type}</p>
+                  </div>
+                  <div>
                     <Label className="text-sm text-muted-foreground">Info Status</Label>
                     <p className="font-medium">{serviceData.service_info || '-'}</p>
                   </div>
+                  {serviceData.info_date && (
+                    <div>
+                      <Label className="text-sm text-muted-foreground">Tanggal Info</Label>
+                      <p className="font-medium">{format(new Date(serviceData.info_date), 'd MMMM yyyy, HH:mm', { locale: id })}</p>
+                    </div>
+                  )}
                 </div>
                 <div>
-                  <Label className="text-sm text-muted-foreground">Keluhan</Label>
+                  <Label className="text-sm text-muted-foreground">Deskripsi</Label>
                   <p className="font-medium">{serviceData.description}</p>
                 </div>
+                {serviceData.service_info === 'Telah Selesai' && (
+                  <div className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 rounded-md">
+                    <p className="font-semibold">Penting:</p>
+                    <p className="text-sm">Servis sudah selesai dikerjakan, silakan ambil ke konter. Kami tidak bertanggung jawab atas kehilangan dan kerusakan barang yang tidak diambil setelah 1 bulan servis diinfokan selesai.</p>
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="flex justify-end">
                 <Button onClick={handleViewReceipt}>

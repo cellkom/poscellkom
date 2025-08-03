@@ -53,12 +53,14 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, entry }) =
           <ServiceMasukReceipt ref={receiptRef} entry={{
             id: String(entry.id),
             date: new Date(entry.date),
-            customerName: entry.customerName,
-            customerPhone: entry.customerPhone,
-            category: entry.category,
-            deviceType: entry.device_type,
-            damageType: entry.damage_type,
-            description: entry.description,
+            customerName: entry.customerName || 'N/A',
+            customerPhone: entry.customerPhone || 'N/A',
+            category: entry.category || 'N/A',
+            deviceType: entry.device_type || 'N/A',
+            damageType: entry.damage_type || 'N/A',
+            description: entry.description || 'N/A',
+            serviceInfo: entry.service_info || 'N/A',
+            infoDate: entry.info_date ? new Date(entry.info_date) : null,
           }} />
         </div>
         <DialogFooter className="sm:justify-between gap-2">
