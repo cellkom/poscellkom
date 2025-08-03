@@ -52,12 +52,6 @@ const ServiceMasukReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ entry },
         <div>Deskripsi: {entry.description}</div>
       </div>
 
-      <div className="border-t border-dashed border-black my-2 py-2 text-xs space-y-1">
-        <p className="font-bold">STATUS SERVICE:</p>
-        <div>Info: {entry.serviceInfo}</div>
-        <div>Tanggal Info: {entry.infoDate ? format(entry.infoDate, 'dd/MM/yy HH:mm') : '-'}</div>
-      </div>
-
       <div className="text-center text-xs mt-4">
         <p className="font-bold">Simpan struk ini sebagai bukti pengambilan barang.</p>
         <p>Kami tidak bertanggung jawab atas kehilangan struk.</p>
