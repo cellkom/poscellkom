@@ -1,142 +1,173 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useServiceEntries } from "@/hooks/use-service-entries";
+import { useInstallments } from "@/hooks/use-installments";
+import { startOfToday, endOfToday } from "date-fns";
+import { Banknote, ShoppingCart, Wrench, Clock, ArrowRight, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
-import { Badge } from "@/components/ui/badge";
 
-// Define a unified transaction type
-type Transaction = {
-  id: string | number;
-  created_at: string;
-  display_id: string;
-  type: 'Penjualan' | 'Servis';
-  customer_name: string | null;
-  amount: number;
-  payment_method: string | null;
-};
+const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
 const ReportsPage = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const { serviceEntries } = useServiceEntries();
+  const { installments } = useInstallments();
+  const [summaryToday, setSummaryToday] = useState({
+    totalRevenue: 0,
+    totalTransactions: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTransactions = async () => {
+    const fetchTodaySummary = async () => {
       setLoading(true);
-      try {
-        // Fetch sales transactions
-        const { data: sales, error: salesError } = await supabase
-          .from('sales_transactions')
-          .select('id, created_at, transaction_id_display, customer_name_cache, total, payment_method');
+      const todayStart = startOfToday().toISOString();
+      const todayEnd = endOfToday().toISOString();
 
-        if (salesError) {
-          console.error("Sales Error:", salesError);
-          throw salesError;
-        }
+      const { data: sales, error: salesError } = await supabase
+        .from('sales_transactions')
+        .select('total_amount')
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd);
 
-        // Fetch service transactions
-        const { data: services, error: servicesError } = await supabase
-          .from('service_transactions')
-          .select('id, created_at, customer_name_cache, total_amount, payment_method, service_entry_id');
-        
-        if (servicesError) {
-          console.error("Service Error:", servicesError);
-          throw servicesError;
-        }
+      const { data: services, error: servicesError } = await supabase
+        .from('service_transactions')
+        .select('total_amount')
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd);
 
-        const formattedSales: Transaction[] = (sales || []).map(s => ({
-          id: s.id,
-          created_at: s.created_at,
-          display_id: s.transaction_id_display || `SALE-${s.id.toString().substring(0, 4)}`,
-          type: 'Penjualan',
-          customer_name: s.customer_name_cache,
-          amount: s.total,
-          payment_method: s.payment_method,
-        }));
-
-        const formattedServices: Transaction[] = (services || []).map(s => ({
-          id: s.id,
-          created_at: s.created_at,
-          display_id: `SERVICE-${s.service_entry_id}`,
-          type: 'Servis',
-          customer_name: s.customer_name_cache,
-          amount: s.total_amount,
-          payment_method: s.payment_method,
-        }));
-
-        const combined = [...formattedSales, ...formattedServices]
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-        setTransactions(combined);
-      } catch (error) {
-        console.error("Error fetching transactions:", error);
-      } finally {
+      if (salesError || servicesError) {
+        console.error("Error fetching today's summary:", salesError || servicesError);
         setLoading(false);
+        return;
       }
+
+      const totalSalesRevenue = sales.reduce((sum, s) => sum + s.total_amount, 0);
+      const totalServiceRevenue = services.reduce((sum, s) => sum + s.total_amount, 0);
+
+      setSummaryToday({
+        totalRevenue: totalSalesRevenue + totalServiceRevenue,
+        totalTransactions: sales.length + services.length,
+      });
+      setLoading(false);
     };
 
-    fetchTransactions();
+    fetchTodaySummary();
   }, []);
 
+  const servicesInProgress = useMemo(() => {
+    return serviceEntries.filter(e => e.status === 'Pending' || e.status === 'Proses').length;
+  }, [serviceEntries]);
+
+  const activeReceivables = useMemo(() => {
+    return installments.filter(i => i.status === 'Belum Lunas').reduce((sum, i) => sum + i.remaining_amount, 0);
+  }, [installments]);
+
   return (
-    <div className="p-4 md:p-8 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Laporan Transaksi</h1>
-          <p className="text-muted-foreground">
-            Menampilkan semua transaksi penjualan dan servis.
-          </p>
-        </div>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Laporan & Analisis</h1>
+        <p className="text-muted-foreground">Ringkasan, analisis, dan ekspor data penjualan serta service.</p>
       </div>
+
+      {/* Ringkasan Hari Ini */}
       <Card>
         <CardHeader>
-          <CardTitle>Semua Transaksi</CardTitle>
-          <CardDescription>Daftar semua transaksi yang tercatat dalam sistem.</CardDescription>
+          <CardTitle>Ringkasan Hari Ini</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <p>Memuat data transaksi...</p>
-            </div>
-          ) : transactions.length === 0 ? (
-            <div className="text-center py-16">
-                <p className="text-muted-foreground">Belum ada data transaksi.</p>
+            <div className="col-span-full flex justify-center items-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead>ID Transaksi</TableHead>
-                  <TableHead>Tipe</TableHead>
-                  <TableHead>Pelanggan</TableHead>
-                  <TableHead>Metode Bayar</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transactions.map((tx) => (
-                  <TableRow key={`${tx.type}-${tx.id}`}>
-                    <TableCell>{format(new Date(tx.created_at), "dd MMM yyyy, HH:mm", { locale: id })}</TableCell>
-                    <TableCell className="font-medium">{tx.display_id}</TableCell>
-                    <TableCell>
-                      <Badge variant={tx.type === 'Penjualan' ? 'default' : 'secondary'}>
-                        {tx.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{tx.customer_name || "-"}</TableCell>
-                    <TableCell>{tx.payment_method || "-"}</TableCell>
-                    <TableCell className="text-right">
-                      {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(tx.amount)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <>
+              <Card className="bg-green-50 border-green-200">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-green-800">Total Penjualan</CardTitle>
+                  <Banknote className="h-5 w-5 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-900">{formatCurrency(summaryToday.totalRevenue)}</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-blue-50 border-blue-200">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-blue-800">Transaksi</CardTitle>
+                  <ShoppingCart className="h-5 w-5 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-900">{summaryToday.totalTransactions}</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-purple-50 border-purple-200">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-purple-800">Service Proses</CardTitle>
+                  <Wrench className="h-5 w-5 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-purple-900">{servicesInProgress}</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-yellow-50 border-yellow-200">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-yellow-800">Piutang Aktif</CardTitle>
+                  <Clock className="h-5 w-5 text-yellow-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-yellow-900">{formatCurrency(activeReceivables)}</div>
+                </CardContent>
+              </Card>
+            </>
           )}
         </CardContent>
       </Card>
+
+      {/* Fitur Laporan */}
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight mb-4">Fitur Laporan</h2>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-100 p-3 rounded-full"><ShoppingCart className="h-6 w-6 text-blue-600" /></div>
+                <div>
+                  <CardTitle>Laporan Penjualan</CardTitle>
+                  <CardDescription>Analisis penjualan sparepart dan aksesoris.</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Lihat detail transaksi, produk terlaris, dan ringkasan laba rugi dari penjualan barang.
+            </CardContent>
+            <div className="p-6 pt-0">
+              <Button asChild className="w-full">
+                <Link to="/dashboard/reports/sales">Lihat Laporan <ArrowRight className="ml-2 h-4 w-4" /></Link>
+              </Button>
+            </div>
+          </Card>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <div className="bg-purple-100 p-3 rounded-full"><Wrench className="h-6 w-6 text-purple-600" /></div>
+                <div>
+                  <CardTitle>Laporan Service</CardTitle>
+                  <CardDescription>Analisis pendapatan dari jasa perbaikan.</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Lihat detail transaksi service, pendapatan jasa, dan laba dari sparepart yang digunakan.
+            </CardContent>
+            <div className="p-6 pt-0">
+              <Button asChild className="w-full">
+                <Link to="/dashboard/reports/service">Lihat Laporan <ArrowRight className="ml-2 h-4 w-4" /></Link>
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
