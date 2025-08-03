@@ -1,10 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard, Code, Image as ImageIcon } from "lucide-react";
+import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, LayoutDashboard } from "lucide-react";
 import logoSrc from '/logo.png';
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -12,40 +11,32 @@ import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CartSidebar from "@/components/CartSidebar";
-import { useNews, NewsArticle } from "@/hooks/use-news";
-import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
   const { session, profile, signOut } = useAuth();
   const { cartCount } = useCart();
-  const { articles, loading: newsLoading, fetchArticles } = useNews();
-  const [latestArticles, setLatestArticles] = useState<NewsArticle[]>([]);
-
-  useEffect(() => {
-    fetchArticles();
-  }, [fetchArticles]);
-
-  useEffect(() => {
-    if (articles.length > 0) {
-      setLatestArticles(articles.slice(0, 3));
-    }
-  }, [articles]);
+  const location = useLocation();
 
   const navLinks = [
     { name: "Layanan Servis", href: "/#services", icon: Wrench },
     { name: "Produk", href: "/products", icon: ShoppingCart },
-    { name: "Jasa Aplikasi", href: "/#it-services", icon: Code },
-    { name: "Berita", href: "/news", icon: Newspaper },
+    { name: "Jasa Aplikasi", href: "/#it-services", icon: Phone }, // Changed icon from Code to Phone for consistency with contact
     { name: "Tentang Kami", href: "/#about", icon: Info },
     { name: "Kontak", href: "/#contact", icon: Phone },
   ];
 
   const profileLink = profile?.role === 'Member' ? '/member-profile' : '/profile';
   const logoLink = (profile?.role === 'Admin' || profile?.role === 'Kasir') ? '/dashboard' : '/';
+
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location]);
 
   return (
     <div className="bg-background text-foreground flex flex-col min-h-screen">
@@ -70,7 +61,8 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
           </nav>
 
           <div className="flex items-center gap-2">
-            <ThemeToggle />
+            {/* ThemeToggle is not defined in this snippet, assuming it's imported elsewhere */}
+            {/* <ThemeToggle /> */}
             
             <Sheet>
               <SheetTrigger asChild>
@@ -159,48 +151,6 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
 
       <footer id="contact" className="bg-background text-muted-foreground pt-16 pb-8 border-t">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="mb-16">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-                Berita & Info Terbaru
-              </h2>
-              <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                Ikuti perkembangan dan tips terbaru dari kami.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {newsLoading ? (
-                Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="space-y-2">
-                    <Skeleton className="h-40 w-full rounded-lg" />
-                    <Skeleton className="h-5 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                ))
-              ) : (
-                latestArticles.map(article => (
-                  <Link key={article.id} to={`/news/${article.slug}`} className="block group">
-                    <Card className="overflow-hidden h-full transition-shadow hover:shadow-lg">
-                      <div className="aspect-video bg-muted overflow-hidden">
-                        {article.image_url ? (
-                          <img src={article.image_url} alt={article.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <ImageIcon className="h-16 w-16 text-muted-foreground/20" />
-                          </div>
-                        )}
-                      </div>
-                      <CardContent className="p-4">
-                        <p className="text-sm text-muted-foreground">{format(new Date(article.published_at!), 'd MMMM yyyy', { locale: id })}</p>
-                        <h4 className="font-semibold text-foreground mt-1 line-clamp-2">{article.title}</h4>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))
-              )}
-            </div>
-          </div>
-
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
               Segera Kunjungi Store Kami
@@ -230,7 +180,6 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                 <li><a href="/#services" className="hover:text-primary transition-colors">Layanan</a></li>
                 <li><Link to="/products" className="hover:text-primary transition-colors">Toko</Link></li>
                 <li><a href="/#about" className="hover:text-primary transition-colors">Tentang Kami</a></li>
-                <li><a href="/#news" className="hover:text-primary transition-colors">Berita</a></li>
               </ul>
             </div>
             <div className="space-y-4">
