@@ -457,10 +457,10 @@ const ServicePage = () => {
       </div>
 
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Nota Service</DialogTitle></DialogHeader>
+        <DialogContent className="sm:max-w-md print:p-0 print:border-none print:shadow-none">
+          <DialogHeader className="print:hidden"><DialogTitle>Nota Service</DialogTitle></DialogHeader>
           {lastTransaction && <ServiceReceipt ref={receiptRef} transaction={lastTransaction} />}
-          <DialogFooter className="sm:justify-between gap-2">
+          <DialogFooter className="sm:justify-between gap-2 print:hidden">
             <Button type="button" variant="secondary" onClick={handleNewTransaction}><FilePlus2 className="mr-2 h-4 w-4" /> Transaksi Baru</Button>
             <div className="flex gap-2">
               <Button type="button" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Unduh</Button>

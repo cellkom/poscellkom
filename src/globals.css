@@ -100,16 +100,30 @@
 }
 
 @media print {
-  body * {
-    visibility: hidden;
+  /* Reset layout for printing reports from the dashboard */
+  .dashboard-main-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
   }
-  #receipt-print-area, #receipt-print-area * {
-    visibility: visible;
-  }
+
+  /* Ensure the receipt is positioned correctly for printing */
   #receipt-print-area {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+  }
+
+  /* General page setup for printing */
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background-image: none;
   }
 }

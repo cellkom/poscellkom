@@ -139,7 +139,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <div className="min-h-screen w-full">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm print:hidden">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-4">
             {isMobile && (
@@ -204,7 +204,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
         </div>
       </header>
-      <main className="flex-grow container mx-auto p-4 md:p-6">
+      <main className="flex-grow container mx-auto p-4 md:p-6 dashboard-main-content">
         {children}
       </main>
     </div>

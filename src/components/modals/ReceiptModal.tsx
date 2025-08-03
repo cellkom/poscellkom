@@ -45,11 +45,11 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, entry }) =
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md print:p-0 print:border-none print:shadow-none">
+        <DialogHeader className="print:hidden">
           <DialogTitle>Tanda Terima Service</DialogTitle>
         </DialogHeader>
-        <div className="max-h-[70vh] overflow-y-auto p-2">
+        <div className="max-h-[70vh] overflow-y-auto p-2 print:max-h-none print:overflow-visible print:p-0">
           <ServiceMasukReceipt ref={receiptRef} entry={{
             id: String(entry.id),
             date: new Date(entry.date),
@@ -63,7 +63,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, entry }) =
             infoDate: entry.info_date ? new Date(entry.info_date) : null,
           }} />
         </div>
-        <DialogFooter className="sm:justify-between gap-2">
+        <DialogFooter className="sm:justify-between gap-2 print:hidden">
           <Button type="button" variant="secondary" onClick={onClose}>Tutup</Button>
           <div className="flex gap-2">
             <Button type="button" onClick={handleDownload}>
