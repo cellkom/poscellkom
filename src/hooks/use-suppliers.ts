@@ -69,6 +69,7 @@ export const useSuppliers = () => {
             return null;
         }
         showSuccess("Supplier baru berhasil ditambahkan!");
+        setSuppliers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
         return data;
     };
 
@@ -85,6 +86,7 @@ export const useSuppliers = () => {
             return null;
         }
         showSuccess("Data supplier berhasil diperbarui!");
+        setSuppliers(prev => prev.map(s => s.id === id ? data : s));
         return data;
     };
 
@@ -99,6 +101,7 @@ export const useSuppliers = () => {
             return false;
         }
         showSuccess("Supplier berhasil dihapus!");
+        setSuppliers(prev => prev.filter(s => s.id !== id));
         return true;
     };
 

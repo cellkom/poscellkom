@@ -157,7 +157,9 @@ export const useStock = () => {
       return null;
     }
     showSuccess("Produk baru berhasil ditambahkan!");
-    return data ? fromDbProduct(data) : null;
+    const newProduct = fromDbProduct(data);
+    setProducts(prev => [...prev, newProduct].sort((a, b) => a.name.localeCompare(b.name)));
+    return newProduct;
   };
 
   const updateProduct = async (id: string, updatedFields: Partial<Omit<Product, 'id' | 'createdAt'>>, imageFile: File | null) => {
@@ -191,7 +193,9 @@ export const useStock = () => {
       return null;
     }
     showSuccess("Data produk berhasil diperbarui!");
-    return data ? fromDbProduct(data) : null;
+    const updatedProduct = fromDbProduct(data);
+    setProducts(prev => prev.map(p => p.id === id ? updatedProduct : p));
+    return updatedProduct;
   };
 
   const deleteProduct = async (id: string) => {
@@ -210,6 +214,7 @@ export const useStock = () => {
       return false;
     }
     showSuccess("Produk berhasil dihapus!");
+    setProducts(prev => prev.filter(p => p.id !== id));
     return true;
   };
 
@@ -254,7 +259,9 @@ export const useStock = () => {
       return null;
     }
     showSuccess("Stok berhasil diperbarui!");
-    return data ? fromDbProduct(data) : null;
+    const updatedProduct = fromDbProduct(data);
+    setProducts(prev => prev.map(p => p.id === productId ? updatedProduct : p));
+    return updatedProduct;
   };
 
   return {

@@ -70,6 +70,7 @@ export const useCustomers = () => {
             return null;
         }
         showSuccess("Pelanggan baru berhasil ditambahkan!");
+        setCustomers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
         return data;
     };
 
@@ -86,6 +87,7 @@ export const useCustomers = () => {
             return null;
         }
         showSuccess("Data pelanggan berhasil diperbarui!");
+        setCustomers(prev => prev.map(c => c.id === id ? data : c));
         return data;
     };
 
@@ -104,6 +106,7 @@ export const useCustomers = () => {
             return false;
         }
         showSuccess("Pelanggan berhasil dihapus!");
+        setCustomers(prev => prev.filter(c => c.id !== id));
         return true;
     };
 
