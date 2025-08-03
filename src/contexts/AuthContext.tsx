@@ -92,18 +92,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      
-      if (currentUser) {
-        const currentProfile = await fetchProfile(currentUser);
-        setProfile(currentProfile);
-      } else {
+      try {
+        setSession(session);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        
+        if (currentUser) {
+          const currentProfile = await fetchProfile(currentUser);
+          setProfile(currentProfile);
+        } else {
+          setProfile(null);
+        }
+      } catch (e) {
+        console.error("Error in onAuthStateChange handler:", e);
         setProfile(null);
+      } finally {
+        setLoading(false);
       }
-      // Set loading to false only after the initial check is complete.
-      setLoading(false);
     });
 
     return () => {

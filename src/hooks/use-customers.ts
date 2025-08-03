@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
 
@@ -14,23 +14,23 @@ export const useCustomers = () => {
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const fetchCustomers = useCallback(async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('customers')
+            .select('*')
+            .order('name', { ascending: true });
+
+        if (error) {
+            showError(`Gagal memuat data pelanggan: ${error.message}`);
+            console.error(error);
+        } else {
+            setCustomers(data || []);
+        }
+        setLoading(false);
+    }, []);
+
     useEffect(() => {
-        const fetchCustomers = async () => {
-            setLoading(true);
-            const { data, error } = await supabase
-                .from('customers')
-                .select('*')
-                .order('name', { ascending: true });
-
-            if (error) {
-                showError(`Gagal memuat data pelanggan: ${error.message}`);
-                console.error(error);
-            } else {
-                setCustomers(data || []);
-            }
-            setLoading(false);
-        };
-
         fetchCustomers();
 
         const channel = supabase
@@ -38,19 +38,8 @@ export const useCustomers = () => {
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'customers' },
-                (payload) => {
-                    if (payload.eventType === 'INSERT') {
-                        setCustomers(prev => {
-                            if (prev.some(c => c.id === payload.new.id)) return prev;
-                            return [...prev, payload.new as Customer].sort((a, b) => a.name.localeCompare(b.name))
-                        });
-                    }
-                    if (payload.eventType === 'UPDATE') {
-                        setCustomers(prev => prev.map(c => c.id === payload.new.id ? payload.new as Customer : c));
-                    }
-                    if (payload.eventType === 'DELETE') {
-                        setCustomers(prev => prev.filter(c => c.id !== (payload.old as Customer).id));
-                    }
+                () => {
+                    fetchCustomers();
                 }
             )
             .subscribe();
@@ -58,7 +47,7 @@ export const useCustomers = () => {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, []);
+    }, [fetchCustomers]);
 
     const addCustomer = async (newCustomerData: { name: string; phone: string | null; address: string | null; }) => {
         const { data, error } = await supabase
@@ -73,8 +62,7 @@ export const useCustomers = () => {
             return null;
         }
         showSuccess("Pelanggan baru berhasil ditambahkan!");
-        // Manually update state for immediate UI feedback
-        setCustomers(prev => [...prev, data as Customer].sort((a, b) => a.name.localeCompare(b.name)));
+        // The realtime subscription will call fetchCustomers, so no manual update needed.
         return data;
     };
 
