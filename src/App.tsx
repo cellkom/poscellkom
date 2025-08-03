@@ -12,6 +12,8 @@ import PublicPage from './pages/PublicPage';
 import ProductsPage from './pages/ProductsPage';
 import MemberProfilePage from './pages/MemberProfilePage';
 import ServiceTrackingPage from './pages/ServiceTrackingPage';
+import NewsPage from './pages/NewsPage'; // New import
+import NewsDetailPage from './pages/NewsDetailPage'; // New import
 
 // Auth Pages
 import LoginPage from './pages/Auth/LoginPage';
@@ -34,6 +36,7 @@ import TodayReportPage from './pages/Dashboard/Reports/TodayReportPage';
 import UserProfilePage from './pages/UserProfilePage';
 import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
 import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
+import NewsManagementPage from './pages/Dashboard/NewsManagementPage'; // New import
 
 interface ProtectedRouteProps {
   children: JSX.Element;
@@ -67,6 +70,8 @@ function App() {
               {/* Public & Auth Routes */}
               <Route path="/" element={<PublicPage />} />
               <Route path="/products" element={<ProductsPage />} />
+              <Route path="/news" element={<NewsPage />} /> {/* New Public News List */}
+              <Route path="/news/:slug" element={<NewsDetailPage />} /> {/* New Public News Detail */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/member-login" element={<MemberLoginPage />} />
               <Route path="/tracking" element={<ServiceTrackingPage />} />
@@ -114,8 +119,8 @@ function App() {
               <Route path="/dashboard/reports/sales" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><SalesReportPage /></DashboardLayout></ProtectedRoute>} />
               <Route path="/dashboard/reports/service" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><ServiceReportPage /></DashboardLayout></ProtectedRoute>} />
 
-              {/* Other Admin Routes */}
-              {/* <Route path="/dashboard/news" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><NewsManagementPage /></DashboardLayout></ProtectedRoute>} /> */}
+              {/* News Management */}
+              <Route path="/dashboard/news" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><NewsManagementPage /></DashboardLayout></ProtectedRoute>} />
 
             </Routes>
             <Toaster />
