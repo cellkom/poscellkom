@@ -1,201 +1,220 @@
-import { useState } from "react";
-import PublicLayout from "@/components/Layout/PublicLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Loader2, AlertCircle, Eye } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
-import ReceiptModal from "@/components/modals/ReceiptModal"; // Import ReceiptModal
-import { ServiceEntryWithCustomer } from "@/hooks/use-service-entries"; // Use the extended interface
+import { Loader2 } from 'lucide-react';
+import { showError } from '@/utils/toast';
 
-type ServiceStatus = 'Pending' | 'Proses' | 'Selesai' | 'Gagal/Cancel' | 'Sudah Diambil'; // Updated to match ServiceEntry status types
+type ServiceStatus = 'Pending' | 'Proses' | 'Selesai' | 'Gagal/Cancel' | 'Sudah Diambil';
+
+interface ServiceEntryDetail {
+  id: string;
+  created_at: string;
+  customer_id: string;
+  kasir_id: string;
+  category: string | null;
+  device_type: string | null;
+  damage_type: string | null;
+  description: string | null;
+  status: ServiceStatus;
+  date: string;
+  service_info: string | null;
+  info_date: string | null; // Ensure this is included
+  customers: {
+    name: string;
+    phone: string;
+    address: string | null;
+  } | null;
+  users: {
+    full_name: string;
+  } | null;
+}
+
+const getStatusBadgeVariant = (status: ServiceStatus) => {
+  switch (status) {
+    case 'Pending':
+      return 'secondary';
+    case 'Proses':
+      return 'default';
+    case 'Selesai':
+    case 'Sudah Diambil':
+      return 'default';
+    case 'Gagal/Cancel':
+      return 'destructive';
+    default:
+      return 'outline';
+  }
+};
 
 const ServiceTrackingPage = () => {
-  const [serviceId, setServiceId] = useState("");
-  const [serviceData, setServiceData] = useState<ServiceEntryWithCustomer | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { id: serviceId } = useParams<{ id: string }>();
+  const [serviceEntry, setServiceEntry] = useState<ServiceEntryDetail | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searched, setSearched] = useState(false);
-  const [isReceiptModalOpen, setReceiptModalOpen] = useState(false); // State for receipt modal
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!serviceId) {
-      setError("Silakan masukkan ID Servis Anda.");
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    setServiceData(null);
-    setSearched(true);
-
-    try {
-      // Ensure serviceId is a number for the edge function if it expects a number
-      const parsedServiceId = parseInt(serviceId, 10);
-      if (isNaN(parsedServiceId)) {
-        throw new Error("ID Servis tidak valid. Harap masukkan angka.");
+  useEffect(() => {
+    const fetchServiceEntry = async () => {
+      if (!serviceId) {
+        setError("ID Servis tidak ditemukan.");
+        setLoading(false);
+        return;
       }
 
-      const { data, error: functionError } = await supabase.functions.invoke('get-service-status', {
-        body: { serviceId: parsedServiceId }, // Pass the parsed number
-      });
+      setLoading(true);
+      setError(null);
 
-      if (functionError) {
-        throw new Error("ID Servis tidak ditemukan atau terjadi kesalahan pada server.");
-      }
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      const { data, error } = await supabase
+        .from('service_entries')
+        .select(`
+          *,
+          customers (name, phone, address),
+          users (full_name)
+        `)
+        .eq('id', serviceId)
+        .single();
 
-      if (data) {
-        // Map the data to ServiceEntryWithCustomer interface
-        const formattedData: ServiceEntryWithCustomer = {
-          ...data,
-          customerName: data.customers?.name || 'N/A',
-          customerPhone: data.customers?.phone || 'N/A',
-        };
-        setServiceData(formattedData);
+      if (error) {
+        console.error("Error fetching service entry:", error);
+        showError("Gagal memuat detail servis: " + error.message);
+        setError("Gagal memuat detail servis. Pastikan ID servis benar.");
+        setServiceEntry(null);
+      } else if (data) {
+        setServiceEntry(data);
       } else {
-        throw new Error("Data servis tidak ditemukan.");
+        setError("Servis tidak ditemukan.");
+        setServiceEntry(null);
       }
-
-    } catch (err: any) {
-      console.error("Error fetching service status:", err);
-      setError(err.message || "Gagal melacak servis. Pastikan ID sudah benar.");
-      toast.error("Gagal melacak status servis.");
-    } finally {
       setLoading(false);
-    }
-  };
+    };
 
-  const getStatusColor = (status: ServiceStatus) => {
-    switch (status) {
-      case 'Pending':
-        return 'bg-yellow-500 hover:bg-yellow-600';
-      case 'Proses':
-        return 'bg-indigo-500 hover:bg-indigo-600';
-      case 'Selesai':
-        return 'bg-green-500 hover:bg-green-600';
-      case 'Sudah Diambil':
-        return 'bg-gray-500 hover:bg-gray-600';
-      case 'Gagal/Cancel':
-        return 'bg-red-500 hover:bg-red-600';
-      default:
-        return 'bg-gray-400 hover:bg-gray-500';
-    }
-  };
+    fetchServiceEntry();
+  }, [serviceId]);
 
-  const handleViewReceipt = () => {
-    if (serviceData) {
-      setReceiptModalOpen(true);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Memuat data servis...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center text-red-500">Error</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p>{error}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!serviceEntry) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">Servis Tidak Ditemukan</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p>Data servis dengan ID ini tidak ditemukan.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <PublicLayout>
-      <div className="container mx-auto px-4 py-8 md:py-16">
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardHeader className="text-center">
-              <CardTitle className="text-3xl">Lacak Status Servis</CardTitle>
-              <CardDescription>Masukkan ID Servis Anda untuk melihat progres perbaikan perangkat Anda.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-grow">
-                  <Label htmlFor="serviceId" className="sr-only">ID Servis</Label>
-                  <Input
-                    id="serviceId"
-                    type="text"
-                    placeholder="Contoh: 123"
-                    value={serviceId}
-                    onChange={(e) => setServiceId(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Lacak
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {loading && (
-            <div className="text-center mt-8">
-              <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-              <p className="mt-2 text-muted-foreground">Mencari data servis...</p>
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+      <Card className="w-full max-w-3xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center">Detail Servis</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm text-muted-foreground">No. Servis</Label>
+              <p className="text-lg font-medium">SVC-{serviceEntry.id}</p>
             </div>
-          )}
+            <div>
+              <Label className="text-sm text-muted-foreground">Status Servis</Label>
+              <Badge variant={getStatusBadgeVariant(serviceEntry.status)} className="text-lg px-3 py-1">
+                {serviceEntry.status}
+              </Badge>
+            </div>
+          </div>
 
-          {error && !loading && (
-            <Card className="mt-8 border-destructive">
-              <CardHeader className="flex flex-row items-center gap-4">
-                <AlertCircle className="h-8 w-8 text-destructive" />
-                <div>
-                  <CardTitle className="text-destructive">Gagal Melacak</CardTitle>
-                  <CardDescription className="text-destructive/80">{error}</CardDescription>
-                </div>
-              </CardHeader>
-            </Card>
-          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm text-muted-foreground">Tanggal Masuk</Label>
+              <p className="text-lg font-medium">{format(new Date(serviceEntry.date), 'dd MMMM yyyy', { locale: id })}</p>
+            </div>
+            <div>
+              <Label className="text-sm text-muted-foreground">Tanggal di Infokan</Label>
+              <p className="text-lg font-medium">
+                {serviceEntry.info_date ? format(new Date(serviceEntry.info_date), 'dd MMMM yyyy', { locale: id }) : '-'}
+              </p>
+            </div>
+          </div>
 
-          {!loading && !error && serviceData && (
-            <Card className="mt-8">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle>Detail Servis #SVC-{serviceData.id}</CardTitle>
-                    <CardDescription>
-                      Atas nama: {serviceData.customerName || 'N/A'}
-                    </CardDescription>
-                  </div>
-                  <Badge className={`${getStatusColor(serviceData.status)} text-white`}>{serviceData.status}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="grid gap-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Tanggal Masuk</Label>
-                    <p className="font-medium">{format(new Date(serviceData.date), 'd MMMM yyyy, HH:mm', { locale: id })}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Tipe Perangkat</Label>
-                    <p className="font-medium">{serviceData.device_type}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Info Status</Label>
-                    <p className="font-medium">{serviceData.service_info || '-'}</p>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Keluhan</Label>
-                  <p className="font-medium">{serviceData.description}</p>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button onClick={handleViewReceipt}>
-                  <Eye className="mr-2 h-4 w-4" /> Lihat Struk
-                </Button>
-              </CardFooter>
-            </Card>
-          )}
-        </div>
-      </div>
-      {serviceData && (
-        <ReceiptModal
-          isOpen={isReceiptModalOpen}
-          onClose={() => setReceiptModalOpen(false)}
-          entry={serviceData}
-        />
-      )}
-    </PublicLayout>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm text-muted-foreground">Nama Pelanggan</Label>
+              <p className="text-lg font-medium">{serviceEntry.customers?.name || 'N/A'}</p>
+            </div>
+            <div>
+              <Label className="text-sm text-muted-foreground">Nomor Telepon</Label>
+              <p className="text-lg font-medium">{serviceEntry.customers?.phone || 'N/A'}</p>
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-sm text-muted-foreground">Alamat Pelanggan</Label>
+            <p className="text-lg font-medium">{serviceEntry.customers?.address || 'N/A'}</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm text-muted-foreground">Kategori Perangkat</Label>
+              <p className="text-lg font-medium">{serviceEntry.category || 'N/A'}</p>
+            </div>
+            <div>
+              <Label className="text-sm text-muted-foreground">Tipe Perangkat</Label>
+              <p className="text-lg font-medium">{serviceEntry.device_type || 'N/A'}</p>
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-sm text-muted-foreground">Jenis Kerusakan</Label>
+            <p className="text-lg font-medium">{serviceEntry.damage_type || 'N/A'}</p>
+          </div>
+
+          <div>
+            <Label className="text-sm text-muted-foreground">Deskripsi Kerusakan</Label>
+            <p className="text-lg font-medium">{serviceEntry.description || 'N/A'}</p>
+          </div>
+
+          <div>
+            <Label className="text-sm text-muted-foreground">Info Status Servis</Label>
+            <p className="text-lg font-medium">{serviceEntry.service_info || 'Belum ada info'}</p>
+          </div>
+
+          <div>
+            <Label className="text-sm text-muted-foreground">Ditangani Oleh</Label>
+            <p className="text-lg font-medium">{serviceEntry.users?.full_name || 'N/A'}</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
