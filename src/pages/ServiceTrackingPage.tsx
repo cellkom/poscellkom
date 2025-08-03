@@ -91,6 +91,17 @@ const ServiceTrackingPage = () => {
     }
   };
 
+  const getServiceInfoBadgeColor = (info: string | null) => {
+    switch (info) {
+      case 'Sedang proses':
+        return 'bg-blue-500 hover:bg-blue-600';
+      case 'Telah Selesai':
+        return 'bg-green-500 hover:bg-green-600';
+      default:
+        return 'bg-gray-400 hover:bg-gray-500';
+    }
+  };
+
   const handleViewReceipt = () => {
     if (serviceData) {
       setReceiptModalOpen(true);
@@ -175,7 +186,9 @@ const ServiceTrackingPage = () => {
                   </div>
                   <div>
                     <Label className="text-sm text-muted-foreground">Info Status</Label>
-                    <p className="font-medium">{serviceData.service_info || '-'}</p>
+                    <Badge className={`${getServiceInfoBadgeColor(serviceData.service_info)} text-white font-bold`}>
+                      {serviceData.service_info || '-'}
+                    </Badge>
                   </div>
                   {serviceData.info_date && (
                     <div>
