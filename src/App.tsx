@@ -38,6 +38,7 @@ import UserProfilePage from './pages/UserProfilePage';
 import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
 import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
 import NewsManagementPage from './pages/Dashboard/NewsManagementPage';
+import SettingsPage from './pages/Dashboard/SettingsPage';
 
 interface ProtectedRouteProps {
   children: JSX.Element;
@@ -123,6 +124,7 @@ function App() {
 
               {/* Other Admin Routes */}
               <Route path="/dashboard/news" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><NewsManagementPage /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/dashboard/settings" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><SettingsPage /></DashboardLayout></ProtectedRoute>} />
 
             </Routes>
             <Toaster />

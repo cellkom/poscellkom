@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard, Code, Image as ImageIcon } from "lucide-react";
-import logoSrc from '/logo.png';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ReactNode, useEffect, useState } from "react";
@@ -17,6 +16,7 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSettings } from "@/hooks/use-settings";
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
@@ -24,6 +24,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
   const { cartCount } = useCart();
   const { articles, loading: newsLoading, fetchArticles } = useNews();
   const [latestArticles, setLatestArticles] = useState<NewsArticle[]>([]);
+  const { settings } = useSettings();
 
   useEffect(() => {
     fetchArticles();
@@ -52,12 +53,13 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link to={logoLink} className="flex items-center gap-2">
-            <img src={logoSrc} alt="Cellkom.Store Logo" className="h-10 w-auto" />
+            <img src={settings.logoUrl || '/logo.png'} alt="App Logo" className="h-10 w-auto" />
             <div>
               <h1 className="text-lg md:text-xl font-bold font-poppins">
-                <span className="text-primary">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
+                <span className="text-primary">{settings.appName ? settings.appName.split('.')[0] : 'Cellkom'}</span>
+                <span className="font-semibold text-muted-foreground">{settings.appName && settings.appName.includes('.') ? `.${settings.appName.split('.')[1]}`: '.Store'}</span>
               </h1>
-              <p className="hidden md:block text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
+              <p className="hidden md:block text-xs text-muted-foreground -mt-1">{settings.appDescription || 'Pusat Service HP dan Komputer'}</p>
             </div>
           </Link>
           
@@ -215,13 +217,13 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="space-y-4">
               <Link to="/" className="flex items-center gap-3">
-                <img src={logoSrc} alt="Cellkom.Store Logo" className="h-8 w-auto" />
+                <img src={settings.logoUrl || '/logo.png'} alt="App Logo" className="h-8 w-auto" />
                 <span className="text-xl font-bold font-poppins">
-                  <span className="text-foreground">Cellkom</span><span className="font-semibold text-muted-foreground">.Store</span>
+                  <span className="text-foreground">{settings.appName || 'Cellkom.Store'}</span>
                 </span>
               </Link>
               <p className="text-sm">
-                Pusat Servis HP dan Komputer Terpercaya. Cepat, Profesional, dan Bergaransi.
+                {settings.appDescription || 'Pusat Servis HP dan Komputer Terpercaya. Cepat, Profesional, dan Bergaransi.'}
               </p>
             </div>
             <div className="space-y-4">

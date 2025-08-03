@@ -1,13 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, LayoutDashboard, Package, ShoppingCart, Database, FileText, Users, UserCircle, Receipt, Wrench, CreditCard, ChevronDown, ClipboardPlus, Truck, Newspaper } from "lucide-react";
+import { Menu, LayoutDashboard, Package, ShoppingCart, Database, FileText, Users, UserCircle, Receipt, Wrench, CreditCard, ChevronDown, ClipboardPlus, Truck, Newspaper, Settings } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import logoSrc from '/logo.png';
+import { useSettings } from "@/hooks/use-settings";
 import type { ReactNode, ForwardRefExoticComponent, RefAttributes } from "react";
 import type { LucideProps } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
@@ -58,12 +58,14 @@ const navItems: NavItem[] = [
   },
   { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
   { name: "Manajemen Berita", icon: Newspaper, path: "/dashboard/news" },
+  { name: "Pengaturan", icon: Settings, path: "/dashboard/settings" },
 ];
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const isMobile = useIsMobile();
   const location = useLocation();
   const { profile, signOut } = useAuth();
+  const { settings } = useSettings();
 
   const renderNavLinks = (isMobileNav = false) => {
     const nav = navItems.map((item) => {
@@ -121,7 +123,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         );
       }
 
-      if (item.path === '/dashboard/reports' || item.path === '/dashboard/news') {
+      if (item.path === '/dashboard/reports' || item.path === '/dashboard/news' || item.path === '/dashboard/settings') {
           if (profile?.role !== 'Admin') return null;
       }
 
@@ -152,10 +154,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <SheetContent side="left" className="w-64 p-4">
                   <div className="mb-6">
                     <Link to="/" className="flex items-center gap-3">
-                      <img src={logoSrc} alt="Cellkom.Store Logo" className="h-12 w-auto" />
+                      <img src={settings.logoUrl || '/logo.png'} alt="App Logo" className="h-12 w-auto" />
                       <div>
-                        <h1 className="text-lg font-bold text-primary font-poppins">Cellkom.Store</h1>
-                        <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
+                        <h1 className="text-lg font-bold text-primary font-poppins">{settings.appName || 'Cellkom.Store'}</h1>
+                        <p className="text-xs text-muted-foreground -mt-1">{settings.appDescription || 'Pusat Service HP dan Komputer'}</p>
                       </div>
                     </Link>
                   </div>
@@ -164,10 +166,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </Sheet>
             )}
             <Link to="/" className="flex items-center gap-3">
-              <img src={logoSrc} alt="Cellkom.Store Logo" className="h-12 w-auto" />
+              <img src={settings.logoUrl || '/logo.png'} alt="App Logo" className="h-12 w-auto" />
               <div className="hidden md:block">
-                <h1 className="text-lg font-bold text-primary font-poppins">Cellkom.Store</h1>
-                <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
+                <h1 className="text-lg font-bold text-primary font-poppins">{settings.appName || 'Cellkom.Store'}</h1>
+                <p className="text-xs text-muted-foreground -mt-1">{settings.appDescription || 'Pusat Service HP dan Komputer'}</p>
               </div>
             </Link>
           </div>
