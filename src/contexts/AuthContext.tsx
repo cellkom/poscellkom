@@ -91,21 +91,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user, fetchProfile]);
 
   useEffect(() => {
-    setLoading(true);
-    
-    // Dapatkan sesi awal saat aplikasi dimuat
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        const currentProfile = await fetchProfile(currentUser);
-        setProfile(currentProfile);
-      }
-      setLoading(false); // Set loading ke false setelah pemeriksaan awal
-    });
-
-    // Siapkan listener untuk perubahan selanjutnya
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       const currentUser = session?.user ?? null;
@@ -115,9 +100,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const currentProfile = await fetchProfile(currentUser);
         setProfile(currentProfile);
       } else {
-        // Ini menangani logout
         setProfile(null);
       }
+      // Set loading to false only after the initial check is complete.
       setLoading(false);
     });
 
