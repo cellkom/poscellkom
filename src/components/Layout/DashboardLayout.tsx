@@ -1,111 +1,198 @@
-import { useState } from "react";
-import { Link, useLocation, Outlet } from "react-router-dom"; // Import Outlet
-import { cn } from "@/lib/utils";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Menu, LayoutDashboard, Package, ShoppingCart, Database, FileText, Users, UserCircle, Receipt, Wrench, CreditCard, ChevronDown, ClipboardPlus, Truck, Newspaper } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Home, Package, Users, Settings, BarChart, Wrench, Newspaper } from "lucide-react"; // Added Newspaper icon
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import logoSrc from '/logo.png';
+import type { ReactNode, ForwardRefExoticComponent, RefAttributes } from "react";
+import type { LucideProps } from "lucide-react";
+import { ThemeToggle } from "../ThemeToggle";
 
-const navItems = [
-  {
-    name: "Dashboard",
-    path: "/dashboard",
-    icon: Home,
+interface DashboardLayoutProps {
+  children: ReactNode;
+}
+
+type IconType = ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
+
+interface NavSubItem {
+    name: string;
+    icon: IconType;
+    path: string;
+}
+
+interface NavItem {
+    name: string;
+    icon: IconType;
+    path: string;
+    subItems?: NavSubItem[];
+}
+
+const navItems: NavItem[] = [
+  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+  { name: "Stok", icon: Package, path: "/dashboard/stock" },
+  { name: "Service Masuk", icon: ClipboardPlus, path: "/dashboard/service-masuk" },
+  { 
+    name: "Transaksi", 
+    icon: Receipt,
+    path: "/dashboard/transaction", // Base path for active state
+    subItems: [
+        { name: "Penjualan", icon: ShoppingCart, path: "/dashboard/transaction/sales" },
+        { name: "Jasa Service", icon: Wrench, path: "/dashboard/transaction/service" },
+        { name: "Kelola Cicilan", icon: CreditCard, path: "/dashboard/transaction/installments" },
+    ]
   },
-  {
-    name: "Produk",
-    path: "/dashboard/stock", // Corrected path to stock
-    icon: Package,
+  { 
+    name: "Data", 
+    icon: Database, 
+    path: "/dashboard/data",
+    subItems: [
+        { name: "Pelanggan", icon: Users, path: "/dashboard/data/customers" },
+        { name: "Supplier", icon: Truck, path: "/dashboard/data/suppliers" },
+        { name: "Users", icon: Users, path: "/dashboard/data/users" },
+    ]
   },
-  {
-    name: "Pelanggan",
-    path: "/dashboard/customers",
-    icon: Users,
-  },
-  {
-    name: "Service Masuk",
-    path: "/dashboard/service-masuk",
-    icon: Wrench,
-  },
-  {
-    name: "Manajemen Berita",
-    path: "/dashboard/news",
-    icon: Newspaper,
-  },
-  {
-    name: "Pengaturan",
-    path: "/dashboard/settings",
-    icon: Settings,
-  },
+  { name: "Laporan", icon: FileText, path: "/dashboard/reports" },
+  { name: "Manajemen Berita", icon: Newspaper, path: "/dashboard/news" },
 ];
 
-// Removed DashboardLayoutProps interface as children are handled by Outlet
-const DashboardLayout: React.FC = () => { // Removed children from props
+const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+  const isMobile = useIsMobile();
   const location = useLocation();
-  const [isMobileNavOpen, setIsMobileNav] = useState(false); // Renamed state variable for consistency
+  const { profile, signOut } = useAuth();
 
-  return (
-    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <div className="hidden border-r bg-muted/40 md:block">
-        <div className="flex h-full max-h-screen flex-col gap-2">
-          <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-            <Link to="/" className="flex items-center gap-2 font-semibold">
-              <BarChart className="h-6 w-6" />
-              <span className="">POS System</span>
-            </Link>
-          </div>
-          <div className="flex-1">
-            <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-              {navItems.map((item) => (
-                <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname === item.path && "bg-primary-foreground/10")}>
-                  <Link to={item.path!} className="flex items-center gap-2">
-                    <item.icon className="h-4 w-4" />
-                    {item.name}
+  const renderNavLinks = (isMobileNav = false) => {
+    const nav = navItems.map((item) => {
+      if (item.subItems) {
+        const visibleSubItems = item.subItems;
+        if (visibleSubItems.length === 0) return null;
+
+        return isMobileNav ? (
+          <Collapsible key={item.name}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-between hover:bg-background/20">
+                <div className="flex items-center gap-2">
+                  <item.icon className="h-4 w-4" />
+                  {item.name}
+                </div>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pl-6 space-y-1 mt-1">
+              {visibleSubItems.map(subItem => (
+                <Button key={subItem.name} variant="ghost" asChild className="w-full justify-start hover:bg-background/20">
+                  <Link to={subItem.path} className="flex items-center gap-2">
+                    <subItem.icon className="h-4 w-4" />
+                    {subItem.name}
                   </Link>
                 </Button>
               ))}
-            </nav>
+            </CollapsibleContent>
+          </Collapsible>
+        ) : (
+          <DropdownMenu key={item.name}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className={cn("hover:bg-primary-foreground/10", location.pathname.startsWith(item.path) && "bg-primary-foreground/10")}>
+                <item.icon className="h-4 w-4 mr-2" />
+                {item.name}
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {visibleSubItems.map(subItem => (
+                <DropdownMenuItem key={subItem.name} asChild>
+                  <Link to={subItem.path} className="flex items-center gap-2 cursor-pointer">
+                    <subItem.icon className="h-4 w-4" />
+                    {subItem.name}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      }
+
+      return (
+        <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname === item.path && "bg-primary-foreground/10", isMobileNav && "justify-start")}>
+          <Link to={item.path!} className="flex items-center gap-2">
+            <item.icon className="h-4 w-4" />
+            {item.name}
+          </Link>
+        </Button>
+      );
+    });
+    return nav;
+  };
+
+  return (
+    <div className="min-h-screen w-full">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center gap-4">
+            {isMobile && (
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-64 p-4">
+                  <div className="mb-6">
+                    <Link to="/" className="flex items-center gap-3">
+                      <img src={logoSrc} alt="Cellkom.Store Logo" className="h-12 w-auto" />
+                      <div>
+                        <h1 className="text-lg font-bold text-primary font-poppins">Cellkom.Store</h1>
+                        <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
+                      </div>
+                    </Link>
+                  </div>
+                  <nav className="flex flex-col space-y-1">{renderNavLinks(true)}</nav>
+                </SheetContent>
+              </Sheet>
+            )}
+            <Link to="/" className="flex items-center gap-3">
+              <img src={logoSrc} alt="Cellkom.Store Logo" className="h-12 w-auto" />
+              <div className="hidden md:block">
+                <h1 className="text-lg font-bold text-primary font-poppins">Cellkom.Store</h1>
+                <p className="text-xs text-muted-foreground -mt-1">Pusat Service HP dan Komputer</p>
+              </div>
+            </Link>
+          </div>
+          {!isMobile && <nav className="hidden md:flex items-center space-x-1">{renderNavLinks()}</nav>}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2">
+                  <UserCircle className="h-6 w-6" />
+                  <span className="hidden md:inline">{profile?.full_name || 'User'}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{profile?.role}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut} className="cursor-pointer">
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-      </div>
-      <div className="flex flex-col">
-        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-          <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNav}>
-            <SheetTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="shrink-0 md:hidden"
-              >
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col">
-              <nav className="grid gap-2 text-lg font-medium">
-                <Link to="#" className="flex items-center gap-2 text-lg font-semibold mb-4">
-                  <BarChart className="h-6 w-6" />
-                  <span className="sr-only">POS System</span>
-                </Link>
-                {navItems.map((item) => (
-                  <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname === item.path && "bg-primary-foreground/10", "justify-start")} onClick={() => setIsMobileNav(false)}>
-                    <Link to={item.path!} className="flex items-center gap-2">
-                      <item.icon className="h-4 w-4" />
-                      {item.name}
-                    </Link>
-                  </Button>
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
-          <div className="w-full flex-1">
-            {/* Search or other header content */}
-          </div>
-          {/* User menu or other header actions */}
-        </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-          <Outlet /> {/* Render nested routes here */}
-        </main>
-      </div>
+      </header>
+      <main className="flex-grow container mx-auto p-4 md:p-6">
+        {children}
+      </main>
     </div>
   );
 };
