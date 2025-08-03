@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { showError } from '@/utils/toast';
+import { showSuccess, showError } from '@/utils/toast';
 import { Loader2, ShieldCheck, Star, ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import logoSrc from '/logo.png';
@@ -47,7 +47,7 @@ const LoginPage = () => {
     }
 
     if (data.user) {
-      // Langsung periksa profil setelah login berhasil
+      // Check for staff profile
       const { data: staffProfile } = await supabase
         .from('users')
         .select('id')
@@ -55,10 +55,10 @@ const LoginPage = () => {
         .single();
 
       if (staffProfile) {
-        // Pengguna adalah staf, arahkan ke dashboard
+        // User is a staff member, redirect to dashboard
         navigate('/dashboard');
       } else {
-        // Bukan staf, periksa apakah dia member
+        // Not a staff member, check if they are a member
         const { data: memberProfile } = await supabase
           .from('members')
           .select('id')
@@ -69,8 +69,25 @@ const LoginPage = () => {
           showError("Akun ini adalah akun Member. Silakan gunakan halaman login Member.");
           await supabase.auth.signOut();
         } else {
-          showError("Profil pengguna tidak ditemukan. Akun mungkin tidak aktif.");
-          await supabase.auth.signOut();
+          // This is an orphan auth user. Let's create a profile for them.
+          // This is a fallback to fix data integrity issues, like an admin created without a profile.
+          console.warn("User profile not found. Creating a new staff profile as a fallback.");
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert({
+              id: data.user.id,
+              full_name: data.user.email, // Use email as a default name
+              role: 'Admin', // Default to Admin for this recovery path
+            });
+
+          if (insertError) {
+            showError("Gagal mengkonfigurasi profil pengguna. Silakan hubungi support.");
+            console.error("Profile creation fallback error:", insertError);
+            await supabase.auth.signOut();
+          } else {
+            showSuccess("Profil pengguna berhasil dikonfigurasi. Mengarahkan ke dashboard.");
+            navigate('/dashboard');
+          }
         }
       }
     }
