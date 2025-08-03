@@ -12,8 +12,6 @@ interface ServiceEntry {
   deviceType: string;
   damageType: string;
   description: string;
-  serviceInfo?: string | null; // Add serviceInfo
-  infoDate?: Date | null; // Add infoDate
 }
 
 interface ReceiptProps {
@@ -51,14 +49,6 @@ const ServiceMasukReceipt = forwardRef<HTMLDivElement, ReceiptProps>(({ entry },
         <div>Kerusakan: {entry.damageType}</div>
         <div>Deskripsi: {entry.description}</div>
       </div>
-
-      {(entry.serviceInfo || entry.infoDate) && (
-        <div className="border-t border-dashed border-black my-2 py-2 text-xs space-y-1">
-          <p className="font-bold">INFORMASI STATUS:</p>
-          {entry.serviceInfo && <div>Info: {entry.serviceInfo}</div>}
-          {entry.infoDate && <div>Tanggal Info: {format(entry.infoDate, 'dd/MM/yy HH:mm')}</div>}
-        </div>
-      )}
 
       <div className="text-center text-xs mt-4">
         <p className="font-bold">Simpan struk ini sebagai bukti pengambilan barang.</p>

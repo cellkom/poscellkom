@@ -59,8 +59,6 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, entry }) =
             deviceType: entry.device_type,
             damageType: entry.damage_type,
             description: entry.description,
-            serviceInfo: entry.service_info, // Pass service_info
-            infoDate: entry.info_date ? new Date(entry.info_date) : null, // Pass info_date
           }} />
         </div>
         <DialogFooter className="sm:justify-between gap-2">
