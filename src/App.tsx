@@ -1,133 +1,70 @@
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { CartProvider } from './contexts/CartContext';
-import { Toaster } from '@/components/ui/sonner';
-import { ThemeProvider } from './components/ThemeProvider';
-
-// Layouts
-import DashboardLayout from './components/Layout/DashboardLayout';
-
-// Public Pages
-import PublicPage from './pages/PublicPage';
-import ProductsPage from './pages/ProductsPage';
-import NewsPage from './pages/NewsPage';
-import NewsDetailPage from './pages/NewsDetailPage';
-import MemberProfilePage from './pages/MemberProfilePage';
-import ServiceTrackingPage from './pages/ServiceTrackingPage';
-
-// Auth Pages
-import LoginPage from './pages/Auth/LoginPage';
-import MemberLoginPage from './pages/Auth/MemberLoginPage';
-
-// Dashboard Pages
-import DashboardPage from './pages/Dashboard/DashboardPage';
-import UsersPage from './pages/Dashboard/UsersPage';
-import CustomerPage from './pages/Dashboard/Data/CustomerPage';
-import SupplierPage from './pages/Dashboard/Data/SupplierPage';
-import StockPage from './pages/Dashboard/StockPage';
-import SalesPage from './pages/Dashboard/Transaction/SalesPage';
-import ServicePage from './pages/Dashboard/Transaction/ServicePage';
-import InstallmentPage from './pages/Dashboard/Transaction/InstallmentPage';
-import AddInstallmentPage from './pages/Dashboard/Transaction/AddInstallmentPage';
-import ReportsPage from './pages/Dashboard/ReportsPage';
-import SalesReportPage from './pages/Dashboard/Reports/SalesReportPage';
-import ServiceReportPage from './pages/Dashboard/Reports/ServiceReportPage';
-import TodayReportPage from './pages/Dashboard/Reports/TodayReportPage';
-import NewsManagementPage from './pages/Dashboard/NewsManagementPage';
-import UserProfilePage from './pages/UserProfilePage';
-import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
-import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
-
-interface ProtectedRouteProps {
-  children: JSX.Element;
-  allowedRoles: string[];
-}
-
-const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { profile, loading } = useAuth();
-
-  if (loading) {
-    return <div className="flex h-screen items-center justify-center">Memuat...</div>;
-  }
-
-  if (!profile || !allowedRoles.includes(profile.role || '')) {
-    if (allowedRoles.includes('Admin') || allowedRoles.includes('Kasir')) {
-      return <Navigate to="/login" replace />;
-    }
-    return <Navigate to="/member-login" replace />;
-  }
-
-  return children;
-};
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import PublicLayout from "./components/Layout/PublicLayout";
+import DashboardLayout from "./components/Layout/DashboardLayout";
+import IndexPage from "./pages/Index";
+import LoginPage from "./pages/Login";
+import ServiceTrackingPage from "./pages/ServiceTrackingPage";
+import ProductsPage from "./pages/Dashboard/ProductsPage";
+import SalesPage from "./pages/Dashboard/SalesPage";
+import CustomersPage from "./pages/Dashboard/CustomersPage";
+import SuppliersPage from "./pages/Dashboard/SuppliersPage";
+import ServiceMasukPage from "./pages/Dashboard/ServiceMasukPage";
+import InstallmentsPage from "./pages/Dashboard/InstallmentsPage";
+import SettingsPage from "./pages/Dashboard/SettingsPage";
+import NewsManagementPage from "./pages/Dashboard/NewsManagementPage"; // Import the new page
+import { Toaster } from "sonner";
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <Router>
-        <AuthProvider>
-          <CartProvider>
-            <Routes>
-              {/* Public & Auth Routes */}
-              <Route path="/" element={<PublicPage />} />
-              <Route path="/products" element={<ProductsPage />} />
-              <Route path="/news" element={<NewsPage />} />
-              <Route path="/news/:slug" element={<NewsDetailPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/member-login" element={<MemberLoginPage />} />
-              <Route path="/tracking" element={<ServiceTrackingPage />} />
-              
-              {/* Protected Member Route */}
-              <Route 
-                path="/member-profile" 
-                element={
-                  <ProtectedRoute allowedRoles={['Member']}>
-                    <MemberProfilePage />
-                  </ProtectedRoute>
-                } 
-              />
+    <Router>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+      <Toaster richColors />
+    </Router>
+  );
+}
 
-              {/* Protected Staff/Admin Routes */}
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute allowedRoles={['Admin', 'Kasir']}>
-                    <UserProfilePage />
-                  </ProtectedRoute>
-                } 
-              />
+function AppRoutes() {
+  const { user, loading } = useAuth();
 
-              {/* Dashboard Routes */}
-              <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><DashboardPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/dashboard/stock" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><StockPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/dashboard/service-masuk" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><ServiceMasukPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/dashboard/services-in-progress" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><ServicesInProgressPage /></DashboardLayout></ProtectedRoute>} />
-              
-              {/* Transactions */}
-              <Route path="/dashboard/transaction/sales" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><SalesPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/dashboard/transaction/service" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><ServicePage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/dashboard/transaction/installments" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><InstallmentPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/dashboard/transaction/add-installment" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><AddInstallmentPage /></DashboardLayout></ProtectedRoute>} />
+  if (loading) {
+    return <div>Loading authentication...</div>; // Or a spinner
+  }
 
-              {/* Data Management */}
-              <Route path="/dashboard/data/customers" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><CustomerPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/dashboard/data/suppliers" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><SupplierPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/dashboard/data/users" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><UsersPage /></DashboardLayout></ProtectedRoute>} />
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<PublicLayout><IndexPage /></PublicLayout>} />
+      <Route path="/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
+      <Route path="/track-service" element={<PublicLayout><ServiceTrackingPage /></PublicLayout>} />
 
-              {/* Reports */}
-              <Route path="/dashboard/reports" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><ReportsPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/dashboard/reports/today" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><TodayReportPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/dashboard/reports/sales" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><SalesReportPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/dashboard/reports/service" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><ServiceReportPage /></DashboardLayout></ProtectedRoute>} />
+      {/* Protected Dashboard Routes */}
+      <Route
+        path="/dashboard/*"
+        element={user ? <DashboardLayout><DashboardRoutes /></DashboardLayout> : <Navigate to="/login" replace />}
+      />
 
-              {/* Other Admin Routes */}
-              <Route path="/dashboard/news" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><NewsManagementPage /></DashboardLayout></ProtectedRoute>} />
+      {/* Fallback for unknown routes */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
 
-            </Routes>
-            <Toaster />
-          </CartProvider>
-        </AuthProvider>
-      </Router>
-    </ThemeProvider>
+function DashboardRoutes() {
+  return (
+    <Routes>
+      <Route index element={<ProductsPage />} /> {/* Default dashboard page */}
+      <Route path="products" element={<ProductsPage />} />
+      <Route path="sales" element={<SalesPage />} />
+      <Route path="customers" element={<CustomersPage />} />
+      <Route path="suppliers" element={<SuppliersPage />} />
+      <Route path="service-entries" element={<ServiceMasukPage />} />
+      <Route path="installments" element={<InstallmentsPage />} />
+      <Route path="settings" element={<SettingsPage />} />
+      <Route path="news" element={<NewsManagementPage />} /> {/* New route for News Management */}
+    </Routes>
   );
 }
 
