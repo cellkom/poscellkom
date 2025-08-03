@@ -21,6 +21,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
 
 type Status = 'Pending' | 'Proses' | 'Selesai' | 'Gagal/Cancel' | 'Sudah Diambil';
 
@@ -95,18 +97,25 @@ const ServiceMasukPage = () => {
                   <TableCell>{entry.device_type}</TableCell>
                   <TableCell><Badge variant={getStatusBadgeVariant(entry.status)}>{entry.status}</Badge></TableCell>
                   <TableCell>
-                    <Select
-                      value={entry.service_info || ''}
-                      onValueChange={(newValue) => handleServiceInfoChange(entry.id, newValue)}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Pilih Info" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Sedang proses">Sedang proses</SelectItem>
-                        <SelectItem value="Telah Selesai">Telah Selesai</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex flex-col gap-1">
+                      <Select
+                        value={entry.service_info || ''}
+                        onValueChange={(newValue) => handleServiceInfoChange(entry.id, newValue)}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Pilih Info" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Sedang proses">Sedang proses</SelectItem>
+                          <SelectItem value="Telah Selesai">Telah Selesai</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {entry.updated_at && (
+                        <span className="text-xs text-muted-foreground">
+                          Diperbarui: {format(new Date(entry.updated_at), 'dd MMM yyyy, HH:mm', { locale: id })}
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center gap-2">
