@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { SheetClose } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { ShoppingCart, Minus, Plus, Trash2, XCircle } from "lucide-react";
 import { Link } from 'react-router-dom';
@@ -11,8 +12,24 @@ const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style
 
 const CartSidebar = () => {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { session, profile } = useAuth();
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.retailPrice * item.quantity), 0);
+
+  const CheckoutButton = () => {
+    if (session && profile?.role === 'Member') {
+      return (
+        <Button asChild className="w-full" size="lg">
+          <Link to="/checkout">Lanjutkan ke Pembayaran</Link>
+        </Button>
+      );
+    }
+    return (
+      <Button asChild className="w-full" size="lg">
+        <Link to="/member-login">Lanjutkan ke Pembayaran</Link>
+      </Button>
+    );
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -77,9 +94,7 @@ const CartSidebar = () => {
             <span className="text-lg font-semibold">Subtotal:</span>
             <span className="text-xl font-bold text-primary">{formatCurrency(subtotal)}</span>
           </div>
-          <Button className="w-full" size="lg">
-            Lanjutkan ke Pembayaran
-          </Button>
+          <CheckoutButton />
           <Button variant="outline" className="w-full" onClick={clearCart}>
             Bersihkan Keranjang
           </Button>
