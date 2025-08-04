@@ -251,13 +251,13 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
               </p>
             </div>
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-foreground">Navigasi</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a href="/#services" className="hover:text-primary transition-colors">Layanan</a></li>
-                <li><Link to="/products" className="hover:text-primary transition-colors">Toko</Link></li>
-                <li><a href="/#about" className="hover:text-primary transition-colors">Tentang Kami</a></li>
-                <li><a href="/#news" className="hover:text-primary transition-colors">Berita</a></li>
-              </ul>
+              <h3 className="text-lg font-semibold text-foreground">Author</h3>
+              <div className="flex flex-col items-start gap-3">
+                <img src="/author.jpg" alt="Author" className="w-full h-32 object-cover rounded-lg shadow-md" />
+                <p className="text-sm">
+                  Aplikasi ini dikembangkan oleh putra daerah yang berdedikasi untuk memberikan solusi teknologi terbaik bagi komunitas.
+                </p>
+              </div>
             </div>
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">Kontak</h3>
