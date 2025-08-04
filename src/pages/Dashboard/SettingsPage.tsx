@@ -8,7 +8,7 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { Loader2, Upload } from "lucide-react";
 
 const SettingsPage = () => {
-  const { settings, loading, updateSettings, uploadLogo } = useSettings();
+  const { settings, loading, updateSettings, uploadLogo, uploadAuthorImage } = useSettings();
   const [formData, setFormData] = useState({
     appName: '',
     appDescription: '',
@@ -19,14 +19,17 @@ const SettingsPage = () => {
     contactEmail: '',
     contactPhone: '',
     socialInstagram: '',
-    socialFacebook: '', // New field
-    socialYoutube: '', // New field
-    socialTiktok: '', // New field
+    socialFacebook: '',
+    socialYoutube: '',
+    socialTiktok: '',
     footerCopyright: '',
     consultationLink: '',
+    authorDescription: '',
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [authorImageFile, setAuthorImageFile] = useState<File | null>(null);
+  const [authorImagePreview, setAuthorImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -41,13 +44,15 @@ const SettingsPage = () => {
         contactEmail: settings.contactEmail || '',
         contactPhone: settings.contactPhone || '',
         socialInstagram: settings.socialInstagram || '',
-        socialFacebook: settings.socialFacebook || '', // Initialize new field
-        socialYoutube: settings.socialYoutube || '', // Initialize new field
-        socialTiktok: settings.socialTiktok || '', // Initialize new field
+        socialFacebook: settings.socialFacebook || '',
+        socialYoutube: settings.socialYoutube || '',
+        socialTiktok: settings.socialTiktok || '',
         footerCopyright: settings.footerCopyright || '',
         consultationLink: settings.consultationLink || '',
+        authorDescription: settings.authorDescription || '',
       });
       setLogoPreview(settings.logoUrl || null);
+      setAuthorImagePreview(settings.authorImageUrl || null);
     }
   }, [settings]);
 
@@ -56,11 +61,19 @@ const SettingsPage = () => {
     setFormData(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setLogoFile(file);
       setLogoPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleAuthorImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAuthorImageFile(file);
+      setAuthorImagePreview(URL.createObjectURL(file));
     }
   };
 
@@ -77,6 +90,15 @@ const SettingsPage = () => {
     setIsSubmitting(true);
     await uploadLogo(logoFile);
     setLogoFile(null);
+    setIsSubmitting(false);
+  };
+
+  const handleAuthorImageSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!authorImageFile) return;
+    setIsSubmitting(true);
+    await uploadAuthorImage(authorImageFile);
+    setAuthorImageFile(null);
     setIsSubmitting(false);
   };
 
@@ -175,6 +197,37 @@ const SettingsPage = () => {
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Informasi Author</CardTitle>
+          <CardDescription>Atur deskripsi dan foto author yang ditampilkan di footer.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="authorDescription">Deskripsi Author</Label>
+            <Textarea id="authorDescription" value={formData.authorDescription} onChange={handleInputChange} rows={4} />
+          </div>
+          <div className="space-y-2">
+            <Label>Foto Author</Label>
+            <div className="flex items-center gap-6">
+              <div className="w-24 h-24 bg-muted rounded-md flex items-center justify-center">
+                {authorImagePreview ? <img src={authorImagePreview} alt="Author Preview" className="h-full w-full object-cover rounded-md" /> : <span className="text-xs text-muted-foreground">No Image</span>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="authorImageFile">Pilih file foto (PNG/JPG)</Label>
+                <Input id="authorImageFile" type="file" accept="image/png, image/jpeg" onChange={handleAuthorImageFileChange} />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button type="button" onClick={handleAuthorImageSubmit} disabled={!authorImageFile || isSubmitting}>
+            {isSubmitting && !authorImageFile ? null : isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+            Unggah Foto Author
+          </Button>
+        </CardFooter>
+      </Card>
       
       <Card>
         <CardHeader>
@@ -188,7 +241,7 @@ const SettingsPage = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="logoFile">Pilih file logo (PNG/JPG)</Label>
-              <Input id="logoFile" type="file" accept="image/png, image/jpeg" onChange={handleFileChange} />
+              <Input id="logoFile" type="file" accept="image/png, image/jpeg" onChange={handleLogoFileChange} />
             </div>
           </div>
         </CardContent>

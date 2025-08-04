@@ -253,9 +253,9 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">Author</h3>
               <div className="flex items-center gap-4">
-                <img src="/author.jpg" alt="Author" className="w-20 h-20 object-cover rounded-lg shadow-md flex-shrink-0" />
+                <img src={settings.authorImageUrl || "/author.jpg"} alt="Author" className="w-20 h-20 object-cover rounded-lg shadow-md flex-shrink-0" />
                 <p className="text-sm">
-                  Aplikasi ini dikembangkan oleh putra daerah yang berdedikasi untuk memberikan solusi teknologi terbaik bagi komunitas.
+                  {settings.authorDescription || "Aplikasi ini dikembangkan oleh putra daerah yang berdedikasi untuk memberikan solusi teknologi terbaik bagi komunitas."}
                 </p>
               </div>
             </div>

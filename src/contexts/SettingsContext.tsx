@@ -4,10 +4,12 @@ import { showError, showSuccess } from '@/utils/toast';
 
 export interface AppSettings {
   [key: string]: string;
-  consultationLink?: string; // New field for consultation link
-  socialFacebook?: string; // New field for Facebook link
-  socialYoutube?: string; // New field for YouTube link
-  socialTiktok?: string; // New field for TikTok link
+  consultationLink?: string;
+  socialFacebook?: string;
+  socialYoutube?: string;
+  socialTiktok?: string;
+  authorDescription?: string;
+  authorImageUrl?: string;
 }
 
 interface SettingsContextType {
@@ -15,6 +17,7 @@ interface SettingsContextType {
   loading: boolean;
   updateSettings: (settingsToUpdate: AppSettings) => Promise<boolean>;
   uploadLogo: (file: File) => Promise<boolean>;
+  uploadAuthorImage: (file: File) => Promise<boolean>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -85,7 +88,25 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     return updateSettings({ logoUrl: finalUrl });
   };
 
-  const value = { settings, loading, updateSettings, uploadLogo };
+  const uploadAuthorImage = async (file: File): Promise<boolean> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `public/author.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(fileName, file, { upsert: true });
+
+    if (uploadError) {
+      showError(`Gagal mengunggah foto author: ${uploadError.message}`);
+      return false;
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(fileName);
+    const finalUrl = `${publicUrl}?t=${new Date().getTime()}`;
+    return updateSettings({ authorImageUrl: finalUrl });
+  };
+
+  const value = { settings, loading, updateSettings, uploadLogo, uploadAuthorImage };
 
   return (
     <SettingsContext.Provider value={value}>
