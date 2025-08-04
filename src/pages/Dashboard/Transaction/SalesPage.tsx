@@ -246,16 +246,22 @@ const SalesPage = () => {
 
   const handlePrint = useCallback(() => window.print(), []);
 
-  const handleDownload = useCallback(() => {
-    if (receiptRef.current === null) return;
-    toPng(receiptRef.current, { cacheBust: true })
-      .then((dataUrl) => {
-        const link = document.createElement('a');
-        link.download = `nota-${lastTransaction?.id}.png`;
-        link.href = dataUrl;
-        link.click();
-      })
-      .catch((err) => console.error('Gagal membuat gambar struk:', err));
+  const handleDownload = useCallback(async () => {
+    if (receiptRef.current === null) {
+      showError("Gagal mengunduh struk. Konten tidak ditemukan.");
+      return;
+    }
+    try {
+      const dataUrl = await toPng(receiptRef.current, { cacheBust: true, pixelRatio: 3 });
+      const link = document.createElement('a');
+      link.download = `nota-${lastTransaction?.id}.png`;
+      link.href = dataUrl;
+      link.click();
+      showSuccess("Struk berhasil diunduh!");
+    } catch (err) {
+      console.error('Gagal membuat gambar struk:', err);
+      showError("Gagal mengunduh struk.");
+    }
   }, [receiptRef, lastTransaction]);
 
   useEffect(() => {

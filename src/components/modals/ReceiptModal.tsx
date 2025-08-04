@@ -31,7 +31,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, entry }) =
     }
 
     try {
-      const dataUrl = await toPng(receiptRef.current, { cacheBust: true });
+      const dataUrl = await toPng(receiptRef.current, { cacheBust: true, pixelRatio: 3 });
       const link = document.createElement('a');
       link.download = `tanda-terima-service-${entry.id}.png`;
       link.href = dataUrl;
