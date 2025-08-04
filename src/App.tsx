@@ -111,8 +111,8 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <Router>
-        <SettingsProvider>
+      <SettingsProvider>
+        <Router>
           <HeadManager /> {/* Add HeadManager here */}
           <AuthProvider>
             <CartProvider>
@@ -195,8 +195,8 @@ function App() {
               <Toaster />
             </CartProvider>
           </AuthProvider>
-        </SettingsProvider>
-      </Router>
+        </Router>
+      </SettingsProvider>
     </ThemeProvider>
   );
 }
