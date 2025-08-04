@@ -8,11 +8,13 @@ import { useStock } from "@/hooks/use-stock";
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useCart } from "@/contexts/CartContext"; // Import useCart
 
 const PublicPage = () => {
   const { products, loading } = useStock();
   const { session, profile } = useAuth();
   const { settings } = useSettings();
+  const { addToCart } = useCart(); // Destructure addToCart from useCart
   const location = useLocation();
 
   const isMember = session && profile?.role === 'Member';
@@ -162,7 +164,7 @@ const PublicPage = () => {
                       <p className="font-bold text-primary text-xl mt-auto">{formatCurrency(product.retailPrice)}</p>
                       <Button
                         className="mt-4 w-full"
-                        onClick={() => handleAddToCart(product)}
+                        onClick={() => addToCart(product)} // Use addToCart directly
                         disabled={product.stock <= 0}
                       >
                         <ShoppingCart className="mr-2 h-4 w-4" />
