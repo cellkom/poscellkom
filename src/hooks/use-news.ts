@@ -68,7 +68,6 @@ export const useNews = () => {
   }, [fetchArticles]);
 
   const getArticleBySlug = async (slug: string): Promise<NewsArticle | null> => {
-    setLoading(true);
     const { data, error } = await supabase
       .from('news')
       .select(`
@@ -80,7 +79,6 @@ export const useNews = () => {
       .lte('published_at', new Date().toISOString())
       .single();
     
-    setLoading(false);
     if (error) {
       console.error("Error fetching article by slug:", error);
       return null;

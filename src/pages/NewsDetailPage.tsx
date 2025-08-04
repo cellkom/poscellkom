@@ -10,20 +10,31 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const NewsDetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { getArticleBySlug, loading } = useNews();
+  const { getArticleBySlug } = useNews();
   const [article, setArticle] = useState<NewsArticle | null>(null);
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
     if (slug) {
       const fetchArticle = async () => {
-        const data = await getArticleBySlug(slug);
-        setArticle(data);
+        setPageLoading(true);
+        try {
+          const data = await getArticleBySlug(slug);
+          setArticle(data);
+        } catch (error) {
+          console.error("Failed to fetch article", error);
+          setArticle(null);
+        } finally {
+          setPageLoading(false);
+        }
       };
       fetchArticle();
+    } else {
+      setPageLoading(false);
     }
   }, [slug, getArticleBySlug]);
 
-  if (loading) {
+  if (pageLoading) {
     return (
       <PublicLayout>
         <div className="flex justify-center items-center h-screen">
