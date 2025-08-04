@@ -11,7 +11,9 @@ export interface Order {
   order_number: string;
   members: {
     full_name: string;
-  };
+    phone: string | null;
+    address: string | null;
+  } | null;
 }
 
 export interface OrderItem {
@@ -34,7 +36,7 @@ export const useOrders = () => {
       .from('orders')
       .select(`
         *,
-        members ( full_name )
+        members ( full_name, phone, address )
       `)
       .order('created_at', { ascending: false });
 
