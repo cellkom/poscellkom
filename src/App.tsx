@@ -5,6 +5,7 @@ import { SettingsProvider } from './contexts/SettingsContext';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from './components/ThemeProvider';
 import HeadManager from './components/HeadManager'; // Import HeadManager
+import { Loader2 } from 'lucide-react'; // Import Loader2 for loading indicator
 
 // Layouts
 import DashboardLayout from './components/Layout/DashboardLayout';
@@ -51,19 +52,59 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { profile, loading } = useAuth();
+  const { profile, loading, user } = useAuth();
+
+  // Log states for debugging
+  console.log('ProtectedRoute render:', { loading, user, profile, allowedRoles, currentPath: window.location.pathname });
 
   if (loading) {
-    return <div className="flex h-screen items-center justify-center">Memuat...</div>;
+    // Show a loading indicator while authentication state is being determined
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-700 dark:text-gray-300">Memuat sesi...</h1>
+          <Loader2 className="mx-auto mt-4 h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
   }
 
-  if (!profile || !allowedRoles.includes(profile.role || '')) {
+  // After loading, if there's no authenticated user
+  if (!user) {
+    console.log('No authenticated user found. Redirecting.');
+    // Redirect based on expected roles for this route
     if (allowedRoles.includes('Admin') || allowedRoles.includes('Kasir')) {
       return <Navigate to="/login" replace />;
     }
+    // Assuming other protected routes are for members
     return <Navigate to="/member-login" replace />;
   }
 
+  // If user is authenticated, but profile is missing or role doesn't match
+  // The `profile` might be null if `fetchProfile` failed or returned null.
+  // `profile.role || ''` handles cases where role is undefined/null.
+  if (!profile || !allowedRoles.includes(profile.role || '')) {
+    console.log('User authenticated, but profile missing or role mismatch. Redirecting.', { profile, allowedRoles });
+    // Determine the correct login page based on the user's actual role (if profile exists)
+    // or the expected roles for the route.
+    if (profile?.role === 'Member' && (allowedRoles.includes('Admin') || allowedRoles.includes('Kasir'))) {
+        // Member trying to access a staff route
+        return <Navigate to="/member-login" replace />;
+    }
+    if ((profile?.role === 'Admin' || profile?.role === 'Kasir') && allowedRoles.includes('Member')) {
+        // Staff trying to access a member route
+        return <Navigate to="/login" replace />;
+    }
+    // If profile is null, or role doesn't match and no specific cross-role redirect,
+    // default to the login page that matches the route's allowed roles.
+    if (allowedRoles.includes('Admin') || allowedRoles.includes('Kasir')) {
+        return <Navigate to="/login" replace />;
+    }
+    // Default for member routes if profile is null or role is not 'Member'
+    return <Navigate to="/member-login" replace />;
+  }
+
+  // If all checks pass (not loading, user exists, profile exists and role matches)
   return children;
 };
 
