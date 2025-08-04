@@ -68,7 +68,7 @@ const OrderManagementPage = () => {
                   <TableRow key={order.id}>
                     <TableCell className="font-mono">{order.order_number}</TableCell>
                     <TableCell>{format(new Date(order.created_at), "dd MMM yyyy, HH:mm", { locale: id })}</TableCell>
-                    <TableCell>{order.members.full_name}</TableCell>
+                    <TableCell>{order.members?.full_name || 'Member Dihapus'}</TableCell>
                     <TableCell>{formatCurrency(order.total_amount)}</TableCell>
                     <TableCell>
                       <Select value={order.status} onValueChange={(value) => handleStatusChange(order.id, value as Order['status'])}>
