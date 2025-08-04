@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, Wrench, Receipt, CreditCard, ShoppingCart, Activity } from "lucide-react";
+import { DollarSign, Wrench, Receipt, CreditCard, ShoppingCart, Activity, Users } from "lucide-react";
 import { useServiceEntries } from "@/hooks/use-service-entries";
 import { useInstallments } from "@/hooks/use-installments";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,7 +45,7 @@ const DashboardPage = () => {
   const { serviceEntries, loading: servicesLoading } = useServiceEntries();
   const { installments, loading: installmentsLoading } = useInstallments();
   
-  const [summary, setSummary] = useState({ revenueToday: 0, transactionsToday: 0 });
+  const [summary, setSummary] = useState({ revenueToday: 0, transactionsToday: 0, visitorsToday: 0 });
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -62,10 +62,12 @@ const DashboardPage = () => {
         setLoading(true);
         const todayStart = startOfToday().toISOString();
         const todayEnd = endOfToday().toISOString();
+        const todayDate = new Date().toISOString().split('T')[0];
 
         // Fetch summary data for today
         const salesTodayPromise = supabase.from('sales_transactions').select('total_amount').gte('created_at', todayStart).lte('created_at', todayEnd);
         const servicesTodayPromise = supabase.from('service_transactions').select('total_amount').gte('created_at', todayStart).lte('created_at', todayEnd);
+        const visitorsTodayPromise = supabase.from('daily_visits').select('count').eq('date', todayDate).single();
 
         // Fetch recent activities
         const recentSalesPromise = supabase.from('sales_transactions').select('id, created_at, transaction_id_display, customer_name_cache, total_amount, remaining_amount, sales_transaction_items(products(name))').order('created_at', { ascending: false }).limit(3);
@@ -74,9 +76,10 @@ const DashboardPage = () => {
         const [
             salesTodayResult,
             servicesTodayResult,
+            visitorsTodayResult,
             recentSalesResult,
             recentServicesResult
-        ] = await Promise.all([salesTodayPromise, servicesTodayPromise, recentSalesPromise, recentServicesPromise]);
+        ] = await Promise.all([salesTodayPromise, servicesTodayPromise, visitorsTodayPromise, recentSalesPromise, recentServicesPromise]);
 
         // Process summary
         const totalSalesRevenue = (salesTodayResult.data || []).reduce((sum, s) => sum + s.total_amount, 0);
@@ -84,6 +87,7 @@ const DashboardPage = () => {
         setSummary({
             revenueToday: totalSalesRevenue + totalServiceRevenue,
             transactionsToday: (salesTodayResult.data?.length || 0) + (servicesTodayResult.data?.length || 0),
+            visitorsToday: visitorsTodayResult.data?.count || 0,
         });
 
         // Process activities
@@ -139,6 +143,15 @@ const DashboardPage = () => {
           ))
         ) : (
           <>
+            <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pengunjung Hari Ini</CardTitle>
+                <Users className="h-4 w-4 text-teal-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{summary.visitorsToday} Pengunjung</div>
+              </CardContent>
+            </Card>
             <Link to="/dashboard/reports/today">
               <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

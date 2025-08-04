@@ -17,6 +17,7 @@ import { id } from 'date-fns/locale';
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSettings } from "@/contexts/SettingsContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
@@ -25,6 +26,21 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
   const { articles, loading: newsLoading, fetchArticles } = useNews();
   const [latestArticles, setLatestArticles] = useState<NewsArticle[]>([]);
   const { settings } = useSettings();
+
+  useEffect(() => {
+    const trackVisit = async () => {
+      const hasVisited = sessionStorage.getItem('hasVisited');
+      if (!hasVisited) {
+        try {
+          await supabase.functions.invoke('track-visit');
+          sessionStorage.setItem('hasVisited', 'true');
+        } catch (error) {
+          console.error("Failed to track visit:", error);
+        }
+      }
+    };
+    trackVisit();
+  }, []);
 
   useEffect(() => {
     fetchArticles();
