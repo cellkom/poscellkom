@@ -67,7 +67,7 @@ export const useNews = () => {
     };
   }, [fetchArticles]);
 
-  const getArticleBySlug = async (slug: string): Promise<NewsArticle | null> => {
+  const getArticleBySlug = useCallback(async (slug: string): Promise<NewsArticle | null> => {
     const { data, error } = await supabase
       .from('news')
       .select(`
@@ -84,9 +84,9 @@ export const useNews = () => {
       return null;
     }
     return data ? { ...data, author_name: data.author?.full_name || 'Tanpa Nama' } : null;
-  };
+  }, []);
 
-  const uploadNewsImage = async (imageFile: File): Promise<string | null> => {
+  const uploadNewsImage = useCallback(async (imageFile: File): Promise<string | null> => {
     if (!imageFile) return null;
     const fileExt = imageFile.name.split('.').pop();
     const fileName = `news/${Date.now()}.${fileExt}`;
@@ -101,7 +101,7 @@ export const useNews = () => {
     }
     const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(data.path);
     return urlData.publicUrl;
-  };
+  }, []);
 
   return { articles, loading, fetchArticles, getArticleBySlug, uploadNewsImage };
 };
