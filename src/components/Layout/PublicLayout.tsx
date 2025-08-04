@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard, Code, Image as ImageIcon } from "lucide-react";
+import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard, Code, Image as ImageIcon, ClipboardList } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ReactNode, useEffect, useState } from "react";
@@ -110,6 +110,14 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                       <span>Profil Saya</span>
                     </Link>
                   </DropdownMenuItem>
+                  {profile?.role === 'Member' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/my-orders" className="flex items-center gap-2 cursor-pointer">
+                        <ClipboardList className="h-4 w-4" />
+                        <span>Daftar Pesanan</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   {(profile.role === 'Admin' || profile.role === 'Kasir') && (
                     <DropdownMenuItem asChild>
                       <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">

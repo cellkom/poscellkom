@@ -16,6 +16,7 @@ import NewsDetailPage from './pages/NewsDetailPage';
 import MemberProfilePage from './pages/MemberProfilePage';
 import ServiceTrackingPage from './pages/ServiceTrackingPage';
 import CheckoutPage from './pages/CheckoutPage';
+import MemberOrdersPage from './pages/MemberOrdersPage';
 
 // Auth Pages
 import LoginPage from './pages/Auth/LoginPage';
@@ -88,6 +89,14 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['Member']}>
                       <MemberProfilePage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/my-orders" 
+                  element={
+                    <ProtectedRoute allowedRoles={['Member']}>
+                      <MemberOrdersPage />
                     </ProtectedRoute>
                   } 
                 />
