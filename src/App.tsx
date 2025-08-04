@@ -4,6 +4,7 @@ import { CartProvider } from './contexts/CartContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from './components/ThemeProvider';
+import HeadManager from './components/HeadManager'; // Import HeadManager
 
 // Layouts
 import DashboardLayout from './components/Layout/DashboardLayout';
@@ -71,6 +72,7 @@ function App() {
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <Router>
         <SettingsProvider>
+          <HeadManager /> {/* Add HeadManager here */}
           <AuthProvider>
             <CartProvider>
               <Routes>
