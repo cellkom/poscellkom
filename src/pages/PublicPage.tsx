@@ -8,13 +8,16 @@ import { useStock } from "@/hooks/use-stock";
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
-import { useCart } from "@/contexts/CartContext"; // Import useCart
+import { useCart } from "@/contexts/CartContext";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { useAdvertisements } from "@/hooks/use-advertisements";
 
 const PublicPage = () => {
   const { products, loading } = useStock();
   const { session, profile } = useAuth();
   const { settings } = useSettings();
-  const { addToCart } = useCart(); // Destructure addToCart from useCart
+  const { addToCart } = useCart();
+  const { advertisements, loading: adsLoading } = useAdvertisements();
   const location = useLocation();
 
   const isMember = session && profile?.role === 'Member';
@@ -95,6 +98,39 @@ const PublicPage = () => {
                 <span className="font-semibold text-primary">Lacak Servis Anda!</span> Masukkan No. Servis yang tertera pada struk Anda di menu <span className="font-semibold">Info Servis</span> untuk melihat status perbaikan perangkat Anda secara real-time.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Advertisement Carousel Section */}
+        <section className="py-8 bg-background">
+          <div className="container px-4 md:px-6">
+            {adsLoading ? (
+              <Skeleton className="w-full h-48 md:h-64 lg:h-80 rounded-lg" />
+            ) : advertisements.length > 0 && (
+              <Carousel className="w-full" opts={{ loop: true }}>
+                <CarouselContent>
+                  {advertisements.map((ad) => (
+                    <CarouselItem key={ad.id}>
+                      <div className="p-1">
+                        <Card className="overflow-hidden">
+                          <CardContent className="flex aspect-[21/9] items-center justify-center p-0">
+                            {ad.link_url ? (
+                              <a href={ad.link_url} target="_blank" rel="noopener noreferrer">
+                                <img src={ad.image_url} alt={ad.alt_text || 'Iklan'} className="w-full h-full object-cover" />
+                              </a>
+                            ) : (
+                              <img src={ad.image_url} alt={ad.alt_text || 'Iklan'} className="w-full h-full object-cover" />
+                            )}
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="hidden sm:flex" />
+                <CarouselNext className="hidden sm:flex" />
+              </Carousel>
+            )}
           </div>
         </section>
 
