@@ -19,8 +19,11 @@ const SettingsPage = () => {
     contactEmail: '',
     contactPhone: '',
     socialInstagram: '',
+    socialFacebook: '', // New field
+    socialYoutube: '', // New field
+    socialTiktok: '', // New field
     footerCopyright: '',
-    consultationLink: '', // New field
+    consultationLink: '',
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -38,8 +41,11 @@ const SettingsPage = () => {
         contactEmail: settings.contactEmail || '',
         contactPhone: settings.contactPhone || '',
         socialInstagram: settings.socialInstagram || '',
+        socialFacebook: settings.socialFacebook || '', // Initialize new field
+        socialYoutube: settings.socialYoutube || '', // Initialize new field
+        socialTiktok: settings.socialTiktok || '', // Initialize new field
         footerCopyright: settings.footerCopyright || '',
-        consultationLink: settings.consultationLink || '', // Initialize new field
+        consultationLink: settings.consultationLink || '',
       });
       setLogoPreview(settings.logoUrl || null);
     }
@@ -146,6 +152,18 @@ const SettingsPage = () => {
           <div className="space-y-2">
             <Label htmlFor="socialInstagram">URL Instagram</Label>
             <Input id="socialInstagram" placeholder="https://instagram.com/username" value={formData.socialInstagram} onChange={handleInputChange} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="socialFacebook">URL Facebook</Label>
+            <Input id="socialFacebook" placeholder="https://facebook.com/username" value={formData.socialFacebook} onChange={handleInputChange} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="socialYoutube">URL YouTube</Label>
+            <Input id="socialYoutube" placeholder="https://youtube.com/channel/id" value={formData.socialYoutube} onChange={handleInputChange} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="socialTiktok">URL TikTok</Label>
+            <Input id="socialTiktok" placeholder="https://tiktok.com/@username" value={formData.socialTiktok} onChange={handleInputChange} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="consultationLink">Tautan Konsultasi Gratis (Jasa Aplikasi)</Label>

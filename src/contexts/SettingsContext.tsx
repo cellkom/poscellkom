@@ -5,6 +5,9 @@ import { showError, showSuccess } from '@/utils/toast';
 export interface AppSettings {
   [key: string]: string;
   consultationLink?: string; // New field for consultation link
+  socialFacebook?: string; // New field for Facebook link
+  socialYoutube?: string; // New field for YouTube link
+  socialTiktok?: string; // New field for TikTok link
 }
 
 interface SettingsContextType {

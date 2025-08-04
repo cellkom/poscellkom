@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard, Code, Image as ImageIcon, ClipboardList } from "lucide-react";
+import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard, Code, Image as ImageIcon, ClipboardList, Facebook, Youtube, Music } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ReactNode, useEffect, useState } from "react";
@@ -49,7 +49,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
   const logoLink = (profile?.role === 'Admin' || profile?.role === 'Kasir') ? '/dashboard' : '/';
 
   return (
-    <div className="bg-background text-foreground flex flex-col min-h-screen">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link to={logoLink} className="flex items-center gap-2">
@@ -255,9 +255,26 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
               <h3 className="text-lg font-semibold text-foreground">Ikuti Kami</h3>
               <p className="text-sm">Dapatkan info terbaru dan promo menarik.</p>
               <div className="flex space-x-4">
-                <a href={settings.socialInstagram || '#'} aria-label="Instagram" className="hover:text-primary transition-colors">
-                  <Instagram className="h-6 w-6" />
-                </a>
+                {settings.socialInstagram && (
+                  <a href={settings.socialInstagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="hover:text-primary transition-colors">
+                    <Instagram className="h-6 w-6" />
+                  </a>
+                )}
+                {settings.socialFacebook && (
+                  <a href={settings.socialFacebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="hover:text-primary transition-colors">
+                    <Facebook className="h-6 w-6" />
+                  </a>
+                )}
+                {settings.socialYoutube && (
+                  <a href={settings.socialYoutube} target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="hover:text-primary transition-colors">
+                    <Youtube className="h-6 w-6" />
+                  </a>
+                )}
+                {settings.socialTiktok && (
+                  <a href={settings.socialTiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="hover:text-primary transition-colors">
+                    <Music className="h-6 w-6" /> {/* Using Music icon for TikTok */}
+                  </a>
+                )}
               </div>
             </div>
           </div>
