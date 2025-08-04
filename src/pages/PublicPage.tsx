@@ -88,6 +88,11 @@ const PublicPage = () => {
                 <Link to="/products">Lihat Produk Unggulan <ArrowRight className="ml-2 h-5 w-5" /></Link>
               </Button>
             </div>
+            <div className="mt-8 max-w-2xl mx-auto">
+              <p className="text-sm text-muted-foreground italic">
+                <span className="font-semibold text-primary">Lacak Servis Anda!</span> Masukkan No. Servis yang tertera pada struk Anda di menu <span className="font-semibold">Info Servis</span> untuk melihat status perbaikan perangkat Anda secara real-time.
+              </p>
+            </div>
           </div>
         </section>
 
