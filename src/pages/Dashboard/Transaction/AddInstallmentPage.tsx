@@ -15,7 +15,7 @@ import { AddCustomerDialog } from "@/components/AddCustomerDialog";
 
 const AddInstallmentPage = () => {
   const navigate = useNavigate();
-  const { customers, loading: customersLoading } = useCustomers();
+  const { customers, loading: customersLoading, addCustomer } = useCustomers();
   const { addManualInstallment } = useInstallments();
   const { user } = useAuth();
 
@@ -151,6 +151,7 @@ const AddInstallmentPage = () => {
         open={isAddCustomerDialogOpen}
         onOpenChange={setIsAddCustomerDialogOpen}
         onCustomerAdded={handleCustomerAdded}
+        addCustomer={addCustomer}
       />
     </>
   );

@@ -36,7 +36,7 @@ const initialState = {
 
 export const AddServiceEntryDialog = ({ open, onOpenChange, onSuccess }: AddServiceEntryDialogProps) => {
   const { addServiceEntry } = useServiceEntries();
-  const { customers, loading: customersLoading } = useCustomers();
+  const { customers, loading: customersLoading, addCustomer } = useCustomers();
   const { user } = useAuth();
   const [formData, setFormData] = useState(initialState);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -225,6 +225,7 @@ export const AddServiceEntryDialog = ({ open, onOpenChange, onSuccess }: AddServ
         open={isAddCustomerDialogOpen}
         onOpenChange={setIsAddCustomerDialogOpen}
         onCustomerAdded={handleCustomerAdded}
+        addCustomer={addCustomer}
       />
     </>
   );

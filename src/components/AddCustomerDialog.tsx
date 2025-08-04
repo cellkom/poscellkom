@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCustomers, Customer } from '@/hooks/use-customers';
+import { Customer } from '@/hooks/use-customers';
 import { Loader2 } from 'lucide-react';
 import { showError } from '@/utils/toast';
 
@@ -18,10 +18,10 @@ interface AddCustomerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCustomerAdded: (newCustomer: Customer) => void;
+  addCustomer: (customerData: { name: string; phone: string | null; address: string | null; }) => Promise<Customer | null>;
 }
 
-export const AddCustomerDialog = ({ open, onOpenChange, onCustomerAdded }: AddCustomerDialogProps) => {
-  const { addCustomer } = useCustomers();
+export const AddCustomerDialog = ({ open, onOpenChange, onCustomerAdded, addCustomer }: AddCustomerDialogProps) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
