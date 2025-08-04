@@ -5,22 +5,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, Code, Image as ImageIcon, Search } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useStock } from "@/hooks/use-stock";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
-import { useCart } from "@/contexts/CartContext";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
-import { supabase } from "@/integrations/supabase/client";
+import { useCart } from "@/contexts/CartContext"; // Import useCart
 
 const PublicPage = () => {
   const { products, loading } = useStock();
   const { session, profile } = useAuth();
   const { settings } = useSettings();
-  const { addToCart } = useCart();
+  const { addToCart } = useCart(); // Destructure addToCart from useCart
   const location = useLocation();
-  const [heroImageUrls, setHeroImageUrls] = useState<string[]>([]);
-  const [heroLoading, setHeroLoading] = useState(true);
 
   const isMember = session && profile?.role === 'Member';
   const displayedProducts = isMember ? products : products.slice(0, 4);
@@ -35,36 +30,6 @@ const PublicPage = () => {
       }
     }
   }, [location]);
-
-  useEffect(() => {
-    const fetchHeroImages = async () => {
-      setHeroLoading(true);
-      const urls: string[] = [];
-      const placeholders = ['/hero-1.jpg', '/hero-2.jpg', '/hero-3.jpg'];
-      const extensions = ['jpg', 'jpeg', 'png', 'webp'];
-
-      for (let i = 1; i <= 3; i++) {
-        let foundUrl = null;
-        for (const ext of extensions) {
-          const filePath = `public/hero-${i}.${ext}`;
-          const { data: listData } = await supabase.storage
-            .from('product-images')
-            .list('public', { search: `hero-${i}.${ext}`, limit: 1 });
-          
-          if (listData && listData.length > 0) {
-            const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
-            foundUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
-            break;
-          }
-        }
-        urls.push(foundUrl || placeholders[i-1]);
-      }
-      setHeroImageUrls(urls);
-      setHeroLoading(false);
-    };
-
-    fetchHeroImages();
-  }, []);
 
   const services = [
     {
@@ -89,80 +54,60 @@ const PublicPage = () => {
       icon: Wrench,
       title: "Teknisi Ahli",
       description: "Tim kami terdiri dari teknisi profesional dan berpengalaman di bidangnya.",
-      className: "md:col-span-2",
     },
     {
       icon: Sparkles,
       title: "Sparepart Berkualitas",
       description: "Kami hanya menggunakan sparepart original atau dengan kualitas terbaik.",
-      className: "",
     },
     {
       icon: ShieldCheck,
       title: "Garansi Servis",
       description: "Setiap perbaikan yang kami lakukan disertai dengan garansi untuk kepuasan Anda.",
-      className: "md:col-span-3",
     },
   ];
 
   return (
     <PublicLayout>
-      <main className="animate-fade-in-up" style={{ animationFillMode: 'backwards' }}>
+      <main>
         {/* Hero Section */}
-        <section className="relative h-[50vh] md:h-[60vh] w-full">
-          {heroLoading ? (
-            <Skeleton className="w-full h-full" />
-          ) : (
-            <Carousel
-              className="w-full h-full"
-              plugins={[Autoplay({ delay: 5000, stopOnInteraction: true })]}
-              opts={{ loop: true }}
-            >
-              <CarouselContent className="h-full">
-                {heroImageUrls.map((src, index) => (
-                  <CarouselItem key={index} className="h-full">
-                    <div
-                      className="h-full w-full bg-cover bg-center"
-                      style={{ backgroundImage: `url(${src})` }}
-                    >
-                      <div className="h-full w-full bg-black/50 flex items-center justify-center">
-                        <div className="text-center text-white container px-4 md:px-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                          <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-primary to-orange-400">
-                            {settings.heroTitle || "Solusi Total untuk Gadget & Komputer Anda"}
-                          </h1>
-                          <p className="max-w-3xl mx-auto text-lg text-gray-200 mb-8">
-                            {settings.heroSubtitle || "Dari perbaikan cepat hingga penjualan sparepart berkualitas, kami siap melayani semua kebutuhan teknologi Anda dengan profesional."}
-                          </p>
-                          <div className="flex flex-wrap gap-4 justify-center">
-                            <Button size="lg" asChild>
-                              <a href="#services">Layanan Servis Kami <Wrench className="ml-2 h-5 w-5" /></a>
-                            </Button>
-                            <Button size="lg" variant="secondary" asChild>
-                              <Link to="/tracking">Info Servis <Search className="ml-2 h-5 w-5" /></Link>
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
-              <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
-            </Carousel>
-          )}
+        <section className="py-20 md:py-32 text-center">
+          <div className="container px-4 md:px-6">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-primary to-orange-400">
+              {settings.heroTitle || "Solusi Total untuk Gadget & Komputer Anda"}
+            </h1>
+            <p className="max-w-3xl mx-auto text-lg text-muted-foreground mb-8">
+              {settings.heroSubtitle || "Dari perbaikan cepat hingga penjualan sparepart berkualitas, kami siap melayani semua kebutuhan teknologi Anda dengan profesional."}
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Button size="lg" asChild>
+                <a href="#services">Layanan Servis Kami <Wrench className="ml-2 h-5 w-5" /></a>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link to="/tracking">Info Servis <Search className="ml-2 h-5 w-5" /></Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link to="/products">Lihat Produk Unggulan <ArrowRight className="ml-2 h-5 w-5" /></Link>
+              </Button>
+            </div>
+            <div className="mt-8 max-w-2xl mx-auto">
+              <p className="text-sm text-muted-foreground italic">
+                <span className="font-semibold text-primary">Lacak Servis Anda!</span> Masukkan No. Servis yang tertera pada struk Anda di menu <span className="font-semibold">Info Servis</span> untuk melihat status perbaikan perangkat Anda secara real-time.
+              </p>
+            </div>
+          </div>
         </section>
 
         {/* Services Section */}
         <section id="services" className="py-16 md:py-24 bg-secondary/50">
           <div className="container px-4 md:px-6">
-            <div className="text-center mb-12 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Layanan Servis Profesional</h2>
               <p className="mt-4 text-lg text-muted-foreground">Kami menangani berbagai jenis kerusakan dengan teknisi berpengalaman.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {services.map((service, index) => (
-                <Card key={service.title} className="text-center hover:shadow-xl hover:-translate-y-2 transition-transform duration-300 animate-fade-in-up" style={{ animationDelay: `${0.4 + index * 0.1}s` }}>
+              {services.map((service) => (
+                <Card key={service.title} className="text-center hover:shadow-xl hover:-translate-y-2 transition-transform duration-300">
                   <CardHeader>
                     <service.icon className="h-12 w-12 mx-auto text-primary" />
                     <CardTitle className="mt-4">{service.title}</CardTitle>
@@ -179,7 +124,7 @@ const PublicPage = () => {
         {/* Featured Products Section */}
         <section id="products" className="py-16 md:py-24 bg-background">
           <div className="container px-4 md:px-6">
-            <div className="text-center mb-12 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+            <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
                 {isMember ? "Semua Produk & Sparepart" : "Produk & Sparepart Unggulan"}
               </h2>
@@ -202,38 +147,36 @@ const PublicPage = () => {
                   </Card>
                 ))
               ) : (
-                displayedProducts.map((product, index) => (
-                  <div className="animate-fade-in-up" style={{ animationDelay: `${0.6 + index * 0.05}s` }}>
-                    <Card key={product.id} className="overflow-hidden group transition-shadow hover:shadow-lg flex flex-col h-full">
-                      <CardHeader className="p-0">
-                        <div className="bg-muted aspect-square flex items-center justify-center overflow-hidden">
-                          {product.imageUrl ? (
-                            <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
-                          ) : (
-                            <ImageIcon className="h-20 w-20 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-4 flex-grow flex flex-col">
-                        <h3 className="font-semibold text-lg truncate" title={product.name}>{product.name}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">{product.category}</p>
-                        <p className="font-bold text-primary text-xl mt-auto">{formatCurrency(product.retailPrice)}</p>
-                        <Button
-                          className="mt-4 w-full"
-                          onClick={() => addToCart(product)}
-                          disabled={product.stock <= 0}
-                        >
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                          {product.stock > 0 ? "Tambah ke Keranjang" : "Stok Habis"}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
+                displayedProducts.map((product) => (
+                  <Card key={product.id} className="overflow-hidden group transition-shadow hover:shadow-lg flex flex-col">
+                    <CardHeader className="p-0">
+                      <div className="bg-muted aspect-square flex items-center justify-center overflow-hidden">
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                        ) : (
+                          <ImageIcon className="h-20 w-20 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 flex-grow flex flex-col">
+                      <h3 className="font-semibold text-lg truncate" title={product.name}>{product.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">{product.category}</p>
+                      <p className="font-bold text-primary text-xl mt-auto">{formatCurrency(product.retailPrice)}</p>
+                      <Button
+                        className="mt-4 w-full"
+                        onClick={() => addToCart(product)} // Use addToCart directly
+                        disabled={product.stock <= 0}
+                      >
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        {product.stock > 0 ? "Tambah ke Keranjang" : "Stok Habis"}
+                      </Button>
+                    </CardContent>
+                  </Card>
                 ))
               )}
             </div>
             {!isMember && (
-              <div className="text-center mt-12 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+              <div className="text-center mt-12">
                 <Button asChild size="lg">
                   <Link to="/products">Lihat Semua Produk <ArrowRight className="ml-2 h-5 w-5" /></Link>
                 </Button>
@@ -242,22 +185,22 @@ const PublicPage = () => {
           </div>
         </section>
 
-        {/* About Us Section (Bento Grid) */}
+        {/* About Us Section */}
         <section id="about" className="py-16 md:py-24 bg-secondary/50">
           <div className="container px-4 md:px-6">
-            <div className="text-center mb-12 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Tentang Kami</h2>
               <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
                 {settings.aboutUsContent || "Cellkom.Store adalah pusat layanan terpadu untuk perbaikan dan penjualan sparepart smartphone, komputer, dan laptop. Berdiri sejak tahun 2024, kami berkomitmen untuk memberikan solusi teknologi yang cepat, andal, dan terjangkau bagi masyarakat."}
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
-              {features.map((feature, index) => (
-                <Card key={feature.title} className={`p-6 flex flex-col items-center text-center transition-all hover:shadow-xl hover:-translate-y-2 animate-fade-in-up ${feature.className}`} style={{ animationDelay: `${0.4 + index * 0.1}s` }}>
+            <div className="grid md:grid-cols-3 gap-12 text-center mt-16">
+              {features.map((feature) => (
+                <div key={feature.title} className="flex flex-col items-center">
                   <feature.icon className="h-10 w-10 mb-4 text-primary" />
                   <h3 className="text-xl font-semibold">{feature.title}</h3>
                   <p className="text-muted-foreground mt-2">{feature.description}</p>
-                </Card>
+                </div>
               ))}
             </div>
           </div>
@@ -266,7 +209,7 @@ const PublicPage = () => {
         {/* IT Services Section */}
         <section id="it-services" className="py-16 md:py-24 bg-background">
           <div className="container px-4 md:px-6 text-center">
-            <div className="mx-auto max-w-3xl animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+            <div className="mx-auto max-w-3xl">
               <div className="inline-block rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary mb-4">
                 <Code className="inline-block h-4 w-4 mr-2" />
                 Jasa Pembuatan Aplikasi
@@ -277,7 +220,7 @@ const PublicPage = () => {
               </p>
               <div className="mt-8">
                 <Button size="lg" asChild>
-                  <a href={settings.consultationLink || '#contact'}>
+                  <a href={settings.consultationLink || '#contact'}> {/* Use the new setting here */}
                     Konsultasi Gratis <ArrowRight className="ml-2 h-5 w-5" />
                   </a>
                 </Button>
