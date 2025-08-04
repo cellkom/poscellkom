@@ -32,34 +32,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   const fetchProfile = useCallback(async (currentUser: User): Promise<UserProfile | null> => {
-    // Coba ambil profil dari tabel 'users' (staf)
-    const { data: staffProfile, error: staffError } = await supabase
-      .from('users')
+    // Menggunakan VIEW user_profiles untuk pencarian yang lebih efisien
+    const { data: userProfile, error } = await supabase
+      .from('user_profiles')
       .select('*')
       .eq('id', currentUser.id)
       .single();
 
-    if (staffError && staffError.code !== 'PGRST116') {
-      console.error("Error fetching staff profile:", staffError);
-      throw staffError;
-    }
-    if (staffProfile) {
-      return staffProfile;
+    if (error && error.code !== 'PGRST116') { // PGRST116 = row not found
+      console.error("Error fetching unified profile:", error);
+      throw error;
     }
 
-    // Jika bukan staf, coba ambil dari tabel 'members'
-    const { data: memberProfile, error: memberError } = await supabase
-      .from('members')
-      .select('*')
-      .eq('id', currentUser.id)
-      .single();
-
-    if (memberError && memberError.code !== 'PGRST116') {
-      console.error("Error fetching member profile:", memberError);
-      throw memberError;
-    }
-    if (memberProfile) {
-      return { ...memberProfile, role: 'Member', email: currentUser.email };
+    if (userProfile) {
+      // Menambahkan email dari session karena tidak ada di VIEW
+      return { ...userProfile, email: currentUser.email };
     }
 
     console.warn(`No profile found for user ${currentUser.id}. This might happen if the user was created but the profile trigger failed.`);
