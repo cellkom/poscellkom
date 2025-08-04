@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PublicLayout from "@/components/Layout/PublicLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -7,15 +7,80 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Shield, Loader2 } from "lucide-react";
+import { User, Mail, Shield, Loader2, Camera } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
 
 const UserProfilePage = () => {
-  const { profile, session, loading } = useAuth();
+  const { profile, session, loading, refreshProfile } = useAuth();
+  
+  // State for profile form
+  const [formData, setFormData] = useState({ full_name: '' });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
+
+  // State for password form
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({ full_name: profile.full_name || '' });
+      setImagePreview(profile.avatar_url || null);
+    }
+  }, [profile]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleProfileSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session) return;
+    setIsProfileSubmitting(true);
+
+    let avatarUrl = profile?.avatar_url;
+
+    if (imageFile) {
+      const fileExt = imageFile.name.split('.').pop();
+      const filePath = `public/${session.user.id}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, imageFile, { upsert: true });
+
+      if (uploadError) {
+        showError(`Gagal mengunggah foto: ${uploadError.message}`);
+        setIsProfileSubmitting(false);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      avatarUrl = `${publicUrl}?t=${new Date().getTime()}`; // Add timestamp to bust cache
+    }
+
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({
+        full_name: formData.full_name,
+        avatar_url: avatarUrl,
+      })
+      .eq('id', session.user.id);
+
+    if (updateError) {
+      showError(`Gagal memperbarui profil: ${updateError.message}`);
+    } else {
+      showSuccess("Profil berhasil diperbarui!");
+      await refreshProfile();
+    }
+    setIsProfileSubmitting(false);
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,9 +97,9 @@ const UserProfilePage = () => {
       return;
     }
 
-    setIsSubmitting(true);
+    setIsPasswordSubmitting(true);
     const { error } = await supabase.auth.updateUser({ password: password });
-    setIsSubmitting(false);
+    setIsPasswordSubmitting(false);
 
     if (error) {
       showError(`Gagal mengubah password: ${error.message}`);
@@ -82,44 +147,50 @@ const UserProfilePage = () => {
     <PublicLayout>
       <div className="container mx-auto px-4 py-8 md:py-12 max-w-2xl space-y-6">
         <Card>
-          <CardHeader className="text-center">
+          <CardHeader>
             <CardTitle className="text-2xl">Profil Saya</CardTitle>
-            <CardDescription>Informasi akun Anda sebagai staf.</CardDescription>
+            <CardDescription>Ubah informasi akun Anda sebagai staf.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex flex-col items-center space-y-4">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name || ''} />
-                <AvatarFallback className="text-3xl">
-                  {profile.full_name?.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <h2 className="text-xl font-semibold">{profile.full_name}</h2>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
-                <Mail className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{session.user.email}</p>
+          <form onSubmit={handleProfileSave}>
+            <CardContent className="space-y-6">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="relative">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={imagePreview || ''} alt={profile.full_name || ''} />
+                    <AvatarFallback className="text-3xl">
+                      {profile.full_name?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button asChild size="icon" className="absolute bottom-0 right-0 rounded-full h-8 w-8">
+                    <Label htmlFor="picture" className="cursor-pointer">
+                      <Camera className="h-4 w-4" />
+                      <Input id="picture" type="file" className="sr-only" accept="image/*" onChange={handleImageChange} />
+                    </Label>
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
-                <User className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Nama Lengkap</p>
-                  <p className="font-medium">{profile.full_name}</p>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Nama Lengkap</Label>
+                  <Input id="fullName" value={formData.full_name} onChange={(e) => setFormData({ ...formData, full_name: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input value={session.user.email || ''} disabled />
+                </div>
+                <div className="space-y-2">
+                  <Label>Role</Label>
+                  <Input value={profile.role || ''} disabled />
                 </div>
               </div>
-              <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
-                <Shield className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Role</p>
-                  <p className="font-medium">{profile.role}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
+            </CardContent>
+            <CardFooter>
+              <Button type="submit" disabled={isProfileSubmitting}>
+                {isProfileSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Simpan Perubahan Profil
+              </Button>
+            </CardFooter>
+          </form>
         </Card>
 
         <Card>
@@ -151,8 +222,8 @@ const UserProfilePage = () => {
               </div>
             </CardContent>
             <CardFooter>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" disabled={isPasswordSubmitting}>
+                {isPasswordSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Simpan Password Baru
               </Button>
             </CardFooter>
