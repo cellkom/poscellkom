@@ -41,6 +41,7 @@ import ServiceMasukPage from './pages/Dashboard/ServiceMasukPage';
 import ServicesInProgressPage from './pages/Dashboard/ServicesInProgressPage';
 import NewsManagementPage from './pages/Dashboard/NewsManagementPage';
 import SettingsPage from './pages/Dashboard/SettingsPage';
+import OrderManagementPage from './pages/Dashboard/OrderManagementPage';
 
 interface ProtectedRouteProps {
   children: JSX.Element;
@@ -114,6 +115,7 @@ function App() {
                 <Route path="/dashboard/stock" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><StockPage /></DashboardLayout></ProtectedRoute>} />
                 <Route path="/dashboard/service-masuk" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><ServiceMasukPage /></DashboardLayout></ProtectedRoute>} />
                 <Route path="/dashboard/services-in-progress" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><ServicesInProgressPage /></DashboardLayout></ProtectedRoute>} />
+                <Route path="/dashboard/orders" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><OrderManagementPage /></DashboardLayout></ProtectedRoute>} />
                 
                 {/* Transactions */}
                 <Route path="/dashboard/transaction/sales" element={<ProtectedRoute allowedRoles={['Admin', 'Kasir']}><DashboardLayout><SalesPage /></DashboardLayout></ProtectedRoute>} />
