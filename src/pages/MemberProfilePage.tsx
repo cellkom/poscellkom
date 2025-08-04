@@ -7,11 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, User, Mail, Phone, HomeIcon, Camera } from "lucide-react";
+import { Loader2, Mail, Phone, HomeIcon, Camera } from "lucide-react";
 import { showSuccess, showError } from '@/utils/toast';
+import { Link } from 'react-router-dom';
 
 const MemberProfilePage = () => {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, loading: authLoading } = useAuth();
   const [formData, setFormData] = useState({ address: '' });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -72,11 +73,27 @@ const MemberProfilePage = () => {
     setLoading(false);
   };
 
-  if (!profile) {
+  if (authLoading) {
     return (
       <PublicLayout>
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </PublicLayout>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <PublicLayout>
+        <div className="container mx-auto px-4 py-12 text-center">
+          <h2 className="text-2xl font-bold">Profil Tidak Ditemukan</h2>
+          <p className="text-muted-foreground mt-2">
+            Sepertinya terjadi masalah saat memuat profil Anda. Silakan coba login kembali.
+          </p>
+          <Button asChild className="mt-6">
+            <Link to="/member-login">Kembali ke Halaman Login</Link>
+          </Button>
         </div>
       </PublicLayout>
     );
