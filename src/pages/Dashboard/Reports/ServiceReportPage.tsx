@@ -11,7 +11,6 @@ import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Calendar as CalendarIcon, Printer, Wrench, DollarSign, TrendingUp, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSettings } from "@/contexts/SettingsContext";
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
@@ -34,13 +33,13 @@ interface ServiceTransaction {
 }
 
 const ServiceReportPage = () => {
-  const { settings } = useSettings();
   const [serviceData, setServiceData] = useState<ServiceTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 29),
     to: new Date(),
   });
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchServiceData = async () => {
@@ -99,26 +98,7 @@ const ServiceReportPage = () => {
   const handlePrint = () => window.print();
 
   return (
-    <div className="space-y-6 printable-content">
-      {/* Header khusus untuk cetak */}
-      <div className="hidden print:block mb-8">
-        <div className="flex items-center justify-between pb-4 border-b">
-          <div className="flex items-center gap-4">
-            <img src={settings.logoUrl || '/logo.png'} alt="Logo Bisnis" className="h-16 w-auto" />
-            <div>
-              <h1 className="text-2xl font-bold">{settings.appName || 'Laporan Jasa Service'}</h1>
-              <p className="text-muted-foreground">{settings.appDescription}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <h2 className="text-xl font-semibold">Laporan Jasa Service</h2>
-            <p className="text-sm text-muted-foreground">
-              Periode: {dateRange?.from && format(dateRange.from, "d MMM yyyy", { locale: id })} - {dateRange?.to && format(dateRange.to, "d MMM yyyy", { locale: id })}
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <div className="space-y-6" ref={printRef}>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
         <div>
           <Button variant="outline" asChild>
@@ -130,11 +110,11 @@ const ServiceReportPage = () => {
         <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Cetak Laporan</Button>
       </div>
 
-      <Card className="print:shadow-none print:border-0 print:hidden">
-        <CardHeader>
+      <Card className="print:shadow-none print:border-0">
+        <CardHeader className="print:hidden">
           <CardTitle>Filter Periode</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="print:hidden">
           <Popover>
             <PopoverTrigger asChild>
               <Button id="date" variant={"outline"} className={cn("w-[300px] justify-start text-left font-normal", !dateRange && "text-muted-foreground")}>
@@ -146,6 +126,10 @@ const ServiceReportPage = () => {
               <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={setDateRange} numberOfMonths={2} />
             </PopoverContent>
           </Popover>
+        </CardContent>
+        <CardContent className="hidden print:block text-center mb-4">
+          <h1 className="text-2xl font-bold">Laporan Jasa Service</h1>
+          <p>Periode: {dateRange?.from && format(dateRange.from, "d MMMM yyyy", { locale: id })} - {dateRange?.to && format(dateRange.to, "d MMMM yyyy", { locale: id })}</p>
         </CardContent>
       </Card>
 

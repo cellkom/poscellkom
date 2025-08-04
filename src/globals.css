@@ -99,42 +99,31 @@
   }
 }
 
-@layer utilities {
-  @page {
-    size: A4;
-    margin: 1.5cm;
+@media print {
+  /* Reset layout for printing reports from the dashboard */
+  .dashboard-main-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
   }
 
-  @media print {
-    body {
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-      background-image: none;
-    }
+  /* Ensure the receipt is positioned correctly for printing */
+  #receipt-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
 
-    /* Sembunyikan semua elemen secara default */
-    body * {
-      visibility: hidden;
-    }
+  /* General page setup for printing */
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
 
-    /* Tampilkan hanya area yang bisa dicetak dan isinya */
-    .printable-content, .printable-content * {
-      visibility: visible;
-    }
-
-    .printable-content {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      margin: 0;
-      padding: 0;
-    }
-
-    /* Hapus bayangan dan border pada card saat dicetak */
-    .printable-content .card {
-      box-shadow: none !important;
-      border: none !important;
-    }
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background-image: none;
   }
 }
