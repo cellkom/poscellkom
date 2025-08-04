@@ -8,7 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useOrders, Order, OrderItem } from "@/hooks/use-orders";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Loader2, Eye, PackageCheck, PackageX } from "lucide-react";
+import { Loader2, Eye, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
@@ -22,11 +32,12 @@ const getStatusBadgeVariant = (status: Order['status']) => {
 };
 
 const OrderManagementPage = () => {
-  const { orders, loading, updateOrderStatus, fetchOrderDetails } = useOrders();
+  const { orders, loading, updateOrderStatus, fetchOrderDetails, deleteOrder } = useOrders();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderDetails, setOrderDetails] = useState<OrderItem[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
 
   const handleViewDetails = async (order: Order) => {
     setSelectedOrder(order);
@@ -39,6 +50,13 @@ const OrderManagementPage = () => {
 
   const handleStatusChange = (orderId: string, status: Order['status']) => {
     updateOrderStatus(orderId, status);
+  };
+
+  const handleDelete = async () => {
+    if (orderToDelete) {
+      await deleteOrder(orderToDelete.id);
+      setOrderToDelete(null);
+    }
   };
 
   return (
@@ -83,9 +101,14 @@ const OrderManagementPage = () => {
                       </Select>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button variant="outline" size="sm" onClick={() => handleViewDetails(order)}>
-                        <Eye className="h-4 w-4 mr-2" /> Detail
-                      </Button>
+                      <div className="flex justify-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleViewDetails(order)}>
+                          <Eye className="h-4 w-4 mr-2" /> Detail
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => setOrderToDelete(order)}>
+                          <Trash2 className="h-4 w-4 mr-2" /> Hapus
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -144,6 +167,21 @@ const OrderManagementPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!orderToDelete} onOpenChange={() => setOrderToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini akan menghapus pesanan dengan nomor {orderToDelete?.order_number} secara permanen. Aksi ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Hapus</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

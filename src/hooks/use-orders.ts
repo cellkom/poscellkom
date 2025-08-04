@@ -97,5 +97,33 @@ export const useOrders = () => {
     return data as any;
   };
 
-  return { orders, loading, fetchOrders, updateOrderStatus, fetchOrderDetails };
+  const deleteOrder = async (orderId: string) => {
+    // First, delete related order items to be safe.
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .delete()
+      .eq('order_id', orderId);
+
+    if (itemsError) {
+      showError(`Gagal menghapus item pesanan terkait: ${itemsError.message}`);
+      return false;
+    }
+
+    // Then, delete the order itself.
+    const { error: orderError } = await supabase
+      .from('orders')
+      .delete()
+      .eq('id', orderId);
+
+    if (orderError) {
+      showError(`Gagal menghapus pesanan: ${orderError.message}`);
+      return false;
+    }
+
+    showSuccess("Pesanan berhasil dihapus.");
+    fetchOrders(); // Refresh the list
+    return true;
+  };
+
+  return { orders, loading, fetchOrders, updateOrderStatus, fetchOrderDetails, deleteOrder };
 };
