@@ -18,6 +18,7 @@ interface SettingsContextType {
   updateSettings: (settingsToUpdate: AppSettings) => Promise<boolean>;
   uploadLogo: (file: File) => Promise<boolean>;
   uploadAuthorImage: (file: File) => Promise<boolean>;
+  uploadHeroImage: (file: File, heroIndex: 1 | 2 | 3) => Promise<boolean>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -106,7 +107,24 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     return updateSettings({ authorImageUrl: finalUrl });
   };
 
-  const value = { settings, loading, updateSettings, uploadLogo, uploadAuthorImage };
+  const uploadHeroImage = async (file: File, heroIndex: 1 | 2 | 3): Promise<boolean> => {
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const fileName = `public/hero-${heroIndex}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(fileName, file, { upsert: true });
+
+    if (uploadError) {
+      showError(`Gagal mengunggah gambar hero: ${uploadError.message}`);
+      return false;
+    }
+
+    showSuccess(`Gambar Hero ${heroIndex} berhasil diperbarui!`);
+    return true;
+  };
+
+  const value = { settings, loading, updateSettings, uploadLogo, uploadAuthorImage, uploadHeroImage };
 
   return (
     <SettingsContext.Provider value={value}>

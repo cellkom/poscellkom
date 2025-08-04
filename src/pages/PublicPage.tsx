@@ -5,12 +5,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Smartphone, Laptop, Printer, Wrench, Sparkles, ShieldCheck, ArrowRight, ShoppingCart, Code, Image as ImageIcon, Search } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useStock } from "@/hooks/use-stock";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useCart } from "@/contexts/CartContext";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import { supabase } from "@/integrations/supabase/client";
 
 const PublicPage = () => {
   const { products, loading } = useStock();
@@ -18,6 +19,8 @@ const PublicPage = () => {
   const { settings } = useSettings();
   const { addToCart } = useCart();
   const location = useLocation();
+  const [heroImageUrls, setHeroImageUrls] = useState<string[]>([]);
+  const [heroLoading, setHeroLoading] = useState(true);
 
   const isMember = session && profile?.role === 'Member';
   const displayedProducts = isMember ? products : products.slice(0, 4);
@@ -33,11 +36,31 @@ const PublicPage = () => {
     }
   }, [location]);
 
-  const heroImages = [
-    '/hero-1.jpg', // Ganti dengan path gambar Anda
-    '/hero-2.jpg', // Ganti dengan path gambar Anda
-    '/hero-3.jpg', // Ganti dengan path gambar Anda
-  ];
+  useEffect(() => {
+    const fetchHeroImages = async () => {
+      setHeroLoading(true);
+      const urls: string[] = [];
+      const placeholders = ['/hero-1.jpg', '/hero-2.jpg', '/hero-3.jpg'];
+      
+      for (let i = 1; i <= 3; i++) {
+        const filePath = `public/hero-${i}.jpg`;
+        const { data: listData } = await supabase.storage
+          .from('product-images')
+          .list('public', { search: `hero-${i}.jpg`, limit: 1 });
+
+        if (listData && listData.length > 0) {
+          const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
+          urls.push(`${data.publicUrl}?t=${new Date().getTime()}`);
+        } else {
+          urls.push(placeholders[i-1]);
+        }
+      }
+      setHeroImageUrls(urls);
+      setHeroLoading(false);
+    };
+
+    fetchHeroImages();
+  }, []);
 
   const services = [
     {
@@ -83,43 +106,47 @@ const PublicPage = () => {
       <main className="animate-fade-in-up" style={{ animationFillMode: 'backwards' }}>
         {/* Hero Section */}
         <section className="relative h-[60vh] md:h-[80vh] w-full">
-          <Carousel
-            className="w-full h-full"
-            plugins={[Autoplay({ delay: 5000, stopOnInteraction: true })]}
-            opts={{ loop: true }}
-          >
-            <CarouselContent className="h-full">
-              {heroImages.map((src, index) => (
-                <CarouselItem key={index} className="h-full">
-                  <div
-                    className="h-full w-full bg-cover bg-center"
-                    style={{ backgroundImage: `url(${src})` }}
-                  >
-                    <div className="h-full w-full bg-black/50 flex items-center justify-center">
-                      <div className="text-center text-white container px-4 md:px-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-primary to-orange-400">
-                          {settings.heroTitle || "Solusi Total untuk Gadget & Komputer Anda"}
-                        </h1>
-                        <p className="max-w-3xl mx-auto text-lg text-gray-200 mb-8">
-                          {settings.heroSubtitle || "Dari perbaikan cepat hingga penjualan sparepart berkualitas, kami siap melayani semua kebutuhan teknologi Anda dengan profesional."}
-                        </p>
-                        <div className="flex flex-wrap gap-4 justify-center">
-                          <Button size="lg" asChild>
-                            <a href="#services">Layanan Servis Kami <Wrench className="ml-2 h-5 w-5" /></a>
-                          </Button>
-                          <Button size="lg" variant="secondary" asChild>
-                            <Link to="/tracking">Info Servis <Search className="ml-2 h-5 w-5" /></Link>
-                          </Button>
+          {heroLoading ? (
+            <Skeleton className="w-full h-full" />
+          ) : (
+            <Carousel
+              className="w-full h-full"
+              plugins={[Autoplay({ delay: 5000, stopOnInteraction: true })]}
+              opts={{ loop: true }}
+            >
+              <CarouselContent className="h-full">
+                {heroImageUrls.map((src, index) => (
+                  <CarouselItem key={index} className="h-full">
+                    <div
+                      className="h-full w-full bg-cover bg-center"
+                      style={{ backgroundImage: `url(${src})` }}
+                    >
+                      <div className="h-full w-full bg-black/50 flex items-center justify-center">
+                        <div className="text-center text-white container px-4 md:px-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                          <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-primary to-orange-400">
+                            {settings.heroTitle || "Solusi Total untuk Gadget & Komputer Anda"}
+                          </h1>
+                          <p className="max-w-3xl mx-auto text-lg text-gray-200 mb-8">
+                            {settings.heroSubtitle || "Dari perbaikan cepat hingga penjualan sparepart berkualitas, kami siap melayani semua kebutuhan teknologi Anda dengan profesional."}
+                          </p>
+                          <div className="flex flex-wrap gap-4 justify-center">
+                            <Button size="lg" asChild>
+                              <a href="#services">Layanan Servis Kami <Wrench className="ml-2 h-5 w-5" /></a>
+                            </Button>
+                            <Button size="lg" variant="secondary" asChild>
+                              <Link to="/tracking">Info Servis <Search className="ml-2 h-5 w-5" /></Link>
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
-            <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
-          </Carousel>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
+              <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex" />
+            </Carousel>
+          )}
         </section>
 
         {/* Services Section */}
