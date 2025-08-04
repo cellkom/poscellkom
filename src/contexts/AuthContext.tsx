@@ -109,15 +109,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const initializeSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      await setAuthData(session);
-      setLoading(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        await setAuthData(session);
+      } catch (error) {
+        console.error("Error during session initialization:", error);
+        await setAuthData(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
     initializeSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      await setAuthData(session);
+      try {
+        await setAuthData(session);
+      } catch (error) {
+        console.error("Error in onAuthStateChange handler:", error);
+      }
     });
 
     return () => {
