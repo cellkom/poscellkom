@@ -2,25 +2,36 @@ import { useState, useEffect } from 'react';
 import PublicLayout from "@/components/Layout/PublicLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Mail, Phone, HomeIcon, Camera } from "lucide-react";
+import { Loader2, Mail, Phone, HomeIcon, Camera, Shield } from "lucide-react";
 import { showSuccess, showError } from '@/utils/toast';
 import { Link } from 'react-router-dom';
 
 const MemberProfilePage = () => {
   const { user, profile, refreshProfile, loading: authLoading } = useAuth();
-  const [formData, setFormData] = useState({ address: '' });
+  
+  // State for profile form
+  const [formData, setFormData] = useState({ phone: '', address: '' });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
+
+  // State for password form
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
 
   useEffect(() => {
     if (profile) {
-      setFormData({ address: profile.address || '' });
+      setFormData({ 
+        phone: profile.phone || '',
+        address: profile.address || '' 
+      });
+      setImagePreview(profile.avatar_url || null);
     }
   }, [profile]);
 
@@ -32,9 +43,9 @@ const MemberProfilePage = () => {
     }
   };
 
-  const handleSave = async () => {
+  const handleProfileSave = async () => {
     if (!user) return;
-    setLoading(true);
+    setIsProfileSubmitting(true);
 
     let avatarUrl = profile?.avatar_url;
 
@@ -48,17 +59,18 @@ const MemberProfilePage = () => {
 
       if (uploadError) {
         showError(`Gagal mengunggah foto: ${uploadError.message}`);
-        setLoading(false);
+        setIsProfileSubmitting(false);
         return;
       }
 
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      avatarUrl = publicUrl;
+      avatarUrl = `${publicUrl}?t=${new Date().getTime()}`;
     }
 
     const { error: updateError } = await supabase
       .from('members')
       .update({
+        phone: formData.phone,
         address: formData.address,
         avatar_url: avatarUrl,
       })
@@ -68,9 +80,37 @@ const MemberProfilePage = () => {
       showError(`Gagal memperbarui profil: ${updateError.message}`);
     } else {
       showSuccess("Profil berhasil diperbarui!");
-      await refreshProfile(); // Refresh context to update header
+      await refreshProfile();
     }
-    setLoading(false);
+    setIsProfileSubmitting(false);
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!password || !confirmPassword) {
+      showError("Harap isi kedua kolom password.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      showError("Password tidak cocok.");
+      return;
+    }
+    if (password.length < 6) {
+      showError("Password minimal harus 6 karakter.");
+      return;
+    }
+
+    setIsPasswordSubmitting(true);
+    const { error } = await supabase.auth.updateUser({ password: password });
+    setIsPasswordSubmitting(false);
+
+    if (error) {
+      showError(`Gagal mengubah password: ${error.message}`);
+    } else {
+      showSuccess("Password berhasil diubah!");
+      setPassword('');
+      setConfirmPassword('');
+    }
   };
 
   if (authLoading) {
@@ -101,7 +141,7 @@ const MemberProfilePage = () => {
 
   return (
     <PublicLayout>
-      <div className="container mx-auto px-4 md:px-6 py-12">
+      <div className="container mx-auto px-4 md:px-6 py-12 space-y-8">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="text-2xl">Profil Saya</CardTitle>
@@ -135,7 +175,7 @@ const MemberProfilePage = () => {
                 <Phone className="h-5 w-5 text-muted-foreground" />
                 <div className="w-full">
                   <Label htmlFor="phone">Nomor Telepon</Label>
-                  <Input id="phone" value={profile.phone || '-'} readOnly disabled />
+                  <Input id="phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -148,11 +188,48 @@ const MemberProfilePage = () => {
             </div>
           </CardContent>
           <CardFooter>
-            <Button onClick={handleSave} disabled={loading} className="w-full">
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Simpan Perubahan
+            <Button onClick={handleProfileSave} disabled={isProfileSubmitting} className="w-full">
+              {isProfileSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Simpan Perubahan Profil
             </Button>
           </CardFooter>
+        </Card>
+
+        <Card className="max-w-2xl mx-auto">
+          <CardHeader>
+            <CardTitle className="text-2xl flex items-center gap-2"><Shield className="h-5 w-5" /> Keamanan Akun</CardTitle>
+            <CardDescription>Ubah password Anda secara berkala untuk menjaga keamanan.</CardDescription>
+          </CardHeader>
+          <form onSubmit={handlePasswordChange}>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Password Baru</Label>
+                <Input 
+                  id="new-password" 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Minimal 6 karakter"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Konfirmasi Password Baru</Label>
+                <Input 
+                  id="confirm-password" 
+                  type="password" 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Ulangi password baru"
+                />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button type="submit" disabled={isPasswordSubmitting} className="w-full">
+                {isPasswordSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Ubah Password
+              </Button>
+            </CardFooter>
+          </form>
         </Card>
       </div>
     </PublicLayout>
