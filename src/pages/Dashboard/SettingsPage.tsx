@@ -33,7 +33,12 @@ const SettingsPage = () => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [authorImageFile, setAuthorImageFile] = useState<File | null>(null);
   const [authorImagePreview, setAuthorImagePreview] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Separate loading states for each action
+  const [isTextSubmitting, setIsTextSubmitting] = useState(false);
+  const [isLogoSubmitting, setIsLogoSubmitting] = useState(false);
+  const [isAuthorSubmitting, setIsAuthorSubmitting] = useState(false);
+  const [isAdSubmitting, setIsAdSubmitting] = useState(false);
 
   // State for new ad
   const [adFile, setAdFile] = useState<File | null>(null);
@@ -96,33 +101,33 @@ const SettingsPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setIsTextSubmitting(true);
     await updateSettings(formData);
-    setIsSubmitting(false);
+    setIsTextSubmitting(false);
   };
 
   const handleLogoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!logoFile) return;
-    setIsSubmitting(true);
+    setIsLogoSubmitting(true);
     await uploadLogo(logoFile);
     setLogoFile(null);
-    setIsSubmitting(false);
+    setIsLogoSubmitting(false);
   };
 
   const handleAuthorImageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!authorImageFile) return;
-    setIsSubmitting(true);
+    setIsAuthorSubmitting(true);
     await uploadAuthorImage(authorImageFile);
     setAuthorImageFile(null);
-    setIsSubmitting(false);
+    setIsAuthorSubmitting(false);
   };
 
   const handleAdSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!adFile) return;
-    setIsSubmitting(true);
+    setIsAdSubmitting(true);
     const success = await addAdvertisement(adFile, adAltText, adLinkUrl);
     if (success) {
       setAdFile(null);
@@ -130,7 +135,7 @@ const SettingsPage = () => {
       setAdLinkUrl('');
       setAdPreview(null);
     }
-    setIsSubmitting(false);
+    setIsAdSubmitting(false);
   };
 
   if (loading) {
@@ -183,8 +188,8 @@ const SettingsPage = () => {
               <Label htmlFor="adLinkUrl">URL Tautan (Opsional)</Label>
               <Input id="adLinkUrl" value={adLinkUrl} onChange={(e) => setAdLinkUrl(e.target.value)} placeholder="Contoh: /products" />
             </div>
-            <Button type="submit" disabled={!adFile || isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+            <Button type="submit" disabled={!adFile || isAdSubmitting}>
+              {isAdSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
               Unggah Iklan
             </Button>
           </form>
@@ -302,8 +307,8 @@ const SettingsPage = () => {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="button" onClick={handleAuthorImageSubmit} disabled={!authorImageFile || isSubmitting}>
-              {isSubmitting && !authorImageFile ? null : isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+            <Button type="button" onClick={handleAuthorImageSubmit} disabled={!authorImageFile || isAuthorSubmitting}>
+              {isAuthorSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
               Unggah Foto Author
             </Button>
           </CardFooter>
@@ -326,16 +331,16 @@ const SettingsPage = () => {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="button" onClick={handleLogoSubmit} disabled={!logoFile || isSubmitting}>
-              {isSubmitting && !logoFile ? null : isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+            <Button type="button" onClick={handleLogoSubmit} disabled={!logoFile || isLogoSubmitting}>
+              {isLogoSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
               Unggah Logo
             </Button>
           </CardFooter>
         </Card>
 
         <div className="flex justify-end">
-          <Button type="submit" size="lg" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button type="submit" size="lg" disabled={isTextSubmitting}>
+            {isTextSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Simpan Semua Perubahan
           </Button>
         </div>
