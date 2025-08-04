@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, Wrench, Receipt, CreditCard, ShoppingCart, Activity, Users } from "lucide-react";
+import { DollarSign, Wrench, Receipt, CreditCard, ShoppingCart, Activity, Users, ClipboardList } from "lucide-react";
 import { useServiceEntries } from "@/hooks/use-service-entries";
 import { useInstallments } from "@/hooks/use-installments";
+import { useOrders } from "@/hooks/use-orders";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfToday, endOfToday } from "date-fns";
 
@@ -44,6 +45,7 @@ interface ActivityItem {
 const DashboardPage = () => {
   const { serviceEntries, loading: servicesLoading } = useServiceEntries();
   const { installments, loading: installmentsLoading } = useInstallments();
+  const { orders, loading: ordersLoading } = useOrders();
   
   const [summary, setSummary] = useState({ revenueToday: 0, transactionsToday: 0, visitorsToday: 0 });
   const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -56,6 +58,10 @@ const DashboardPage = () => {
   const totalReceivables = useMemo(() => {
     return installments.filter(i => i.status === 'Belum Lunas').reduce((sum, i) => sum + i.remaining_amount, 0);
   }, [installments]);
+
+  const pendingOrders = useMemo(() => {
+    return orders.filter(o => o.status === 'Pending').length;
+  }, [orders]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -124,14 +130,14 @@ const DashboardPage = () => {
     fetchDashboardData();
   }, []);
 
-  const pageLoading = loading || servicesLoading || installmentsLoading;
+  const pageLoading = loading || servicesLoading || installmentsLoading || ordersLoading;
 
   return (
     <div className="space-y-6">
       {/* Stat Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {pageLoading ? (
-          Array.from({ length: 4 }).map((_, index) => (
+          Array.from({ length: 6 }).map((_, index) => (
             <Card key={index}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Skeleton className="h-4 w-2/3" />
@@ -193,6 +199,17 @@ const DashboardPage = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{servicesInProgress} Servis</div>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/dashboard/orders">
+              <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pesanan Masuk</CardTitle>
+                  <ClipboardList className="h-4 w-4 text-cyan-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{pendingOrders} Pesanan</div>
                 </CardContent>
               </Card>
             </Link>
