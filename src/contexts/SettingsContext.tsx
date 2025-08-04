@@ -4,6 +4,7 @@ import { showError, showSuccess } from '@/utils/toast';
 
 export interface AppSettings {
   [key: string]: string;
+  consultationLink?: string; // New field for consultation link
 }
 
 interface SettingsContextType {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } => 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ const SettingsPage = () => {
     contactPhone: '',
     socialInstagram: '',
     footerCopyright: '',
+    consultationLink: '', // New field
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -38,6 +39,7 @@ const SettingsPage = () => {
         contactPhone: settings.contactPhone || '',
         socialInstagram: settings.socialInstagram || '',
         footerCopyright: settings.footerCopyright || '',
+        consultationLink: settings.consultationLink || '', // Initialize new field
       });
       setLogoPreview(settings.logoUrl || null);
     }
@@ -144,6 +146,10 @@ const SettingsPage = () => {
           <div className="space-y-2">
             <Label htmlFor="socialInstagram">URL Instagram</Label>
             <Input id="socialInstagram" placeholder="https://instagram.com/username" value={formData.socialInstagram} onChange={handleInputChange} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="consultationLink">Tautan Konsultasi Gratis (Jasa Aplikasi)</Label>
+            <Input id="consultationLink" placeholder="https://wa.me/6281234567890" value={formData.consultationLink} onChange={handleInputChange} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="footerCopyright">Teks Copyright Footer</Label>

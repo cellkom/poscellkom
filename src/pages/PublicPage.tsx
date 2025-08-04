@@ -146,7 +146,7 @@ const PublicPage = () => {
                 ))
               ) : (
                 displayedProducts.map((product) => (
-                  <Card key={product.id} className="overflow-hidden group transition-shadow hover:shadow-lg">
+                  <Card key={product.id} className="overflow-hidden group transition-shadow hover:shadow-lg flex flex-col">
                     <CardHeader className="p-0">
                       <div className="bg-muted aspect-square flex items-center justify-center overflow-hidden">
                         {product.imageUrl ? (
@@ -156,10 +156,18 @@ const PublicPage = () => {
                         )}
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold truncate" title={product.name}>{product.name}</h3>
-                      <p className="text-sm text-muted-foreground">{product.category}</p>
-                      <p className="font-bold mt-2 text-primary">{formatCurrency(product.retailPrice)}</p>
+                    <CardContent className="p-4 flex-grow flex flex-col">
+                      <h3 className="font-semibold text-lg truncate" title={product.name}>{product.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">{product.category}</p>
+                      <p className="font-bold text-primary text-xl mt-auto">{formatCurrency(product.retailPrice)}</p>
+                      <Button
+                        className="mt-4 w-full"
+                        onClick={() => handleAddToCart(product)}
+                        disabled={product.stock <= 0}
+                      >
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        {product.stock > 0 ? "Tambah ke Keranjang" : "Stok Habis"}
+                      </Button>
                     </CardContent>
                   </Card>
                 ))
@@ -210,7 +218,7 @@ const PublicPage = () => {
               </p>
               <div className="mt-8">
                 <Button size="lg" asChild>
-                  <a href="#contact">
+                  <a href={settings.consultationLink || '#contact'}> {/* Use the new setting here */}
                     Konsultasi Gratis <ArrowRight className="ml-2 h-5 w-5" />
                   </a>
                 </Button>
