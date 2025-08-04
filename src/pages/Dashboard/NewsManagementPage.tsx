@@ -82,8 +82,13 @@ const NewsManagementPage = () => {
     setIsSubmitting(true);
     try {
       let imageUrl = editingArticle?.image_url || null;
+
       if (imageFile) {
-        imageUrl = await uploadNewsImage(imageFile);
+        const uploadedUrl = await uploadNewsImage(imageFile);
+        if (uploadedUrl === null) {
+          throw new Error("Proses unggah gambar gagal. Berita tidak disimpan.");
+        }
+        imageUrl = uploadedUrl;
       }
 
       const payload = {
@@ -93,12 +98,9 @@ const NewsManagementPage = () => {
         published_at: formData.status === 'published' ? new Date().toISOString() : null,
       };
 
-      let error;
-      if (editingArticle) {
-        ({ error } = await supabase.from('news').update(payload).eq('id', editingArticle.id));
-      } else {
-        ({ error } = await supabase.from('news').insert(payload));
-      }
+      const { error } = editingArticle
+        ? await supabase.from('news').update(payload).eq('id', editingArticle.id)
+        : await supabase.from('news').insert(payload);
 
       if (error) {
         throw error;
@@ -108,7 +110,7 @@ const NewsManagementPage = () => {
       setIsDialogOpen(false);
       fetchArticles(true);
     } catch (error: any) {
-      showError(`Gagal menyimpan berita: ${error.message}`);
+      showError(error.message || "Gagal menyimpan berita. Silakan coba lagi.");
     } finally {
       setIsSubmitting(false);
     }

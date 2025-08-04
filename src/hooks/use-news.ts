@@ -90,7 +90,7 @@ export const useNews = () => {
     if (!imageFile) return null;
     const fileExt = imageFile.name.split('.').pop();
     const fileName = `news/${Date.now()}.${fileExt}`;
-    const { error, data } = await supabase.storage.from('product-images').upload(fileName, imageFile);
+    const { error, data } = await supabase.storage.from('product-images').upload(fileName, imageFile, { upsert: true });
     if (error) {
       showError(`Gagal mengunggah gambar: ${error.message}`);
       return null;
