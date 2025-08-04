@@ -108,19 +108,29 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const uploadHeroImage = async (file: File, heroIndex: 1 | 2 | 3): Promise<boolean> => {
+    // First, remove any existing hero image for this slot, regardless of extension
+    const { data: existingFiles } = await supabase.storage
+      .from('product-images')
+      .list('public', { search: `hero-${heroIndex}.` });
+
+    if (existingFiles && existingFiles.length > 0) {
+      const filesToRemove = existingFiles.map(f => `public/${f.name}`);
+      await supabase.storage.from('product-images').remove(filesToRemove);
+    }
+
     const fileExt = file.name.split('.').pop() || 'jpg';
     const fileName = `public/hero-${heroIndex}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
       .from('product-images')
-      .upload(fileName, file, { upsert: true });
+      .upload(fileName, file, { upsert: false }); // Set upsert to false as we are handling deletion manually
 
     if (uploadError) {
       showError(`Gagal mengunggah gambar hero: ${uploadError.message}`);
       return false;
     }
 
-    showSuccess(`Gambar Hero ${heroIndex} berhasil diperbarui!`);
+    showSuccess(`Gambar Hero ${heroIndex} berhasil diperbarui! Refresh halaman utama untuk melihat perubahan.`);
     return true;
   };
 

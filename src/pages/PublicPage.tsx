@@ -41,19 +41,23 @@ const PublicPage = () => {
       setHeroLoading(true);
       const urls: string[] = [];
       const placeholders = ['/hero-1.jpg', '/hero-2.jpg', '/hero-3.jpg'];
-      
-      for (let i = 1; i <= 3; i++) {
-        const filePath = `public/hero-${i}.jpg`;
-        const { data: listData } = await supabase.storage
-          .from('product-images')
-          .list('public', { search: `hero-${i}.jpg`, limit: 1 });
+      const extensions = ['jpg', 'jpeg', 'png', 'webp'];
 
-        if (listData && listData.length > 0) {
-          const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
-          urls.push(`${data.publicUrl}?t=${new Date().getTime()}`);
-        } else {
-          urls.push(placeholders[i-1]);
+      for (let i = 1; i <= 3; i++) {
+        let foundUrl = null;
+        for (const ext of extensions) {
+          const filePath = `public/hero-${i}.${ext}`;
+          const { data: listData } = await supabase.storage
+            .from('product-images')
+            .list('public', { search: `hero-${i}.${ext}`, limit: 1 });
+          
+          if (listData && listData.length > 0) {
+            const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
+            foundUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
+            break;
+          }
         }
+        urls.push(foundUrl || placeholders[i-1]);
       }
       setHeroImageUrls(urls);
       setHeroLoading(false);
@@ -105,7 +109,7 @@ const PublicPage = () => {
     <PublicLayout>
       <main className="animate-fade-in-up" style={{ animationFillMode: 'backwards' }}>
         {/* Hero Section */}
-        <section className="relative h-[60vh] md:h-[80vh] w-full">
+        <section className="relative h-[50vh] md:h-[60vh] w-full">
           {heroLoading ? (
             <Skeleton className="w-full h-full" />
           ) : (
