@@ -11,6 +11,7 @@ import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Calendar as CalendarIcon, Printer, Receipt, DollarSign, TrendingUp, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSettings } from "@/contexts/SettingsContext";
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
@@ -31,13 +32,13 @@ interface SaleTransaction {
 }
 
 const SalesReportPage = () => {
+  const { settings } = useSettings();
   const [salesData, setSalesData] = useState<SaleTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 29),
     to: new Date(),
   });
-  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchSalesData = async () => {
@@ -99,21 +100,29 @@ const SalesReportPage = () => {
     }, { totalTransactions: 0, totalSales: 0, totalProfit: 0, totalTunai: 0, totalCicilan: 0 });
   }, [salesData]);
 
-  const bestSellingProducts = useMemo(() => {
-    const productCount = salesData
-      .flatMap(sale => sale.sales_transaction_items)
-      .reduce((acc, item) => {
-        const name = item.products.name;
-        acc[name] = (acc[name] || 0) + item.quantity;
-        return acc;
-      }, {} as Record<string, number>);
-    return Object.entries(productCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  }, [salesData]);
-
   const handlePrint = () => window.print();
 
   return (
-    <div className="space-y-6" ref={printRef}>
+    <div className="space-y-6 printable-content">
+      {/* Header khusus untuk cetak */}
+      <div className="hidden print:block mb-8">
+        <div className="flex items-center justify-between pb-4 border-b">
+          <div className="flex items-center gap-4">
+            <img src={settings.logoUrl || '/logo.png'} alt="Logo Bisnis" className="h-16 w-auto" />
+            <div>
+              <h1 className="text-2xl font-bold">{settings.appName || 'Laporan Penjualan'}</h1>
+              <p className="text-muted-foreground">{settings.appDescription}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <h2 className="text-xl font-semibold">Laporan Penjualan Sparepart</h2>
+            <p className="text-sm text-muted-foreground">
+              Periode: {dateRange?.from && format(dateRange.from, "d MMM yyyy", { locale: id })} - {dateRange?.to && format(dateRange.to, "d MMM yyyy", { locale: id })}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
         <div>
           <Button variant="outline" asChild>
@@ -125,11 +134,11 @@ const SalesReportPage = () => {
         <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Cetak Laporan</Button>
       </div>
 
-      <Card className="print:shadow-none print:border-0">
-        <CardHeader className="print:hidden">
+      <Card className="print:shadow-none print:border-0 print:hidden">
+        <CardHeader>
           <CardTitle>Filter Periode</CardTitle>
         </CardHeader>
-        <CardContent className="print:hidden">
+        <CardContent>
           <Popover>
             <PopoverTrigger asChild>
               <Button id="date" variant={"outline"} className={cn("w-[300px] justify-start text-left font-normal", !dateRange && "text-muted-foreground")}>
@@ -142,21 +151,12 @@ const SalesReportPage = () => {
             </PopoverContent>
           </Popover>
         </CardContent>
-        <CardContent className="hidden print:block text-center mb-4">
-          <h1 className="text-2xl font-bold">Laporan Penjualan Sparepart</h1>
-          <p>Periode: {dateRange?.from && format(dateRange.from, "d MMMM yyyy", { locale: id })} - {dateRange?.to && format(dateRange.to, "d MMMM yyyy", { locale: id })}</p>
-        </CardContent>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Transaksi</CardTitle><Receipt className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{summary.totalTransactions}</div><p className="text-xs text-muted-foreground">Transaksi Sparepart</p></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Penjualan</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(summary.totalSales)}</div><p className="text-xs text-muted-foreground">Omzet Kotor</p></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Laba</CardTitle><TrendingUp className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold text-green-600">{formatCurrency(summary.totalProfit)}</div><p className="text-xs text-muted-foreground">Keuntungan Bersih</p></CardContent></Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card><CardHeader><CardTitle>Breakdown Pembayaran</CardTitle></CardHeader><CardContent className="space-y-4"><div className="flex items-center justify-between p-4 bg-green-50 rounded-lg"><div className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-600" /><span>Pembayaran Tunai</span></div><span className="font-bold text-green-700">{formatCurrency(summary.totalTunai)}</span></div><div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg"><div className="flex items-center gap-2"><XCircle className="h-5 w-5 text-yellow-600" /><span>Pembayaran Cicilan</span></div><span className="font-bold text-yellow-700">{formatCurrency(summary.totalCicilan)}</span></div></CardContent></Card>
-        <Card><CardHeader><CardTitle>Produk Terlaris</CardTitle></CardHeader><CardContent>{bestSellingProducts.length > 0 ? (<ul className="space-y-2">{bestSellingProducts.map(([name, count]) => (<li key={name} className="flex justify-between items-center text-sm"><span>{name}</span><span className="font-semibold bg-gray-100 px-2 py-1 rounded">{count} terjual</span></li>))}</ul>) : (<p className="text-sm text-muted-foreground text-center py-4">Tidak ada data produk.</p>)}</CardContent></Card>
       </div>
 
       <Card>
