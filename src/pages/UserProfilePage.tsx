@@ -66,7 +66,7 @@ const UserProfilePage = () => {
     }
 
     const { error: updateError } = await supabase
-      .from('users')
+      .from('user_profiles')
       .update({
         full_name: formData.full_name,
         avatar_url: avatarUrl,
