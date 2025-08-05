@@ -1,208 +1,213 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PlusCircle, MoreHorizontal, Image as ImageIcon, Edit, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, Loader2, Image as ImageIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { showSuccess, showError } from "@/utils/toast";
-import { format } from "date-fns";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNews, NewsArticle } from "@/hooks/use-news";
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
+import { Skeleton } from '@/components/ui/skeleton';
+import NewsFormDialog from '@/components/Dashboard/NewsFormDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { showError, showSuccess } from '@/utils/toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const NewsManagementPage = () => {
-  const { user } = useAuth();
-  const { articles, loading, fetchArticles, uploadNewsImage } = useNews();
+  const { articles, loading, fetchArticles } = useNews();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
-  const [formData, setFormData] = useState({ title: '', content: '', status: 'draft' as 'draft' | 'published', slug: '' });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
 
   useEffect(() => {
-    fetchArticles(true); // Fetch all articles for admin
+    // Fetch articles in admin mode to get both drafts and published
+    fetchArticles(true);
   }, [fetchArticles]);
 
-  const generateSlug = (title: string) => {
-    return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-  };
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTitle = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      title: newTitle,
-      slug: generateSlug(newTitle)
-    }));
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleOpenDialog = (article: NewsArticle | null = null) => {
-    setEditingArticle(article);
-    if (article) {
-      setFormData({
-        title: article.title,
-        content: article.content,
-        status: article.status,
-        slug: article.slug,
-      });
-      setImagePreview(article.image_url);
-    } else {
-      setFormData({ title: '', content: '', status: 'draft', slug: '' });
-      setImagePreview(null);
-    }
-    setImageFile(null);
+  const handleAdd = () => {
+    setSelectedArticle(null);
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title || !formData.content || !formData.slug) {
-      showError("Judul, konten, dan slug wajib diisi.");
-      return;
-    }
-    if (!user) {
-      showError("Sesi pengguna tidak ditemukan.");
-      return;
-    }
+  const handleEdit = (article: NewsArticle) => {
+    setSelectedArticle(article);
+    setIsDialogOpen(true);
+  };
 
-    setIsSubmitting(true);
-    try {
-      let imageUrl = editingArticle?.image_url || null;
-
-      if (imageFile) {
-        const uploadedUrl = await uploadNewsImage(imageFile);
-        if (uploadedUrl === null) {
-          throw new Error("Proses unggah gambar gagal. Berita tidak disimpan.");
-        }
-        imageUrl = uploadedUrl;
-      }
-
-      const payload = {
-        ...formData,
-        image_url: imageUrl,
-        author_id: user.id,
-        published_at: formData.status === 'published' ? new Date().toISOString() : null,
-      };
-
-      const { error } = editingArticle
-        ? await supabase.from('news').update(payload).eq('id', editingArticle.id)
-        : await supabase.from('news').insert(payload);
-
-      if (error) {
-        throw error;
-      }
-
-      showSuccess(`Berita berhasil ${editingArticle ? 'diperbarui' : 'ditambahkan'}.`);
-      setIsDialogOpen(false);
-      fetchArticles(true);
-    } catch (error: any) {
-      showError(error.message || "Gagal menyimpan berita. Silakan coba lagi.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleSaveSuccess = () => {
+    setIsDialogOpen(false);
+    // Refetch articles in admin mode to show the latest changes
+    fetchArticles(true);
   };
 
   const handleDelete = async (articleId: string) => {
-    if (window.confirm("Anda yakin ingin menghapus berita ini?")) {
-      const { error } = await supabase.from('news').delete().eq('id', articleId);
-      if (error) {
-        showError(`Gagal menghapus: ${error.message}`);
-      } else {
-        showSuccess("Berita berhasil dihapus.");
-        fetchArticles(true);
-      }
+    const { error } = await supabase.from('news').delete().eq('id', articleId);
+    if (error) {
+      showError(`Gagal menghapus berita: ${error.message}`);
+    } else {
+      showSuccess('Berita berhasil dihapus.');
+      // Refetch articles to update the list
+      fetchArticles(true);
+    }
+  };
+
+  const handleToggleStatus = async (article: NewsArticle) => {
+    const newStatus = article.status === 'published' ? 'draft' : 'published';
+    const newPublishedAt = newStatus === 'published' && !article.published_at ? new Date().toISOString() : article.published_at;
+
+    const { error } = await supabase
+      .from('news')
+      .update({ status: newStatus, published_at: newPublishedAt })
+      .eq('id', article.id);
+
+    if (error) {
+      showError(`Gagal mengubah status: ${error.message}`);
+    } else {
+      showSuccess(`Status berita berhasil diubah menjadi ${newStatus}.`);
+      fetchArticles(true);
     }
   };
 
   return (
-    <>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Manajemen Berita</h1>
+          <p className="text-muted-foreground">Buat, edit, dan kelola semua berita dan informasi.</p>
+        </div>
+        <Button onClick={handleAdd}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Tambah Berita
+        </Button>
+      </div>
+
       <Card>
-        <CardHeader className="flex flex-row justify-between items-center">
-          <CardTitle>Manajemen Berita</CardTitle>
-          <Button onClick={() => handleOpenDialog()}><PlusCircle className="mr-2 h-4 w-4" /> Tulis Berita Baru</Button>
+        <CardHeader>
+          <CardTitle>Daftar Berita</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader><TableRow><TableHead>Judul</TableHead><TableHead>Status</TableHead><TableHead>Tanggal Publikasi</TableHead><TableHead className="text-center">Aksi</TableHead></TableRow></TableHeader>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[80px]">Gambar</TableHead>
+                <TableHead>Judul</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Tanggal Publikasi</TableHead>
+                <TableHead>Tanggal Update</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={4} className="text-center h-24"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></TableCell></TableRow>
-              ) : articles.map(article => (
-                <TableRow key={article.id}>
-                  <TableCell className="font-medium">{article.title}</TableCell>
-                  <TableCell><Badge variant={article.status === 'published' ? 'default' : 'secondary'}>{article.status}</Badge></TableCell>
-                  <TableCell>{article.published_at ? format(new Date(article.published_at), 'dd MMM yyyy') : '-'}</TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex justify-center gap-2">
-                      <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(article)}><Edit className="h-4 w-4" /></Button>
-                      <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(article.id)}><Trash2 className="h-4 w-4" /></Button>
-                    </div>
+                Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton className="h-12 w-12 rounded-md" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                  </TableRow>
+                ))
+              ) : articles.length > 0 ? (
+                articles.map(article => (
+                  <TableRow key={article.id}>
+                    <TableCell>
+                      <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center">
+                        {article.image_url ? (
+                          <img src={article.image_url} alt={article.title} className="h-full w-full object-cover rounded-md" />
+                        ) : (
+                          <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{article.title}</TableCell>
+                    <TableCell>
+                      <Badge variant={article.status === 'published' ? 'default' : 'secondary'}>
+                        {article.status === 'published' ? 'Diterbitkan' : 'Draft'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {article.published_at ? format(new Date(article.published_at), 'd MMM yyyy', { locale: id }) : '-'}
+                    </TableCell>
+                    <TableCell>{format(new Date(article.updated_at), 'd MMM yyyy', { locale: id })}</TableCell>
+                    <TableCell>
+                      <AlertDialog>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Buka menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(article)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              <span>Edit</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleToggleStatus(article)}>
+                              {article.status === 'published' ? (
+                                <ToggleLeft className="mr-2 h-4 w-4" />
+                              ) : (
+                                <ToggleRight className="mr-2 h-4 w-4" />
+                              )}
+                              <span>{article.status === 'published' ? 'Jadikan Draft' : 'Terbitkan'}</span>
+                            </DropdownMenuItem>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem className="text-red-600">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Hapus</span>
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus berita secara permanen.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Batal</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(article.id)} className="bg-red-600 hover:bg-red-700">
+                              Ya, Hapus
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    Belum ada berita.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader><DialogTitle>{editingArticle ? 'Edit Berita' : 'Tulis Berita Baru'}</DialogTitle></DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Judul</Label>
-                <Input id="title" value={formData.title} onChange={handleTitleChange} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="slug">Slug (URL)</Label>
-                <Input id="slug" value={formData.slug} onChange={(e) => setFormData(p => ({...p, slug: e.target.value}))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="content">Konten</Label>
-                <Textarea id="content" value={formData.content} onChange={(e) => setFormData(p => ({...p, content: e.target.value}))} rows={10} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="image">Gambar Utama</Label>
-                <Input id="image" type="file" accept="image/*" onChange={handleImageChange} />
-                {imagePreview && <img src={imagePreview} alt="Preview" className="mt-2 h-32 w-auto object-cover rounded-md border" />}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(v: 'draft' | 'published') => setFormData(p => ({...p, status: v}))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)}>Batal</Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Simpan
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
+      <NewsFormDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSaveSuccess={handleSaveSuccess}
+        article={selectedArticle}
+      />
+    </div>
   );
 };
 
