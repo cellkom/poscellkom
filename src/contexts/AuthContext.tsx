@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
@@ -24,7 +24,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -40,26 +40,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (error && error.code !== 'PGRST116') {
       console.error("Error fetching unified profile:", error);
-      throw error;
+      return null;
     }
 
     if (userProfile) {
       return { ...userProfile, email: currentUser.email };
     }
-
-    console.warn(`No profile found for user ${currentUser.id}.`);
+    
     return null;
   }, []);
 
   const signOut = async () => {
     const lastRole = profile?.role;
-    
     await supabase.auth.signOut();
-    
     setSession(null);
     setUser(null);
     setProfile(null);
-
     if (lastRole === 'Admin' || lastRole === 'Kasir') {
       navigate('/login');
     } else {
@@ -68,31 +64,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
   
   const refreshProfile = useCallback(async () => {
-      if (user) {
-          const currentProfile = await fetchProfile(user);
+      const currentUser = user;
+      if (currentUser) {
+          const currentProfile = await fetchProfile(currentUser);
           setProfile(currentProfile);
       }
   }, [user, fetchProfile]);
 
   useEffect(() => {
-    setLoading(true);
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      const currentUser = session?.user ?? null;
+    const getInitialSession = async () => {
+      const { data: { session: initialSession } } = await supabase.auth.getSession();
+      setSession(initialSession);
+      const currentUser = initialSession?.user ?? null;
       setUser(currentUser);
 
       if (currentUser) {
-        try {
-          const currentProfile = await fetchProfile(currentUser);
-          setProfile(currentProfile);
-        } catch (e) {
-          console.error("Error fetching profile on auth change:", e);
-          setProfile(null);
-        }
+        const currentProfile = await fetchProfile(currentUser);
+        setProfile(currentProfile);
+      }
+      setLoading(false);
+    };
+
+    getInitialSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      setSession(newSession);
+      const currentUser = newSession?.user ?? null;
+      setUser(currentUser);
+
+      if (currentUser) {
+        const currentProfile = await fetchProfile(currentUser);
+        setProfile(currentProfile);
       } else {
         setProfile(null);
       }
-      setLoading(false);
+      // No need to set loading here as initial load is handled
     });
 
     return () => {
