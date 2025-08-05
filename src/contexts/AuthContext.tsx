@@ -32,43 +32,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   const fetchProfile = useCallback(async (currentUser: User): Promise<UserProfile | null> => {
-    let { data: userProfile, error } = await supabase
+    const { data: userProfile, error } = await supabase
       .from('user_profiles')
       .select('*')
       .eq('id', currentUser.id)
       .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+    if (error && error.code !== 'PGRST116') {
       console.error("Error fetching profile:", error);
       return null;
     }
 
-    // Self-healing: If profile does not exist, create it.
-    if (!userProfile) {
-      console.log(`Profile for ${currentUser.id} not found. Attempting to create one from auth metadata.`);
-      const fullName = currentUser.user_metadata?.full_name || 'Nama Belum Diatur';
-      const role = currentUser.user_metadata?.role || 'Kasir'; // Default to Kasir as a safe staff role
-      const phone = currentUser.user_metadata?.phone || null;
-      const address = currentUser.user_metadata?.address || null;
-
-      const { data: newProfile, error: insertError } = await supabase
-        .from('user_profiles')
-        .insert({ id: currentUser.id, full_name: fullName, role, phone, address })
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error("Failed to self-heal by creating profile:", insertError);
-        return null;
-      }
-      
-      console.log("Successfully created missing profile via self-healing.");
-      userProfile = newProfile;
-    }
-
-    // Self-healing for missing role on an existing profile
+    // Self-healing logic for legacy admin user who might not have a role
     if (userProfile && !userProfile.role) {
-      console.log(`Profile for ${currentUser.id} is missing a role. Assigning 'Admin' as default for staff.`);
+      console.log(`Profile for ${currentUser.id} found but is missing a role. Attempting to fix.`);
+      // This is a safe assumption for this app: a staff user without a role is the admin.
+      // We will update the database to prevent this check from running every time.
       const { data: updatedProfile, error: updateError } = await supabase
         .from('user_profiles')
         .update({ role: 'Admin' })
@@ -78,13 +57,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (updateError) {
         console.error("Failed to self-heal missing role:", updateError);
+        // Return the profile as-is, it will be handled by protected routes
+        return { ...userProfile, email: currentUser.email };
       } else {
-        console.log("Successfully assigned 'Admin' role.");
-        userProfile = updatedProfile;
+        console.log("Successfully assigned 'Admin' role to user.");
+        // Return the newly updated profile
+        return { ...updatedProfile, email: currentUser.email };
       }
     }
 
-    return userProfile ? { ...userProfile, email: currentUser.email } : null;
+    if (userProfile) {
+      return { ...userProfile, email: currentUser.email };
+    }
+    
+    return null;
   }, []);
 
   const signOut = async () => {
@@ -135,6 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setProfile(null);
       }
+      // No need to set loading here as initial load is handled
     });
 
     return () => {

@@ -4,9 +4,8 @@ import { CartProvider } from './contexts/CartContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from './components/ThemeProvider';
-import HeadManager from './components/HeadManager';
-import { Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import HeadManager from './components/HeadManager'; // Import HeadManager
+import { Loader2 } from 'lucide-react'; // Import Loader2 for loading indicator
 
 // Layouts
 import DashboardLayout from './components/Layout/DashboardLayout';
@@ -55,35 +54,57 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { profile, loading, user } = useAuth();
 
+  // Log states for debugging
+  console.log('ProtectedRoute render:', { loading, user, profile, allowedRoles, currentPath: window.location.pathname });
+
   if (loading) {
+    // Show a loading indicator while authentication state is being determined
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-        <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-700 dark:text-gray-300">Memuat sesi...</h1>
+          <Loader2 className="mx-auto mt-4 h-8 w-8 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
 
-  const isStaffRoute = allowedRoles.includes('Admin') || allowedRoles.includes('Kasir');
-
-  // Case 1: Not logged in at all
+  // After loading, if there's no authenticated user
   if (!user) {
-    return <Navigate to={isStaffRoute ? "/login" : "/member-login"} replace />;
+    console.log('No authenticated user found. Redirecting.');
+    // Redirect based on expected roles for this route
+    if (allowedRoles.includes('Admin') || allowedRoles.includes('Kasir')) {
+      return <Navigate to="/login" replace />;
+    }
+    // Assuming other protected routes are for members
+    return <Navigate to="/member-login" replace />;
   }
 
-  // Case 2: Logged in, but profile is missing or role doesn't match
+  // If user is authenticated, but profile is missing or role doesn't match
+  // The `profile` might be null if `fetchProfile` failed or returned null.
+  // `profile.role || ''` handles cases where role is undefined/null.
   if (!profile || !allowedRoles.includes(profile.role || '')) {
-    // Redirect user to their correct home page based on their actual role
-    if (profile?.role === 'Admin' || profile?.role === 'Kasir') {
-      return <Navigate to="/dashboard" replace />;
+    console.log('User authenticated, but profile missing or role mismatch. Redirecting.', { profile, allowedRoles });
+    // Determine the correct login page based on the user's actual role (if profile exists)
+    // or the expected roles for the route.
+    if (profile?.role === 'Member' && (allowedRoles.includes('Admin') || allowedRoles.includes('Kasir'))) {
+        // Member trying to access a staff route
+        return <Navigate to="/member-login" replace />;
     }
-    if (profile?.role === 'Member') {
-      return <Navigate to="/products" replace />;
+    if ((profile?.role === 'Admin' || profile?.role === 'Kasir') && allowedRoles.includes('Member')) {
+        // Staff trying to access a member route
+        return <Navigate to="/login" replace />;
     }
-    // Fallback if profile is missing entirely, send to appropriate login
-    return <Navigate to={isStaffRoute ? "/login" : "/member-login"} replace />;
+    // If profile is null, or role doesn't match and no specific cross-role redirect,
+    // default to the login page that matches the route's allowed roles.
+    if (allowedRoles.includes('Admin') || allowedRoles.includes('Kasir')) {
+        return <Navigate to="/login" replace />;
+    }
+    // Default for member routes if profile is null or role is not 'Member'
+    return <Navigate to="/member-login" replace />;
   }
 
-  // Case 3: Logged in with correct role
+  // If all checks pass (not loading, user exists, profile exists and role matches)
   return children;
 };
 
@@ -92,7 +113,7 @@ function App() {
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <SettingsProvider>
         <Router>
-          <HeadManager />
+          <HeadManager /> {/* Add HeadManager here */}
           <AuthProvider>
             <CartProvider>
               <Routes>
