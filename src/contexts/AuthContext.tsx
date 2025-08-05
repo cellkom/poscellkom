@@ -95,24 +95,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user, fetchProfile]);
 
   useEffect(() => {
-    const getInitialSession = async () => {
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      setSession(initialSession);
-      const currentUser = initialSession?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        const currentProfile = await fetchProfile(currentUser);
-        setProfile(currentProfile);
-      }
-      setLoading(false);
-    };
-
-    getInitialSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
-      setSession(newSession);
-      const currentUser = newSession?.user ?? null;
+    setLoading(true);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
+      const currentUser = session?.user ?? null;
       setUser(currentUser);
 
       if (currentUser) {
@@ -121,7 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setProfile(null);
       }
-      // No need to set loading here as initial load is handled
+      setLoading(false);
     });
 
     return () => {
