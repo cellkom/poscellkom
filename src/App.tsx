@@ -2,7 +2,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "./contexts/AuthContext";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "@/components/Auth/ProtectedRoute";
 import DashboardLayout from "./components/Layout/DashboardLayout";
 import LoginPage from "./pages/Auth/LoginPage";
 import MemberLoginPage from "./pages/Auth/MemberLoginPage";
