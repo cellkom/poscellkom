@@ -12,7 +12,7 @@ import { useCart } from "@/contexts/CartContext";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useAdvertisements } from "@/hooks/use-advertisements";
 
-const PublicPage = () => {
+const HomePage = () => {
   const { products, loading } = useStock();
   const { session, profile } = useAuth();
   const { settings } = useSettings();
@@ -269,4 +269,4 @@ const PublicPage = () => {
   );
 };
 
-export default PublicPage;
+export default HomePage;

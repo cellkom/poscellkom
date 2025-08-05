@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 
@@ -89,28 +89,47 @@ const uploadProductImage = async (imageFile: File): Promise<string | null> => {
   return publicUrl;
 };
 
+// Define the context type
+interface StockContextType {
+  products: Product[];
+  loading: boolean;
+  addProduct: (newProductData: Omit<Product, 'id' | 'createdAt' | 'imageUrl'>, imageFile: File | null) => Promise<Product | null>;
+  updateProduct: (id: string, updatedFields: Partial<Omit<Product, 'id' | 'createdAt'>>, imageFile: File | null) => Promise<Product | null>;
+  deleteProduct: (id: string) => Promise<boolean>;
+  updateStockQuantity: (productId: string, quantityChange: number, entryDate?: string, supplierId?: string | null) => Promise<Product | null>;
+}
+
+const StockContext = createContext<StockContextType | undefined>(undefined);
 
 export const useStock = () => {
+  const context = useContext(StockContext);
+  if (context === undefined) {
+    throw new Error('useStock must be used within a StockProvider');
+  }
+  return context;
+};
+
+export const StockProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) {
+      showError(`Gagal memuat data produk: ${error.message}`);
+      console.error(error);
+    } else {
+      setProducts((data || []).map(fromDbProduct));
+    }
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (error) {
-        showError(`Gagal memuat data produk: ${error.message}`);
-        console.error(error);
-      } else {
-        setProducts((data || []).map(fromDbProduct));
-      }
-      setLoading(false);
-    };
-
     fetchProducts();
 
     const channel = supabase
@@ -135,7 +154,7 @@ export const useStock = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchProducts]);
 
   const addProduct = async (newProductData: Omit<Product, 'id' | 'createdAt' | 'imageUrl'>, imageFile: File | null) => {
     let imageUrl: string | null = null;
@@ -264,7 +283,7 @@ export const useStock = () => {
     return updatedProduct;
   };
 
-  return {
+  const value = {
     products,
     loading,
     addProduct,
@@ -272,4 +291,10 @@ export const useStock = () => {
     deleteProduct,
     updateStockQuantity,
   };
+
+  return (
+    <StockContext.Provider value={value}>
+      {children}
+    </StockContext.Provider>
+  );
 };
