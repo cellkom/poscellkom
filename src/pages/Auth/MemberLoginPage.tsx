@@ -40,7 +40,7 @@ const MemberLoginPage = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: signInEmail,
       password: signInPassword,
     });
@@ -48,8 +48,34 @@ const MemberLoginPage = () => {
     if (error) {
       showError("Email atau password salah.");
       setLoading(false);
+      return;
     }
-    // AuthContext will handle redirection
+
+    if (data.user) {
+      // Immediately check the user's role
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        showError("Gagal memverifikasi peran pengguna. Silakan coba lagi.");
+        await supabase.auth.signOut();
+        setLoading(false);
+        return;
+      }
+
+      const userRole = profileData.role;
+      if (userRole === 'Member') {
+        // Correct role, proceed. AuthContext will handle redirect.
+      } else {
+        // Incorrect role for this login page
+        showError("Akun ini adalah akun Staf. Silakan login dari halaman Penjualan.");
+        await supabase.auth.signOut();
+      }
+    }
+    setLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {

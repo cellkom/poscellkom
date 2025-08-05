@@ -30,7 +30,7 @@ const LoginPage = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       showError("Email atau password salah.");
@@ -38,8 +38,30 @@ const LoginPage = () => {
       return;
     }
 
-    // AuthContext's onAuthStateChange will handle fetching the profile and subsequent redirection via useEffect.
-    // No need for direct state access here.
+    if (data.user) {
+      // Immediately check the user's role
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        showError("Gagal memverifikasi peran pengguna. Silakan coba lagi.");
+        await supabase.auth.signOut(); // Sign out the user
+        setLoading(false);
+        return;
+      }
+
+      const userRole = profileData.role;
+      if (userRole === 'Admin' || userRole === 'Kasir') {
+        // Correct role, proceed. AuthContext will handle redirect.
+      } else {
+        // Incorrect role for this login page
+        showError("Akun ini adalah akun Member. Silakan login dari halaman Member.");
+        await supabase.auth.signOut(); // Sign out the user
+      }
+    }
     setLoading(false);
   };
 
