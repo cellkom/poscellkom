@@ -30,7 +30,7 @@ const LoginPage = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       showError("Email atau password salah.");
@@ -38,19 +38,9 @@ const LoginPage = () => {
       return;
     }
 
-    // AuthContext will handle fetching the profile and redirection.
-    // We just need to wait for the state to update.
-    // A small delay might be needed if AuthContext doesn't update immediately.
-    setTimeout(() => {
-        const { profile: updatedProfile } = useAuth.getState(); // Hypothetical direct state access
-        if (updatedProfile && (updatedProfile.role === 'Admin' || updatedProfile.role === 'Kasir')) {
-            navigate('/dashboard');
-        } else if (updatedProfile) {
-            showError("Akun ini adalah akun Member. Silakan gunakan halaman login Member.");
-            supabase.auth.signOut();
-        }
-        setLoading(false);
-    }, 500);
+    // AuthContext's onAuthStateChange will handle fetching the profile and subsequent redirection via useEffect.
+    // No need for direct state access here.
+    setLoading(false);
   };
 
   return (

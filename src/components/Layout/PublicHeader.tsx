@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 const PublicHeader = () => {
   const { settings } = useSettings();
   const { session, profile, signOut } = useAuth();
-  const { cart } = useCart();
+  const { cartCount } = useCart(); // Changed from 'cart' to 'cartCount'
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const navLinks = [
@@ -86,8 +86,8 @@ const PublicHeader = () => {
           <Button variant="ghost" size="icon" asChild>
             <Link to="/cart">
               <ShoppingCart className="h-5 w-5" />
-              {cart.length > 0 && (
-                <Badge className="absolute top-1 right-1 h-4 w-4 p-0 flex items-center justify-center text-xs">{cart.length}</Badge>
+              {cartCount > 0 && (
+                <Badge className="absolute top-1 right-1 h-4 w-4 p-0 flex items-center justify-center text-xs">{cartCount}</Badge>
               )}
               <span className="sr-only">Keranjang Belanja</span>
             </Link>
@@ -100,8 +100,8 @@ const PublicHeader = () => {
            <Button variant="ghost" size="icon" asChild>
             <Link to="/cart">
               <ShoppingCart className="h-5 w-5" />
-              {cart.length > 0 && (
-                <Badge className="absolute top-1 right-1 h-4 w-4 p-0 flex items-center justify-center text-xs">{cart.length}</Badge>
+              {cartCount > 0 && (
+                <Badge className="absolute top-1 right-1 h-4 w-4 p-0 flex items-center justify-center text-xs">{cartCount}</Badge>
               )}
               <span className="sr-only">Keranjang Belanja</span>
             </Link>

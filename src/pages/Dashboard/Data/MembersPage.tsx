@@ -15,6 +15,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger, // Added this import
 } from "@/components/ui/alert-dialog";
 
 const MembersPage = () => {
