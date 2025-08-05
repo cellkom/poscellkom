@@ -1,19 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit, Trash2, User, Shield, Crown, Loader2 } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Crown, Shield, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { showSuccess, showError } from "@/utils/toast";
 import { format } from "date-fns";
-import { useUsers, UserProfile } from "@/hooks/use-users"; // Import the new useUsers hook
-import { AddUserDialog } from "@/components/user/AddUserDialog.tsx"; // Import AddUserDialog
-import { EditUserDialog } from "@/components/user/EditUserDialog.tsx"; // Import EditUserDialog
+import { useUsers, UserProfile } from "@/hooks/use-users";
+import { AddUserDialog } from "@/components/user/AddUserDialog";
+import { EditUserDialog } from "@/components/user/EditUserDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,23 +18,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 const UsersPage = () => {
   const { user: currentUser } = useAuth();
-  const { users, loading, error, fetchUsers, deleteUser } = useUsers(); // Use the new hook
+  const { users, loading, error, deleteUser } = useUsers();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
 
-  // fetchUsers is already called by the useUsers hook on mount,
-  // but we can call it again after successful operations if needed.
-
   const handleAddSuccess = () => {
     setIsAddDialogOpen(false);
-    // fetchUsers is called internally by useUsers after add, so no need to call here.
   };
 
   const handleEdit = (user: UserProfile) => {
@@ -50,7 +40,6 @@ const UsersPage = () => {
   const handleEditSuccess = () => {
     setIsEditDialogOpen(false);
     setEditingUser(null);
-    // fetchUsers is called internally by useUsers after update, so no need to call here.
   };
 
   const handleDelete = async () => {

@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Loader2, UserCircle } from "lucide-react";
+import { Edit, Trash2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useMembers, MemberProfile } from "@/hooks/use-members";
 import { EditMemberDialog } from "@/components/members/EditMemberDialog";
@@ -16,7 +15,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 const MembersPage = () => {
