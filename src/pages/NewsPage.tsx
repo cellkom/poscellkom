@@ -1,10 +1,8 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PublicLayout from "@/components/Layout/PublicLayout";
 import { useNews } from "@/hooks/use-news";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
-import { Loader2, Image as ImageIcon, Calendar, User } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Loader2, Image as ImageIcon, Calendar, User, ArrowRight } from "lucide-react";
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 
@@ -29,9 +27,9 @@ const NewsPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {articles.length > 0 ? (
               articles.map(article => (
-                <Card key={article.id} className="overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-2 flex flex-col">
-                  <CardHeader className="p-0">
-                    <Link to={`/news/${article.slug}`} className="block">
+                <Link key={article.id} to={`/news/${article.slug}`} className="block group">
+                  <Card className="overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 flex flex-col h-full">
+                    <CardHeader className="p-0">
                       <div className="bg-muted aspect-video flex items-center justify-center overflow-hidden">
                         {article.image_url ? (
                           <img src={article.image_url} alt={article.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
@@ -39,26 +37,22 @@ const NewsPage = () => {
                           <ImageIcon className="h-20 w-20 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
                         )}
                       </div>
-                    </Link>
-                  </CardHeader>
-                  <CardContent className="p-4 md:p-6 flex-grow">
-                    <Link to={`/news/${article.slug}`} className="block">
+                    </CardHeader>
+                    <CardContent className="p-4 md:p-6 flex-grow flex flex-col">
                       <CardTitle className="text-xl line-clamp-2" title={article.title}>{article.title}</CardTitle>
-                    </Link>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                      <div className="flex items-center gap-1.5"><User className="h-3 w-3" /> {article.author_name}</div>
-                      <div className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> {format(new Date(article.published_at!), 'd MMMM yyyy', { locale: id })}</div>
-                    </div>
-                    <CardDescription className="mt-3 line-clamp-3">
-                      {article.content?.substring(0, 150)}...
-                    </CardDescription>
-                  </CardContent>
-                  <CardFooter className="p-4 md:p-6 pt-0">
-                    <Button asChild className="w-full">
-                      <Link to={`/news/${article.slug}`}>Baca Selengkapnya</Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                        <div className="flex items-center gap-1.5"><User className="h-3 w-3" /> {article.author_name}</div>
+                        <div className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> {format(new Date(article.published_at!), 'd MMMM yyyy', { locale: id })}</div>
+                      </div>
+                      <CardDescription className="mt-3 line-clamp-3 flex-grow">
+                        {article.content?.substring(0, 150)}...
+                      </CardDescription>
+                      <div className="mt-4 text-primary font-semibold flex items-center justify-end group-hover:underline">
+                        Baca Selengkapnya <ArrowRight className="ml-2 h-4 w-4" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))
             ) : (
               <div className="col-span-full text-center py-20">
