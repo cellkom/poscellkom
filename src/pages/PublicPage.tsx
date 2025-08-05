@@ -113,7 +113,7 @@ const PublicPage = () => {
                     <CarouselItem key={ad.id}>
                       <div className="p-1">
                         <Card className="overflow-hidden">
-                          <CardContent className="flex aspect-[21/9] items-center justify-center p-0">
+                          <CardContent className="flex aspect-[21/7] items-center justify-center p-0">
                             {ad.link_url ? (
                               <a href={ad.link_url} target="_blank" rel="noopener noreferrer">
                                 <img src={ad.image_url} alt={ad.alt_text || 'Iklan'} className="w-full h-full object-cover" />
