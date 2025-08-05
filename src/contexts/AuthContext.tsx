@@ -95,7 +95,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user, fetchProfile]);
 
   useEffect(() => {
-    setLoading(true);
+    // Check active session on initial load for speed
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        const currentProfile = await fetchProfile(currentUser);
+        setProfile(currentProfile);
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth state changes (login, logout, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       const currentUser = session?.user ?? null;
@@ -107,7 +119,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setProfile(null);
       }
-      setLoading(false);
     });
 
     return () => {
