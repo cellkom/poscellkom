@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface MemberProfile {
   id: string;
@@ -13,11 +14,17 @@ export interface MemberProfile {
 }
 
 export const useMembers = () => {
+  const { user } = useAuth();
   const [members, setMembers] = useState<MemberProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchMembers = useCallback(async () => {
+    if (!user) {
+      setMembers([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
 
@@ -32,7 +39,7 @@ export const useMembers = () => {
       setMembers(data || []);
     }
     setLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchMembers();
