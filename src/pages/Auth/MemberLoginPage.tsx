@@ -29,12 +29,8 @@ const MemberLoginPage = () => {
   const [address, setAddress] = useState('');
 
   useEffect(() => {
-    if (authLoading) {
-      return; // Tunggu hingga proses pengecekan autentikasi awal selesai
-    }
-
+    if (authLoading) return;
     if (session && profile) {
-      // Jika pengguna sudah login dan punya profil, arahkan mereka
       if (profile.role === 'Member') {
         navigate('/products');
       }
@@ -44,7 +40,7 @@ const MemberLoginPage = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: signInEmail,
       password: signInPassword,
     });
@@ -52,38 +48,8 @@ const MemberLoginPage = () => {
     if (error) {
       showError("Email atau password salah.");
       setLoading(false);
-      return;
     }
-
-    if (data.user) {
-      // Langsung periksa profil setelah login berhasil
-      const { data: memberProfile } = await supabase
-        .from('members')
-        .select('id')
-        .eq('id', data.user.id)
-        .single();
-
-      if (memberProfile) {
-        // Pengguna adalah member, arahkan ke halaman produk
-        navigate('/products');
-      } else {
-        // Bukan member, periksa apakah dia staf
-        const { data: staffProfile } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', data.user.id)
-          .single();
-        
-        if (staffProfile) {
-          showError("Akun ini adalah akun Staf/Admin. Silakan gunakan halaman login Penjualan.");
-          await supabase.auth.signOut();
-        } else {
-          showError("Profil member tidak ditemukan. Silakan daftar jika belum punya akun.");
-          await supabase.auth.signOut();
-        }
-      }
-    }
-    setLoading(false);
+    // AuthContext will handle redirection
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -97,7 +63,7 @@ const MemberLoginPage = () => {
           full_name: fullName,
           phone: phone,
           address: address,
-          is_member: 'true', // Marker for the trigger
+          is_member: true, // Marker for the trigger
         },
       },
     });

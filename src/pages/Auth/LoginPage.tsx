@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { showSuccess, showError } from '@/utils/toast';
+import { showError } from '@/utils/toast';
 import { Loader2, ShieldCheck, Star, ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import logoSrc from '/logo.png';
@@ -19,12 +19,8 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    if (authLoading) {
-      return; // Tunggu hingga proses pengecekan autentikasi awal selesai
-    }
-
+    if (authLoading) return;
     if (session && profile) {
-      // Jika pengguna sudah login dan punya profil, arahkan mereka
       if (profile.role === 'Admin' || profile.role === 'Kasir') {
         navigate('/dashboard');
       }
@@ -34,68 +30,27 @@ const LoginPage = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-      if (error) {
-        showError("Email atau password salah.");
-        return;
-      }
-
-      if (data.user) {
-        // Check for staff profile
-        const { data: staffProfile } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', data.user.id)
-          .single();
-
-        if (staffProfile) {
-          // User is a staff member, redirect to dashboard
-          navigate('/dashboard');
-        } else {
-          // Not a staff member, check if they are a member
-          const { data: memberProfile } = await supabase
-            .from('members')
-            .select('id')
-            .eq('id', data.user.id)
-            .single();
-          
-          if (memberProfile) {
-            showError("Akun ini adalah akun Member. Silakan gunakan halaman login Member.");
-            await supabase.auth.signOut();
-          } else {
-            // This is an orphan auth user. Let's create a profile for them.
-            // This is a fallback to fix data integrity issues, like an admin created without a profile.
-            console.warn("User profile not found. Creating a new staff profile as a fallback.");
-            const { error: insertError } = await supabase
-              .from('users')
-              .insert({
-                id: data.user.id,
-                full_name: data.user.email, // Use email as a default name
-                role: 'Admin', // Default to Admin for this recovery path
-              });
-
-            if (insertError) {
-              showError("Gagal mengkonfigurasi profil pengguna. Silakan hubungi support.");
-              console.error("Profile creation fallback error:", insertError);
-              await supabase.auth.signOut();
-            } else {
-              showSuccess("Profil pengguna berhasil dikonfigurasi. Mengarahkan ke dashboard.");
-              navigate('/dashboard');
-            }
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Sign in error:", err);
-      showError("Terjadi kesalahan saat login.");
-    } finally {
+    if (error) {
+      showError("Email atau password salah.");
       setLoading(false);
+      return;
     }
+
+    // AuthContext will handle fetching the profile and redirection.
+    // We just need to wait for the state to update.
+    // A small delay might be needed if AuthContext doesn't update immediately.
+    setTimeout(() => {
+        const { profile: updatedProfile } = useAuth.getState(); // Hypothetical direct state access
+        if (updatedProfile && (updatedProfile.role === 'Admin' || updatedProfile.role === 'Kasir')) {
+            navigate('/dashboard');
+        } else if (updatedProfile) {
+            showError("Akun ini adalah akun Member. Silakan gunakan halaman login Member.");
+            supabase.auth.signOut();
+        }
+        setLoading(false);
+    }, 500);
   };
 
   return (
