@@ -21,7 +21,8 @@ export const useMembers = () => {
     setLoading(true);
     setError(null);
 
-    const { data, error: rpcError } = await supabase.rpc('get_member_users');
+    // Corrected RPC function name from get_member_users to get_all_members
+    const { data, error: rpcError } = await supabase.rpc('get_all_members');
 
     if (rpcError) {
       showError(`Gagal memuat data member: ${rpcError.message}`);
