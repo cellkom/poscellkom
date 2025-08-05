@@ -41,7 +41,7 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     let query = supabase.from('news').select(`
       *,
-      author:user_profiles ( full_name )
+      author:user_profiles!author_id ( full_name )
     `);
 
     if (!adminMode) {
@@ -91,7 +91,7 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
       .from('news')
       .select(`
         *,
-        author:user_profiles ( full_name )
+        author:user_profiles!author_id ( full_name )
       `)
       .eq('slug', slug)
       .eq('status', 'published')
