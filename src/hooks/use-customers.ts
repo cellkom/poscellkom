@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface Customer {
   id: string;
@@ -11,10 +12,16 @@ export interface Customer {
 }
 
 export const useCustomers = () => {
+    const { user } = useAuth();
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchCustomers = useCallback(async () => {
+        if (!user) {
+            setCustomers([]);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         const { data, error } = await supabase
             .from('customers')
@@ -28,34 +35,36 @@ export const useCustomers = () => {
             setCustomers(data || []);
         }
         setLoading(false);
-    }, []);
+    }, [user]);
 
     useEffect(() => {
         fetchCustomers();
 
-        const channel = supabase
-            .channel('customers-channel')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'customers' },
-                (payload) => {
-                    if (payload.eventType === 'INSERT') {
-                        setCustomers(prev => [...prev, payload.new as Customer].sort((a, b) => a.name.localeCompare(b.name)));
+        if (user) {
+            const channel = supabase
+                .channel('customers-channel')
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'customers' },
+                    (payload) => {
+                        if (payload.eventType === 'INSERT') {
+                            setCustomers(prev => [...prev, payload.new as Customer].sort((a, b) => a.name.localeCompare(b.name)));
+                        }
+                        if (payload.eventType === 'UPDATE') {
+                            setCustomers(prev => prev.map(c => c.id === payload.new.id ? payload.new as Customer : c));
+                        }
+                        if (payload.eventType === 'DELETE') {
+                            setCustomers(prev => prev.filter(c => c.id !== (payload.old as { id: string }).id));
+                        }
                     }
-                    if (payload.eventType === 'UPDATE') {
-                        setCustomers(prev => prev.map(c => c.id === payload.new.id ? payload.new as Customer : c));
-                    }
-                    if (payload.eventType === 'DELETE') {
-                        setCustomers(prev => prev.filter(c => c.id !== (payload.old as { id: string }).id));
-                    }
-                }
-            )
-            .subscribe();
+                )
+                .subscribe();
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [fetchCustomers]);
+            return () => {
+                supabase.removeChannel(channel);
+            };
+        }
+    }, [fetchCustomers, user]);
 
     const addCustomer = async (newCustomerData: { name: string; phone: string | null; address: string | null; }) => {
         const { data, error } = await supabase

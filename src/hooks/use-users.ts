@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface UserProfile {
   id: string;
@@ -12,11 +13,17 @@ export interface UserProfile {
 }
 
 export const useUsers = () => {
+  const { user } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
+    if (!user) {
+      setUsers([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -39,25 +46,27 @@ export const useUsers = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchUsers();
-    const usersChannel = supabase
-      .channel('users-profile-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'users' },
-        () => {
-          fetchUsers();
-        }
-      )
-      .subscribe();
+    if (user) {
+      const usersChannel = supabase
+        .channel('users-profile-channel')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'users' },
+          () => {
+            fetchUsers();
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(usersChannel);
-    };
-  }, [fetchUsers]);
+      return () => {
+        supabase.removeChannel(usersChannel);
+      };
+    }
+  }, [fetchUsers, user]);
 
   const addUser = async (email: string, password: string, full_name: string, role: 'Admin' | 'Kasir') => {
     setLoading(true);

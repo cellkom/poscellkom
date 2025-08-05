@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Represents an installment record from the DB, joined with customer name
 export interface Installment {
@@ -26,10 +27,16 @@ export interface InstallmentPayment {
 }
 
 export const useInstallments = () => {
+  const { user } = useAuth();
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchInstallments = useCallback(async () => {
+    if (!user) {
+      setInstallments([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     // Fetch installments and join with customers table to get the name
     const { data, error } = await supabase
@@ -52,26 +59,28 @@ export const useInstallments = () => {
       setInstallments(formattedData);
     }
     setLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchInstallments();
 
-    const channel = supabase
-      .channel('installments-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'installments' },
-        () => {
-          fetchInstallments(); // Refetch on any change
-        }
-      )
-      .subscribe();
+    if (user) {
+      const channel = supabase
+        .channel('installments-channel')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'installments' },
+          () => {
+            fetchInstallments(); // Refetch on any change
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchInstallments]);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [fetchInstallments, user]);
 
   const addPayment = async (installmentId: string, amount: number, kasirId: string) => {
     const installment = installments.find(i => i.id === installmentId);

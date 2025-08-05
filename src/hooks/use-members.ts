@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface MemberProfile {
   id: string;
@@ -14,11 +15,17 @@ export interface MemberProfile {
 }
 
 export const useMembers = () => {
+  const { user } = useAuth();
   const [members, setMembers] = useState<MemberProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchMembers = useCallback(async () => {
+    if (!user) {
+      setMembers([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -37,25 +44,27 @@ export const useMembers = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchMembers();
-    const membersChannel = supabase
-      .channel('members-profile-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'members' },
-        () => {
-          fetchMembers();
-        }
-      )
-      .subscribe();
+    if (user) {
+      const membersChannel = supabase
+        .channel('members-profile-channel')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'members' },
+          () => {
+            fetchMembers();
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(membersChannel);
-    };
-  }, [fetchMembers]);
+      return () => {
+        supabase.removeChannel(membersChannel);
+      };
+    }
+  }, [fetchMembers, user]);
 
   const updateMember = async (id: string, updates: Partial<Omit<MemberProfile, 'id' | 'email' | 'created_at' | 'role'>>) => {
     setLoading(true);

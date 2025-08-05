@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface Order {
   id: string;
@@ -27,10 +28,16 @@ export interface OrderItem {
 }
 
 export const useOrders = () => {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = useCallback(async () => {
+    if (!user) {
+      setOrders([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase
       .from('orders')
@@ -46,23 +53,25 @@ export const useOrders = () => {
       setOrders(data as any);
     }
     setLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchOrders();
-    const channel = supabase
-      .channel('orders-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders' },
-        () => fetchOrders()
-      )
-      .subscribe();
+    if (user) {
+      const channel = supabase
+        .channel('orders-channel')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'orders' },
+          () => fetchOrders()
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchOrders]);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [fetchOrders, user]);
 
   const updateOrderStatus = async (orderId: string, status: Order['status']) => {
     const { error } = await supabase

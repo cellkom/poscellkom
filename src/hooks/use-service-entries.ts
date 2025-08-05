@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface ServiceEntry {
   id: string; // Changed from bigint to string for UUID consistency
@@ -23,10 +24,16 @@ export interface ServiceEntryWithCustomer extends ServiceEntry {
 }
 
 export const useServiceEntries = () => {
+  const { user } = useAuth();
   const [serviceEntries, setServiceEntries] = useState<ServiceEntryWithCustomer[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchServiceEntries = useCallback(async () => {
+    if (!user) {
+      setServiceEntries([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase
       .from('service_entries')
@@ -49,25 +56,27 @@ export const useServiceEntries = () => {
       setServiceEntries(entriesWithCustomer);
     }
     setLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchServiceEntries();
-    const channel = supabase
-      .channel('service-entries-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'service_entries' },
-        () => {
-          fetchServiceEntries();
-        }
-      )
-      .subscribe();
+    if (user) {
+      const channel = supabase
+        .channel('service-entries-channel')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'service_entries' },
+          () => {
+            fetchServiceEntries();
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchServiceEntries]);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [fetchServiceEntries, user]);
 
   const addServiceEntry = async (newEntry: Omit<ServiceEntry, 'id' | 'created_at' | 'info_date'>) => {
     const { data, error } = await supabase

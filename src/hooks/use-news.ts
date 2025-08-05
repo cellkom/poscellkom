@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface NewsArticle {
   id: string;
@@ -17,10 +18,16 @@ export interface NewsArticle {
 }
 
 export const useNews = () => {
+  const { user } = useAuth();
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchArticles = useCallback(async (adminMode = false) => {
+    if (adminMode && !user) {
+      setArticles([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     let query = supabase.from('news').select(`
       *,
@@ -46,7 +53,7 @@ export const useNews = () => {
       setArticles(formattedData);
     }
     setLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const channel = supabase

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface Supplier {
   id: string;
@@ -11,10 +12,16 @@ export interface Supplier {
 }
 
 export const useSuppliers = () => {
+    const { user } = useAuth();
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchSuppliers = useCallback(async () => {
+        if (!user) {
+            setSuppliers([]);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         const { data, error } = await supabase
             .from('suppliers')
@@ -28,34 +35,36 @@ export const useSuppliers = () => {
             setSuppliers(data || []);
         }
         setLoading(false);
-    }, []);
+    }, [user]);
 
     useEffect(() => {
         fetchSuppliers();
 
-        const channel = supabase
-            .channel('suppliers-channel')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'suppliers' },
-                (payload) => {
-                    if (payload.eventType === 'INSERT') {
-                        setSuppliers(prev => [...prev, payload.new as Supplier].sort((a, b) => a.name.localeCompare(b.name)));
+        if (user) {
+            const channel = supabase
+                .channel('suppliers-channel')
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'suppliers' },
+                    (payload) => {
+                        if (payload.eventType === 'INSERT') {
+                            setSuppliers(prev => [...prev, payload.new as Supplier].sort((a, b) => a.name.localeCompare(b.name)));
+                        }
+                        if (payload.eventType === 'UPDATE') {
+                            setSuppliers(prev => prev.map(s => s.id === payload.new.id ? payload.new as Supplier : s));
+                        }
+                        if (payload.eventType === 'DELETE') {
+                            setSuppliers(prev => prev.filter(s => s.id !== (payload.old as Supplier).id));
+                        }
                     }
-                    if (payload.eventType === 'UPDATE') {
-                        setSuppliers(prev => prev.map(s => s.id === payload.new.id ? payload.new as Supplier : s));
-                    }
-                    if (payload.eventType === 'DELETE') {
-                        setSuppliers(prev => prev.filter(s => s.id !== (payload.old as Supplier).id));
-                    }
-                }
-            )
-            .subscribe();
+                )
+                .subscribe();
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [fetchSuppliers]);
+            return () => {
+                supabase.removeChannel(channel);
+            };
+        }
+    }, [fetchSuppliers, user]);
 
     const addSupplier = async (newSupplierData: Omit<Supplier, 'id' | 'created_at'>) => {
         const { data, error } = await supabase
