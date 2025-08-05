@@ -23,7 +23,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
   const { session, profile, signOut } = useAuth();
   const { cartCount } = useCart();
-  const { articles, loading: newsLoading, fetchArticles } = useNews();
+  const { articles, loading: newsLoading } = useNews();
   const [latestArticles, setLatestArticles] = useState<NewsArticle[]>([]);
   const { settings } = useSettings();
 
@@ -41,10 +41,6 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
     };
     trackVisit();
   }, []);
-
-  useEffect(() => {
-    fetchArticles();
-  }, [fetchArticles]);
 
   useEffect(() => {
     if (articles.length > 0) {

@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { showError, showSuccess } from '@/utils/toast';
+import { showError } from '@/utils/toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface NewsArticle {
@@ -17,7 +17,17 @@ export interface NewsArticle {
   author_name?: string;
 }
 
-export const useNews = () => {
+interface NewsContextType {
+  articles: NewsArticle[];
+  loading: boolean;
+  fetchArticles: (adminMode?: boolean) => Promise<void>;
+  getArticleBySlug: (slug: string) => Promise<NewsArticle | null>;
+  uploadNewsImage: (imageFile: File) => Promise<string | null>;
+}
+
+const NewsContext = createContext<NewsContextType | undefined>(undefined);
+
+export const NewsProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,12 +66,16 @@ export const useNews = () => {
   }, [user]);
 
   useEffect(() => {
+    // Initial fetch for public articles
+    fetchArticles(false);
+
     const channel = supabase
-      .channel('news-channel')
+      .channel('news-channel-realtime')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'news' },
         () => {
+          // When a change happens, refetch public articles.
           fetchArticles(false);
         }
       )
@@ -108,5 +122,15 @@ export const useNews = () => {
     return urlData.publicUrl;
   }, []);
 
-  return { articles, loading, fetchArticles, getArticleBySlug, uploadNewsImage };
+  const value = { articles, loading, fetchArticles, getArticleBySlug, uploadNewsImage };
+
+  return <NewsContext.Provider value={value}>{children}</NewsContext.Provider>;
+};
+
+export const useNews = () => {
+  const context = useContext(NewsContext);
+  if (context === undefined) {
+    throw new Error('useNews must be used within a NewsProvider');
+  }
+  return context;
 };

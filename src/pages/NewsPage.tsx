@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PublicLayout from "@/components/Layout/PublicLayout";
-import { useNews, NewsArticle } from "@/hooks/use-news";
+import { useNews } from "@/hooks/use-news";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Loader2, Image as ImageIcon, Calendar, User } from "lucide-react";
@@ -9,11 +9,7 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 
 const NewsPage = () => {
-  const { articles, loading, fetchArticles } = useNews();
-
-  useEffect(() => {
-    fetchArticles();
-  }, [fetchArticles]);
+  const { articles, loading } = useNews();
 
   return (
     <PublicLayout>
