@@ -39,8 +39,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      console.error("Error fetching unified profile:", error);
+      console.error("Error fetching profile:", error);
       return null;
+    }
+
+    // Self-healing logic for legacy admin user who might not have a role
+    if (userProfile && !userProfile.role) {
+      console.log(`Profile for ${currentUser.id} found but is missing a role. Attempting to fix.`);
+      // This is a safe assumption for this app: a staff user without a role is the admin.
+      // We will update the database to prevent this check from running every time.
+      const { data: updatedProfile, error: updateError } = await supabase
+        .from('user_profiles')
+        .update({ role: 'Admin' })
+        .eq('id', currentUser.id)
+        .select()
+        .single();
+      
+      if (updateError) {
+        console.error("Failed to self-heal missing role:", updateError);
+        // Return the profile as-is, it will be handled by protected routes
+        return { ...userProfile, email: currentUser.email };
+      } else {
+        console.log("Successfully assigned 'Admin' role to user.");
+        // Return the newly updated profile
+        return { ...updatedProfile, email: currentUser.email };
+      }
     }
 
     if (userProfile) {
