@@ -32,24 +32,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   const fetchProfile = useCallback(async (currentUser: User): Promise<UserProfile | null> => {
-    // Menggunakan VIEW user_profiles untuk pencarian yang lebih efisien
     const { data: userProfile, error } = await supabase
       .from('user_profiles')
       .select('*')
       .eq('id', currentUser.id)
       .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = row not found
+    if (error && error.code !== 'PGRST116') {
       console.error("Error fetching unified profile:", error);
       throw error;
     }
 
     if (userProfile) {
-      // Menambahkan email dari session karena tidak ada di VIEW
       return { ...userProfile, email: currentUser.email };
     }
 
-    console.warn(`No profile found for user ${currentUser.id}. This might happen if the user was created but the profile trigger failed.`);
+    console.warn(`No profile found for user ${currentUser.id}.`);
     return null;
   }, []);
 
@@ -77,44 +75,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user, fetchProfile]);
 
   useEffect(() => {
-    const setAuthData = async (session: Session | null) => {
+    setLoading(true);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       const currentUser = session?.user ?? null;
       setUser(currentUser);
-      
+
       if (currentUser) {
         try {
           const currentProfile = await fetchProfile(currentUser);
           setProfile(currentProfile);
         } catch (e) {
-          console.error("Error fetching profile:", e);
+          console.error("Error fetching profile on auth change:", e);
           setProfile(null);
         }
       } else {
         setProfile(null);
       }
-    };
-
-    const initializeSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        await setAuthData(session);
-      } catch (error) {
-        console.error("Error during session initialization:", error);
-        await setAuthData(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-        await setAuthData(session);
-      } catch (error) {
-        console.error("Error in onAuthStateChange handler:", error);
-      }
+      setLoading(false);
     });
 
     return () => {
