@@ -86,7 +86,7 @@ const OrderManagementPage = () => {
                   <TableRow key={order.id}>
                     <TableCell className="font-mono">{order.order_number}</TableCell>
                     <TableCell>{format(new Date(order.created_at), "dd MMM yyyy, HH:mm", { locale: id })}</TableCell>
-                    <TableCell>{order.members?.full_name || 'Member Dihapus'}</TableCell>
+                    <TableCell>{order.user_profiles?.full_name || 'Member Dihapus'}</TableCell>
                     <TableCell>{formatCurrency(order.total_amount)}</TableCell>
                     <TableCell>
                       <Select value={order.status} onValueChange={(value) => handleStatusChange(order.id, value as Order['status'])}>
@@ -129,13 +129,13 @@ const OrderManagementPage = () => {
             <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin" /></div>
           ) : (
             <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
-              {selectedOrder?.members ? (
+              {selectedOrder?.user_profiles ? (
                 <div>
                   <h4 className="font-semibold mb-2">Informasi Pelanggan</h4>
                   <div className="text-sm space-y-1 text-muted-foreground p-3 bg-muted rounded-md">
-                    <p><strong>Nama:</strong> {selectedOrder.members.full_name}</p>
-                    <p><strong>Telepon:</strong> {selectedOrder.members.phone || '-'}</p>
-                    <p><strong>Alamat:</strong> {selectedOrder.members.address || '-'}</p>
+                    <p><strong>Nama:</strong> {selectedOrder.user_profiles.full_name}</p>
+                    <p><strong>Telepon:</strong> {selectedOrder.user_profiles.phone || '-'}</p>
+                    <p><strong>Alamat:</strong> {selectedOrder.user_profiles.address || '-'}</p>
                   </div>
                 </div>
               ) : (

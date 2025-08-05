@@ -14,7 +14,7 @@ export interface NewsArticle {
   status: 'draft' | 'published';
   published_at: string | null;
   author_id: string | null;
-  author_name?: string; // Optional: for displaying author name
+  author_name?: string;
 }
 
 export const useNews = () => {
@@ -31,7 +31,7 @@ export const useNews = () => {
     setLoading(true);
     let query = supabase.from('news').select(`
       *,
-      author:users ( full_name )
+      author:user_profiles ( full_name )
     `);
 
     if (!adminMode) {
@@ -62,8 +62,6 @@ export const useNews = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'news' },
         () => {
-          // Refetch with adminMode false for public pages.
-          // Admin page will trigger its own fetch with adminMode=true.
           fetchArticles(false);
         }
       )
@@ -79,7 +77,7 @@ export const useNews = () => {
       .from('news')
       .select(`
         *,
-        author:users ( full_name )
+        author:user_profiles ( full_name )
       `)
       .eq('slug', slug)
       .eq('status', 'published')

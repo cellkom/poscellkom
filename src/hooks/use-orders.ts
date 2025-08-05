@@ -10,7 +10,7 @@ export interface Order {
   total_amount: number;
   status: 'Pending' | 'Processed' | 'Cancelled';
   order_number: string;
-  members: {
+  user_profiles: {
     full_name: string;
     phone: string | null;
     address: string | null;
@@ -43,7 +43,7 @@ export const useOrders = () => {
       .from('orders')
       .select(`
         *,
-        members ( full_name, phone, address )
+        user_profiles ( full_name, phone, address )
       `)
       .order('created_at', { ascending: false });
 
@@ -107,7 +107,6 @@ export const useOrders = () => {
   };
 
   const deleteOrder = async (orderId: string) => {
-    // First, delete related order items to be safe.
     const { error: itemsError } = await supabase
       .from('order_items')
       .delete()
@@ -118,7 +117,6 @@ export const useOrders = () => {
       return false;
     }
 
-    // Then, delete the order itself.
     const { error: orderError } = await supabase
       .from('orders')
       .delete()
@@ -130,7 +128,7 @@ export const useOrders = () => {
     }
 
     showSuccess("Pesanan berhasil dihapus.");
-    fetchOrders(); // Refresh the list
+    fetchOrders();
     return true;
   };
 
