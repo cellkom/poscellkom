@@ -21,14 +21,14 @@ export const useMembers = () => {
     setLoading(true);
     setError(null);
 
-    const { data, error: rpcError } = await supabase.rpc('get_all_members');
+    const { data, error: rpcError } = await supabase.rpc('get_member_users');
 
     if (rpcError) {
       showError(`Gagal memuat data member: ${rpcError.message}`);
       setError(rpcError.message);
       setMembers([]);
     } else {
-      setMembers((data as MemberProfile[]) || []);
+      setMembers(data || []);
     }
     setLoading(false);
   }, []);
