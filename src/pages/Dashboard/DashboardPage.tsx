@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -63,72 +63,79 @@ const DashboardPage = () => {
     return orders.filter(o => o.status === 'Pending').length;
   }, [orders]);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-        setLoading(true);
-        const todayStart = startOfToday().toISOString();
-        const todayEnd = endOfToday().toISOString();
-        const todayDate = new Date().toISOString().split('T')[0];
+  const fetchDashboardData = useCallback(async () => {
+    setLoading(true);
+    const todayStart = startOfToday().toISOString();
+    const todayEnd = endOfToday().toISOString();
+    const todayDate = new Date().toISOString().split('T')[0];
 
-        // Fetch summary data for today
-        const salesTodayPromise = supabase.from('sales_transactions').select('total_amount').gte('created_at', todayStart).lte('created_at', todayEnd);
-        const servicesTodayPromise = supabase.from('service_transactions').select('total_amount').gte('created_at', todayStart).lte('created_at', todayEnd);
-        const visitorsTodayPromise = supabase.from('daily_visits').select('count').eq('date', todayDate).single();
+    const salesTodayPromise = supabase.from('sales_transactions').select('total_amount').gte('created_at', todayStart).lte('created_at', todayEnd);
+    const servicesTodayPromise = supabase.from('service_transactions').select('total_amount').gte('created_at', todayStart).lte('created_at', todayEnd);
+    const visitorsTodayPromise = supabase.from('daily_visits').select('count').eq('date', todayDate).single();
 
-        // Fetch recent activities
-        const recentSalesPromise = supabase.from('sales_transactions').select('id, created_at, transaction_id_display, customer_name_cache, total_amount, remaining_amount, sales_transaction_items(products(name))').order('created_at', { ascending: false }).limit(3);
-        const recentServicesPromise = supabase.from('service_transactions').select('id, service_entry_id, created_at, customer_name_cache, total_amount, description, service_entries(status)').order('created_at', { ascending: false }).limit(3);
+    const recentSalesPromise = supabase.from('sales_transactions').select('id, created_at, transaction_id_display, customer_name_cache, total_amount, remaining_amount, sales_transaction_items(products(name))').order('created_at', { ascending: false }).limit(3);
+    const recentServicesPromise = supabase.from('service_transactions').select('id, service_entry_id, created_at, customer_name_cache, total_amount, description, service_entries(status)').order('created_at', { ascending: false }).limit(3);
 
-        const [
-            salesTodayResult,
-            servicesTodayResult,
-            visitorsTodayResult,
-            recentSalesResult,
-            recentServicesResult
-        ] = await Promise.all([salesTodayPromise, servicesTodayPromise, visitorsTodayPromise, recentSalesPromise, recentServicesPromise]);
+    const [
+        salesTodayResult,
+        servicesTodayResult,
+        visitorsTodayResult,
+        recentSalesResult,
+        recentServicesResult
+    ] = await Promise.all([salesTodayPromise, servicesTodayPromise, visitorsTodayPromise, recentSalesPromise, recentServicesPromise]);
 
-        // Process summary
-        const totalSalesRevenue = (salesTodayResult.data || []).reduce((sum, s) => sum + s.total_amount, 0);
-        const totalServiceRevenue = (servicesTodayResult.data || []).reduce((sum, s) => sum + s.total_amount, 0);
-        setSummary({
-            revenueToday: totalSalesRevenue + totalServiceRevenue,
-            transactionsToday: (salesTodayResult.data?.length || 0) + (servicesTodayResult.data?.length || 0),
-            visitorsToday: visitorsTodayResult.data?.count || 0,
-        });
+    const totalSalesRevenue = (salesTodayResult.data || []).reduce((sum, s) => sum + s.total_amount, 0);
+    const totalServiceRevenue = (servicesTodayResult.data || []).reduce((sum, s) => sum + s.total_amount, 0);
+    setSummary({
+        revenueToday: totalSalesRevenue + totalServiceRevenue,
+        transactionsToday: (salesTodayResult.data?.length || 0) + (servicesTodayResult.data?.length || 0),
+        visitorsToday: visitorsTodayResult.data?.count || 0,
+    });
 
-        // Process activities
-        const mappedSales = (recentSalesResult.data || []).map((s: any) => ({
-            id: s.id,
-            transactionNumber: s.transaction_id_display,
-            customer: s.customer_name_cache || 'Umum',
-            type: 'Penjualan' as const,
-            detail: s.sales_transaction_items[0]?.products?.name ? `${s.sales_transaction_items[0].products.name}...` : 'Penjualan Barang',
-            status: s.remaining_amount > 0 ? 'Cicilan' : 'Lunas',
-            total: s.total_amount,
-            createdAt: new Date(s.created_at),
-        }));
+    const mappedSales = (recentSalesResult.data || []).map((s: any) => ({
+        id: s.id,
+        transactionNumber: s.transaction_id_display,
+        customer: s.customer_name_cache || 'Umum',
+        type: 'Penjualan' as const,
+        detail: s.sales_transaction_items[0]?.products?.name ? `${s.sales_transaction_items[0].products.name}...` : 'Penjualan Barang',
+        status: s.remaining_amount > 0 ? 'Cicilan' : 'Lunas',
+        total: s.total_amount,
+        createdAt: new Date(s.created_at),
+    }));
 
-        const mappedServices = (recentServicesResult.data || []).map((s: any) => ({
-            id: s.id,
-            transactionNumber: `SVC-${s.service_entry_id}`,
-            customer: s.customer_name_cache || 'N/A',
-            type: 'Servis' as const,
-            detail: s.description,
-            status: s.service_entries?.status || 'N/A',
-            total: s.total_amount,
-            createdAt: new Date(s.created_at),
-        }));
+    const mappedServices = (recentServicesResult.data || []).map((s: any) => ({
+        id: s.id,
+        transactionNumber: `SVC-${s.service_entry_id}`,
+        customer: s.customer_name_cache || 'N/A',
+        type: 'Servis' as const,
+        detail: s.description,
+        status: s.service_entries?.status || 'N/A',
+        total: s.total_amount,
+        createdAt: new Date(s.created_at),
+    }));
 
-        const combinedActivities = [...mappedSales, ...mappedServices]
-            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-            .slice(0, 6);
+    const combinedActivities = [...mappedSales, ...mappedServices]
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(0, 6);
 
-        setActivities(combinedActivities);
-        setLoading(false);
-    };
-
-    fetchDashboardData();
+    setActivities(combinedActivities);
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+
+    const channel = supabase
+      .channel('dashboard-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales_transactions' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'service_transactions' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_visits' }, fetchDashboardData)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchDashboardData]);
 
   const pageLoading = loading || servicesLoading || installmentsLoading || ordersLoading;
 

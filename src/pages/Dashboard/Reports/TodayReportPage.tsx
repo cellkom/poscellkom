@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,39 +31,49 @@ const TodayReportPage = () => {
   const [serviceData, setServiceData] = useState<ServiceTransaction[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchTodayData = async () => {
-      setLoading(true);
-      const from = startOfToday().toISOString();
-      const to = endOfToday().toISOString();
+  const fetchTodayData = useCallback(async () => {
+    setLoading(true);
+    const from = startOfToday().toISOString();
+    const to = endOfToday().toISOString();
 
-      const salesPromise = supabase
-        .from('sales_transactions')
-        .select('id, created_at, transaction_id_display, customer_name_cache, total_amount')
-        .gte('created_at', from)
-        .lte('created_at', to)
-        .order('created_at', { ascending: false });
+    const salesPromise = supabase
+      .from('sales_transactions')
+      .select('id, created_at, transaction_id_display, customer_name_cache, total_amount')
+      .gte('created_at', from)
+      .lte('created_at', to)
+      .order('created_at', { ascending: false });
 
-      const servicePromise = supabase
-        .from('service_transactions')
-        .select('id, created_at, service_entry_id, customer_name_cache, description, total_amount')
-        .gte('created_at', from)
-        .lte('created_at', to)
-        .order('created_at', { ascending: false });
+    const servicePromise = supabase
+      .from('service_transactions')
+      .select('id, created_at, service_entry_id, customer_name_cache, description, total_amount')
+      .gte('created_at', from)
+      .lte('created_at', to)
+      .order('created_at', { ascending: false });
 
-      const [salesResult, serviceResult] = await Promise.all([salesPromise, servicePromise]);
+    const [salesResult, serviceResult] = await Promise.all([salesPromise, servicePromise]);
 
-      if (salesResult.error) console.error("Error fetching sales data:", salesResult.error);
-      else setSalesData(salesResult.data as SaleTransaction[]);
+    if (salesResult.error) console.error("Error fetching sales data:", salesResult.error);
+    else setSalesData(salesResult.data as SaleTransaction[]);
 
-      if (serviceResult.error) console.error("Error fetching service data:", serviceResult.error);
-      else setServiceData(serviceResult.data as ServiceTransaction[]);
+    if (serviceResult.error) console.error("Error fetching service data:", serviceResult.error);
+    else setServiceData(serviceResult.data as ServiceTransaction[]);
 
-      setLoading(false);
-    };
-
-    fetchTodayData();
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchTodayData();
+
+    const channel = supabase
+      .channel('today-report-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales_transactions' }, fetchTodayData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'service_transactions' }, fetchTodayData)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchTodayData]);
 
   const summary = useMemo(() => {
     const totalSales = salesData.reduce((sum, sale) => sum + sale.total_amount, 0);

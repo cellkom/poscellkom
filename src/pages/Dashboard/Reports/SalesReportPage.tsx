@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,44 +39,53 @@ const SalesReportPage = () => {
   });
   const printRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const fetchSalesData = async () => {
-      if (!dateRange?.from || !dateRange?.to) return;
-      setLoading(true);
+  const fetchSalesData = useCallback(async () => {
+    if (!dateRange?.from || !dateRange?.to) return;
+    setLoading(true);
 
-      const from = startOfDay(dateRange.from);
-      const to = endOfDay(dateRange.to);
+    const from = startOfDay(dateRange.from);
+    const to = endOfDay(dateRange.to);
 
-      const { data, error } = await supabase
-        .from('sales_transactions')
-        .select(`
-          id,
-          created_at,
-          transaction_id_display,
-          customer_name_cache,
-          total_amount,
-          payment_method,
-          sales_transaction_items (
-            quantity,
-            buy_price_at_sale,
-            products ( name )
-          )
-        `)
-        .gte('created_at', from.toISOString())
-        .lte('created_at', to.toISOString())
-        .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('sales_transactions')
+      .select(`
+        id,
+        created_at,
+        transaction_id_display,
+        customer_name_cache,
+        total_amount,
+        payment_method,
+        sales_transaction_items (
+          quantity,
+          buy_price_at_sale,
+          products ( name )
+        )
+      `)
+      .gte('created_at', from.toISOString())
+      .lte('created_at', to.toISOString())
+      .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching sales data:", error);
-        setSalesData([]);
-      } else {
-        setSalesData(data as any);
-      }
-      setLoading(false);
-    };
-
-    fetchSalesData();
+    if (error) {
+      console.error("Error fetching sales data:", error);
+      setSalesData([]);
+    } else {
+      setSalesData(data as any);
+    }
+    setLoading(false);
   }, [dateRange]);
+
+  useEffect(() => {
+    fetchSalesData();
+
+    const channel = supabase
+      .channel('sales-report-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales_transactions' }, fetchSalesData)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchSalesData]);
 
   const calculateProfit = (sale: SaleTransaction) => {
     const totalCost = sale.sales_transaction_items.reduce((sum, item) => {

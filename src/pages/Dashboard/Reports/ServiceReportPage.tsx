@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,43 +41,52 @@ const ServiceReportPage = () => {
   });
   const printRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const fetchServiceData = async () => {
-      if (!dateRange?.from || !dateRange?.to) return;
-      setLoading(true);
+  const fetchServiceData = useCallback(async () => {
+    if (!dateRange?.from || !dateRange?.to) return;
+    setLoading(true);
 
-      const from = startOfDay(dateRange.from);
-      const to = endOfDay(dateRange.to);
+    const from = startOfDay(dateRange.from);
+    const to = endOfDay(dateRange.to);
 
-      const { data, error } = await supabase
-        .from('service_transactions')
-        .select(`
-          id,
-          created_at,
-          service_entry_id,
-          customer_name_cache,
-          description,
-          total_amount,
-          service_parts_used (
-            quantity,
-            products ( name, buy_price )
-          )
-        `)
-        .gte('created_at', from.toISOString())
-        .lte('created_at', to.toISOString())
-        .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('service_transactions')
+      .select(`
+        id,
+        created_at,
+        service_entry_id,
+        customer_name_cache,
+        description,
+        total_amount,
+        service_parts_used (
+          quantity,
+          products ( name, buy_price )
+        )
+      `)
+      .gte('created_at', from.toISOString())
+      .lte('created_at', to.toISOString())
+      .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching service data:", error);
-        setServiceData([]);
-      } else {
-        setServiceData(data as any);
-      }
-      setLoading(false);
-    };
-
-    fetchServiceData();
+    if (error) {
+      console.error("Error fetching service data:", error);
+      setServiceData([]);
+    } else {
+      setServiceData(data as any);
+    }
+    setLoading(false);
   }, [dateRange]);
+
+  useEffect(() => {
+    fetchServiceData();
+
+    const channel = supabase
+      .channel('service-report-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'service_transactions' }, fetchServiceData)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchServiceData]);
 
   const calculateProfit = (service: ServiceTransaction) => {
     const partsCost = service.service_parts_used.reduce((sum, part) => {
