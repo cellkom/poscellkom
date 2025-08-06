@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Menu, LayoutDashboard, Package, ShoppingCart, Database, FileText, Users, UserCircle, Receipt, Wrench, CreditCard, ChevronDown, ClipboardPlus, Truck, Newspaper, Settings, ClipboardList } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -91,12 +91,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </CollapsibleTrigger>
             <CollapsibleContent className="pl-6 space-y-1 mt-1">
               {visibleSubItems.map(subItem => (
-                <Button key={subItem.name} variant="ghost" asChild className="w-full justify-start hover:bg-background/20">
-                  <Link to={subItem.path} className="flex items-center gap-2">
-                    <subItem.icon className="h-4 w-4" />
-                    {subItem.name}
-                  </Link>
-                </Button>
+                <SheetClose asChild key={subItem.name}>
+                  <Button variant="ghost" asChild className="w-full justify-start hover:bg-background/20">
+                    <Link to={subItem.path} className="flex items-center gap-2">
+                      <subItem.icon className="h-4 w-4" />
+                      {subItem.name}
+                    </Link>
+                  </Button>
+                </SheetClose>
               ))}
             </CollapsibleContent>
           </Collapsible>
@@ -127,7 +129,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           if (profile?.role !== 'Admin') return null;
       }
 
-      return (
+      const navButton = (
         <Button key={item.name} variant="ghost" asChild className={cn("hover:bg-primary-foreground/10", location.pathname === item.path && "bg-primary-foreground/10", isMobileNav && "justify-start")}>
           <Link to={item.path!} className="flex items-center gap-2">
             <item.icon className="h-4 w-4" />
@@ -135,6 +137,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </Link>
         </Button>
       );
+
+      return isMobileNav ? <SheetClose asChild key={item.name}>{navButton}</SheetClose> : navButton;
     });
     return nav;
   };
