@@ -7,7 +7,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DollarSign, Wrench, Receipt, CreditCard, ShoppingCart, Activity, Users, ClipboardList } from "lucide-react";
 import { useServiceEntries } from "@/hooks/use-service-entries";
 import { useInstallments } from "@/hooks/use-installments";
-import { useOrders } from "@/hooks/use-orders";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfToday, endOfToday } from "date-fns";
 
@@ -45,23 +44,10 @@ interface ActivityItem {
 const DashboardPage = () => {
   const { serviceEntries, loading: servicesLoading } = useServiceEntries();
   const { installments, loading: installmentsLoading } = useInstallments();
-  const { orders, loading: ordersLoading } = useOrders();
   
-  const [summary, setSummary] = useState({ revenueToday: 0, transactionsToday: 0, visitorsToday: 0 });
+  const [summary, setSummary] = useState({ revenueToday: 0, transactionsToday: 0, visitorsToday: 0, ordersToday: 0 });
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const servicesInProgress = useMemo(() => {
-    return serviceEntries.filter(e => e.status === 'Pending' || e.status === 'Proses').length;
-  }, [serviceEntries]);
-
-  const totalReceivables = useMemo(() => {
-    return installments.filter(i => i.status === 'Belum Lunas').reduce((sum, i) => sum + i.remaining_amount, 0);
-  }, [installments]);
-
-  const pendingOrders = useMemo(() => {
-    return orders.filter(o => o.status === 'Pending').length;
-  }, [orders]);
 
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
@@ -72,6 +58,7 @@ const DashboardPage = () => {
     const salesTodayPromise = supabase.from('sales_transactions').select('total_amount').gte('created_at', todayStart).lte('created_at', todayEnd);
     const servicesTodayPromise = supabase.from('service_transactions').select('total_amount').gte('created_at', todayStart).lte('created_at', todayEnd);
     const visitorsTodayPromise = supabase.from('daily_visits').select('count').eq('date', todayDate).single();
+    const ordersTodayPromise = supabase.from('orders').select('id', { count: 'exact' }).gte('created_at', todayStart).lte('created_at', todayEnd);
 
     const recentSalesPromise = supabase.from('sales_transactions').select('id, created_at, transaction_id_display, customer_name_cache, total_amount, remaining_amount, sales_transaction_items(products(name))').order('created_at', { ascending: false }).limit(3);
     const recentServicesPromise = supabase.from('service_transactions').select('id, service_entry_id, created_at, customer_name_cache, total_amount, description, service_entries(status)').order('created_at', { ascending: false }).limit(3);
@@ -80,9 +67,10 @@ const DashboardPage = () => {
         salesTodayResult,
         servicesTodayResult,
         visitorsTodayResult,
+        ordersTodayResult,
         recentSalesResult,
         recentServicesResult
-    ] = await Promise.all([salesTodayPromise, servicesTodayPromise, visitorsTodayPromise, recentSalesPromise, recentServicesPromise]);
+    ] = await Promise.all([salesTodayPromise, servicesTodayPromise, visitorsTodayPromise, ordersTodayPromise, recentSalesPromise, recentServicesPromise]);
 
     const totalSalesRevenue = (salesTodayResult.data || []).reduce((sum, s) => sum + s.total_amount, 0);
     const totalServiceRevenue = (servicesTodayResult.data || []).reduce((sum, s) => sum + s.total_amount, 0);
@@ -90,6 +78,7 @@ const DashboardPage = () => {
         revenueToday: totalSalesRevenue + totalServiceRevenue,
         transactionsToday: (salesTodayResult.data?.length || 0) + (servicesTodayResult.data?.length || 0),
         visitorsToday: visitorsTodayResult.data?.count || 0,
+        ordersToday: ordersTodayResult.count || 0,
     });
 
     const mappedSales = (recentSalesResult.data || []).map((s: any) => ({
@@ -130,6 +119,7 @@ const DashboardPage = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sales_transactions' }, fetchDashboardData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'service_transactions' }, fetchDashboardData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_visits' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchDashboardData)
       .subscribe();
 
     return () => {
@@ -137,7 +127,15 @@ const DashboardPage = () => {
     };
   }, [fetchDashboardData]);
 
-  const pageLoading = loading || servicesLoading || installmentsLoading || ordersLoading;
+  const servicesInProgress = useMemo(() => {
+    return serviceEntries.filter(e => e.status === 'Pending' || e.status === 'Proses').length;
+  }, [serviceEntries]);
+
+  const totalReceivables = useMemo(() => {
+    return installments.filter(i => i.status === 'Belum Lunas').reduce((sum, i) => sum + i.remaining_amount, 0);
+  }, [installments]);
+
+  const pageLoading = loading || servicesLoading || installmentsLoading;
 
   return (
     <div className="space-y-6">
@@ -212,11 +210,11 @@ const DashboardPage = () => {
             <Link to="/dashboard/orders">
               <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pesanan Masuk</CardTitle>
+                  <CardTitle className="text-sm font-medium">Pesanan Hari Ini</CardTitle>
                   <ClipboardList className="h-4 w-4 text-cyan-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{pendingOrders} Pesanan</div>
+                  <div className="text-2xl font-bold">{summary.ordersToday} Pesanan</div>
                 </CardContent>
               </Card>
             </Link>
