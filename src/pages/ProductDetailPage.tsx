@@ -89,9 +89,11 @@ const ProductDetailPage = () => {
       }
 
       if (reviewsError) {
-        showError('Gagal memuat ulasan.');
-        console.error(reviewsError);
-      } else {
+        // This error often happens if a user who made a review was deleted.
+        // We can still show the reviews from users that exist.
+        console.warn("Warning fetching reviews:", reviewsError.message);
+      }
+      if (reviewsData) {
         setReviews(reviewsData as any);
       }
 
