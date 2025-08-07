@@ -73,10 +73,10 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
         {/* Main Header Bar */}
-        <div className="container mx-auto flex h-20 items-center gap-4 px-4 md:px-6">
+        <div className="container mx-auto flex h-20 items-center gap-2 px-4 md:px-6">
           <Link to={logoLink} className="flex items-center gap-2 flex-shrink-0">
             <img src={settings.logoUrl || '/logo.png'} alt="App Logo" className="h-12 w-auto" />
-            <div className="hidden lg:block">
+            <div className="hidden sm:block">
               <h1 className="text-lg md:text-xl font-bold font-poppins">
                 <span className="text-primary">{settings.appName ? settings.appName.split('.')[0] : 'Cellkom'}</span>
                 <span className="font-semibold text-muted-foreground">{settings.appName && settings.appName.includes('.') ? `.${settings.appName.split('.')[1]}`: '.Store'}</span>
@@ -84,7 +84,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
             </div>
           </Link>
 
-          <div className="flex-grow max-w-2xl mx-auto hidden md:flex">
+          <div className="flex-grow max-w-2xl mx-auto">
             <GlobalSearchInput />
           </div>
 
@@ -163,9 +163,6 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right">
-                <div className="p-4 border-b">
-                  <GlobalSearchInput />
-                </div>
                 <nav className="grid gap-4 text-base font-medium mt-4 p-4">
                   {navLinks.map(link => (
                     <Link key={link.name} to={link.href} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
@@ -186,10 +183,10 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
           </div>
         </div>
         {/* Navigation Bar */}
-        <nav className="hidden md:flex h-10 items-center justify-center border-t bg-background">
+        <nav className="hidden md:flex h-10 items-center justify-center border-t bg-primary">
           <div className="container mx-auto flex items-center justify-center gap-8 text-sm font-medium px-4 md:px-6">
             {navLinks.map(link => (
-              <Link key={link.name} to={link.href} className="text-muted-foreground transition-colors hover:text-primary">
+              <Link key={link.name} to={link.href} className="text-primary-foreground/90 transition-colors hover:text-primary-foreground">
                 {link.name}
               </Link>
             ))}
