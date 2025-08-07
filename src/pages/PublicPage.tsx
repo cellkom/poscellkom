@@ -17,7 +17,7 @@ const PublicPage = () => {
   const { session, profile } = useAuth();
   const { settings } = useSettings();
   const { addToCart } = useCart();
-  const { advertisements, loading: adsLoading } = useAdvertisements();
+  const { advertisements, loading: adsLoading } = useAdvertisements('homepage_carousel');
   const location = useLocation();
 
   const isMember = session && profile?.role === 'Member';

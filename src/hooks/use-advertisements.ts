@@ -1,88 +1,122 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { showError, showSuccess } from '@/utils/toast';
+import { Advertisement } from '@/types';
+import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
 
-export interface Advertisement {
-  id: string;
-  image_url: string;
-  alt_text: string | null;
-  link_url: string | null;
-  is_active: boolean;
-  sort_order: number;
-}
-
-export const useAdvertisements = () => {
+export const useAdvertisements = (placement?: string) => {
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAdvertisements = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let query = supabase
       .from('advertisements')
       .select('*')
-      .eq('is_active', true)
       .order('sort_order');
 
+    if (placement) {
+      query = query.eq('placement', placement).eq('is_active', true);
+    }
+
+    const { data, error } = await query;
+
     if (error) {
-      showError(`Gagal memuat iklan: ${error.message}`);
+      toast.error('Gagal memuat data iklan.');
+      console.error(error);
     } else {
-      setAdvertisements(data || []);
+      setAdvertisements(data as Advertisement[]);
     }
     setLoading(false);
-  }, []);
+  }, [placement]);
 
   useEffect(() => {
     fetchAdvertisements();
   }, [fetchAdvertisements]);
 
-  const addAdvertisement = async (imageFile: File, altText: string, linkUrl: string) => {
-    const fileExt = imageFile.name.split('.').pop();
-    const fileName = `advertisements/${Date.now()}.${fileExt}`;
-    
-    const { error: uploadError, data: uploadData } = await supabase.storage
-      .from('product-images')
-      .upload(fileName, imageFile);
-
-    if (uploadError) {
-      showError(`Gagal mengunggah gambar: ${uploadError.message}`);
-      return false;
-    }
-
-    const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(uploadData.path);
-
-    const { error: insertError } = await supabase
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const fileName = `${uuidv4()}-${file.name}`;
+    const { data, error } = await supabase.storage
       .from('advertisements')
-      .insert({
-        image_url: publicUrl,
-        alt_text: altText || null,
-        link_url: linkUrl || null,
-      });
+      .upload(fileName, file);
 
-    if (insertError) {
-      showError(`Gagal menyimpan iklan: ${insertError.message}`);
-      return false;
+    if (error) {
+      toast.error('Gagal mengunggah gambar.');
+      console.error(error);
+      return null;
     }
 
-    showSuccess("Iklan berhasil ditambahkan!");
+    const { data: { publicUrl } } = supabase.storage
+      .from('advertisements')
+      .getPublicUrl(data.path);
+
+    return publicUrl;
+  };
+
+  const addAdvertisement = async (adData: Omit<Advertisement, 'id' | 'created_at'>, imageFile: File | null) => {
+    let imageUrl = adData.image_url;
+    if (imageFile) {
+      const uploadedUrl = await uploadImage(imageFile);
+      if (!uploadedUrl) return null;
+      imageUrl = uploadedUrl;
+    }
+
+    const { data, error } = await supabase
+      .from('advertisements')
+      .insert([{ ...adData, image_url: imageUrl }])
+      .select()
+      .single();
+
+    if (error) {
+      toast.error('Gagal menambah iklan baru.');
+      console.error(error);
+      return null;
+    }
+    toast.success('Iklan berhasil ditambahkan.');
+    fetchAdvertisements();
+    return data;
+  };
+
+  const updateAdvertisement = async (id: string, adData: Partial<Advertisement>, imageFile: File | null) => {
+    let imageUrl = adData.image_url;
+    if (imageFile) {
+      const uploadedUrl = await uploadImage(imageFile);
+      if (!uploadedUrl) return null;
+      imageUrl = uploadedUrl;
+    }
+
+    const { data, error } = await supabase
+      .from('advertisements')
+      .update({ ...adData, image_url: imageUrl })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      toast.error('Gagal memperbarui iklan.');
+      console.error(error);
+      return null;
+    }
+    toast.success('Iklan berhasil diperbarui.');
+    fetchAdvertisements();
+    return data;
+  };
+
+  const deleteAdvertisement = async (id: string) => {
+    const { error } = await supabase
+      .from('advertisements')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Gagal menghapus iklan.');
+      console.error(error);
+      return false;
+    }
+    toast.success('Iklan berhasil dihapus.');
     fetchAdvertisements();
     return true;
   };
 
-  const deleteAdvertisement = async (ad: Advertisement) => {
-    const { error: dbError } = await supabase.from('advertisements').delete().eq('id', ad.id);
-    if (dbError) {
-      showError(`Gagal menghapus iklan: ${dbError.message}`);
-      return;
-    }
-
-    const imageName = ad.image_url.split('/').pop();
-    if (imageName) {
-      await supabase.storage.from('product-images').remove([`advertisements/${imageName}`]);
-    }
-
-    showSuccess("Iklan berhasil dihapus.");
-    fetchAdvertisements();
-  };
-
-  return { advertisements, loading, addAdvertisement, deleteAdvertisement, fetchAdvertisements };
+  return { advertisements, loading, fetchAdvertisements, addAdvertisement, updateAdvertisement, deleteAdvertisement };
 };
