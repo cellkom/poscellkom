@@ -10,12 +10,14 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/hooks/use-stock";
+import { useSearchParams } from "react-router-dom";
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
   useEffect(() => {
@@ -51,6 +53,21 @@ const ProductsPage = () => {
 
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    setSearchTerm(searchParams.get("search") || "");
+  }, [searchParams]);
+
+  const handleSearchChange = (newSearchTerm: string) => {
+    setSearchTerm(newSearchTerm);
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (newSearchTerm) {
+      newSearchParams.set('search', newSearchTerm);
+    } else {
+      newSearchParams.delete('search');
+    }
+    setSearchParams(newSearchParams, { replace: true });
+  };
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
@@ -96,7 +113,7 @@ const ProductsPage = () => {
               placeholder="Cari produk..."
               className="pl-10"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           </div>
