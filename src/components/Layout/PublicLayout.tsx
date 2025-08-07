@@ -73,22 +73,24 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
         {/* Main Header Bar */}
-        <div className="container mx-auto flex h-20 items-center gap-2 px-4 md:px-6">
+        <div className="container mx-auto flex h-20 items-center gap-4 px-4 md:px-6">
           <Link to={logoLink} className="flex items-center gap-2 flex-shrink-0">
             <img src={settings.logoUrl || '/logo.png'} alt="App Logo" className="h-12 w-auto" />
-            <div className="hidden sm:block">
-              <h1 className="text-lg md:text-xl font-bold font-poppins">
+          </Link>
+
+          <div className="flex-grow max-w-2xl mx-auto">
+            <div className="md:hidden text-center"> {/* Mobile: Business Name */}
+              <h1 className="text-lg font-bold font-poppins">
                 <span className="text-primary">{settings.appName ? settings.appName.split('.')[0] : 'Cellkom'}</span>
                 <span className="font-semibold text-muted-foreground">{settings.appName && settings.appName.includes('.') ? `.${settings.appName.split('.')[1]}`: '.Store'}</span>
               </h1>
             </div>
-          </Link>
-
-          <div className="flex-grow max-w-2xl mx-auto">
-            <GlobalSearchInput />
+            <div className="hidden md:block"> {/* Desktop: Search Input */}
+              <GlobalSearchInput />
+            </div>
           </div>
 
-          <div className="flex items-center gap-1 ml-auto">
+          <div className="flex items-center gap-1">
             <ThemeToggle />
             
             <Sheet>
@@ -163,6 +165,9 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right">
+                <div className="p-4 border-b">
+                  <GlobalSearchInput />
+                </div>
                 <nav className="grid gap-4 text-base font-medium mt-4 p-4">
                   {navLinks.map(link => (
                     <Link key={link.name} to={link.href} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
