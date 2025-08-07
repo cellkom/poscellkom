@@ -50,7 +50,7 @@ const ProductDetailPage = () => {
       const productPromise = supabase.from('products').select('*').eq('id', productId).single();
       const reviewsPromise = supabase
         .from('product_reviews')
-        .select(`*, user_profiles!inner(full_name, avatar_url)`)
+        .select(`*, user_profiles!user_id(full_name, avatar_url)`)
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
 
