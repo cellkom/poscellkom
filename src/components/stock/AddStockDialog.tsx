@@ -56,7 +56,7 @@ export const AddStockDialog = ({ open, onOpenChange, onSuccess, products, suppli
           <DialogTitle>Tambah Stok Barang</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="item" className="text-right">Barang</Label>
               <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>

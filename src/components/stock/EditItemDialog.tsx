@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useStock, Product } from "@/hooks/use-stock";
 import { Supplier } from "@/hooks/use-suppliers";
+import { showError, showSuccess } from "@/utils/toast";
 
 interface EditItemDialogProps {
   open: boolean;
@@ -29,7 +30,14 @@ export const EditItemDialog = ({ open, onOpenChange, onSuccess, item, suppliers,
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isCategoryComboboxOpen, setIsCategoryComboboxOpen] = useState(false);
-  const [categorySearch, setCategorySearch] = useState("");
+  
+  const [localCategories, setLocalCategories] = useState(categories);
+  const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  useEffect(() => {
+    setLocalCategories(categories);
+  }, [categories]);
 
   useEffect(() => {
     if (item) {
@@ -57,6 +65,24 @@ export const EditItemDialog = ({ open, onOpenChange, onSuccess, item, suppliers,
     }
   };
 
+  const handleAddNewCategory = () => {
+    if (!editingItemData) return;
+    if (!newCategoryName.trim()) {
+      showError("Nama kategori tidak boleh kosong.");
+      return;
+    }
+    const trimmedName = newCategoryName.trim();
+    if (localCategories.some(c => c.toLowerCase() === trimmedName.toLowerCase())) {
+      showError("Kategori sudah ada.");
+      return;
+    }
+    setLocalCategories(prev => [...prev, trimmedName].sort());
+    setEditingItemData({ ...editingItemData, category: trimmedName });
+    setNewCategoryName("");
+    setIsAddCategoryDialogOpen(false);
+    showSuccess(`Kategori "${trimmedName}" ditambahkan.`);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingItemData) return;
@@ -73,96 +99,111 @@ export const EditItemDialog = ({ open, onOpenChange, onSuccess, item, suppliers,
   if (!editingItemData) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Edit Data Barang</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-image" className="text-right">Foto</Label>
-              <div className="col-span-3">
-                <Input id="edit-image" type="file" accept="image/*" onChange={handleImageChange} className="text-sm" />
-                {imagePreview && <img src={imagePreview} alt="Preview" className="mt-2 h-24 w-24 object-cover rounded-md border" />}
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Data Barang</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-image" className="text-right">Foto</Label>
+                <div className="col-span-3">
+                  <Input id="edit-image" type="file" accept="image/*" onChange={handleImageChange} className="text-sm" />
+                  {imagePreview && <img src={imagePreview} alt="Preview" className="mt-2 h-24 w-24 object-cover rounded-md border" />}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-barcode" className="text-right">Barcode</Label><Input id="edit-barcode" name="barcode" value={editingItemData.barcode} onChange={handleChange} className="col-span-3 font-mono" /></div>
+              <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-name" className="text-right">Nama</Label><Input id="edit-name" name="name" value={editingItemData.name} onChange={handleChange} className="col-span-3" /></div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-category" className="text-right">Kategori</Label>
+                <div className="col-span-3 flex items-center gap-2">
+                  <Popover open={isCategoryComboboxOpen} onOpenChange={setIsCategoryComboboxOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" aria-expanded={isCategoryComboboxOpen} className="w-full justify-between">
+                        {editingItemData.category || "Pilih Kategori..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Cari kategori..." />
+                        <CommandList>
+                          <CommandEmpty>Kategori tidak ditemukan.</CommandEmpty>
+                          <CommandGroup>
+                            {localCategories.map((category) => (
+                              <CommandItem key={category} value={category} onSelect={(currentValue) => { setEditingItemData({ ...editingItemData, category: currentValue }); setIsCategoryComboboxOpen(false); }}>
+                                <Check className={cn("mr-2 h-4 w-4", editingItemData.category === category ? "opacity-100" : "opacity-0")} />
+                                {category}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <Button type="button" variant="outline" size="icon" onClick={() => setIsAddCategoryDialogOpen(true)}>
+                    <PlusCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="edit-description" className="text-right pt-2">Deskripsi</Label>
+                <Textarea id="edit-description" name="description" value={editingItemData.description || ''} onChange={handleChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-stock" className="text-right">Stok</Label><Input id="edit-stock" name="stock" type="number" value={editingItemData.stock} onChange={handleChange} className="col-span-3" /></div>
+              <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-buyPrice" className="text-right">Harga Beli</Label><Input id="edit-buyPrice" name="buyPrice" type="number" value={editingItemData.buyPrice} onChange={handleChange} className="col-span-3" /></div>
+              <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-retailPrice" className="text-right">Harga Ecer</Label><Input id="edit-retailPrice" name="retailPrice" type="number" value={editingItemData.retailPrice} onChange={handleChange} className="col-span-3" /></div>
+              <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-resellerPrice" className="text-right">Harga Reseller</Label><Input id="edit-resellerPrice" name="resellerPrice" type="number" value={editingItemData.resellerPrice} onChange={handleChange} className="col-span-3" /></div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-entryDate" className="text-right">Tgl. Masuk</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant={"outline"} className={cn("col-span-3 justify-start text-left font-normal", !editingItemData.entryDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {editingItemData.entryDate ? format(new Date(editingItemData.entryDate), "PPP") : <span>Pilih tanggal</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar mode="single" selected={new Date(editingItemData.entryDate)} onSelect={(date) => setEditingItemData(prev => ({ ...prev!, entryDate: (date || new Date()).toISOString() }))} initialFocus />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-supplier" className="text-right">Supplier</Label>
+                <Select value={editingItemData.supplierId || ''} onValueChange={(value) => setEditingItemData(prev => ({ ...prev!, supplierId: value }))}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Pilih Supplier (Opsional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map(supplier => (<SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-barcode" className="text-right">Barcode</Label><Input id="edit-barcode" name="barcode" value={editingItemData.barcode} onChange={handleChange} className="col-span-3 font-mono" /></div>
-            <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-name" className="text-right">Nama</Label><Input id="edit-name" name="name" value={editingItemData.name} onChange={handleChange} className="col-span-3" /></div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-category" className="text-right">Kategori</Label>
-              <Popover open={isCategoryComboboxOpen} onOpenChange={setIsCategoryComboboxOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox" aria-expanded={isCategoryComboboxOpen} className="col-span-3 justify-between">
-                    {editingItemData.category || "Pilih Kategori..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[250px] p-0">
-                  <Command>
-                    <CommandInput placeholder="Cari atau buat baru..." onValueChange={setCategorySearch} />
-                    <CommandList>
-                      <CommandEmpty>
-                        {categorySearch && (
-                          <CommandItem onSelect={() => { setEditingItemData({ ...editingItemData, category: categorySearch }); setIsCategoryComboboxOpen(false); }}>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Tambah kategori: "{categorySearch}"
-                          </CommandItem>
-                        )}
-                      </CommandEmpty>
-                      <CommandGroup>
-                        {categories.map((category) => (
-                          <CommandItem key={category} value={category} onSelect={(currentValue) => { setEditingItemData({ ...editingItemData, category: currentValue }); setIsCategoryComboboxOpen(false); }}>
-                            <Check className={cn("mr-2 h-4 w-4", editingItemData.category === category ? "opacity-100" : "opacity-0")} />
-                            {category}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label htmlFor="edit-description" className="text-right pt-2">Deskripsi</Label>
-              <Textarea id="edit-description" name="description" value={editingItemData.description || ''} onChange={handleChange} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-stock" className="text-right">Stok</Label><Input id="edit-stock" name="stock" type="number" value={editingItemData.stock} onChange={handleChange} className="col-span-3" /></div>
-            <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-buyPrice" className="text-right">Harga Beli</Label><Input id="edit-buyPrice" name="buyPrice" type="number" value={editingItemData.buyPrice} onChange={handleChange} className="col-span-3" /></div>
-            <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-retailPrice" className="text-right">Harga Ecer</Label><Input id="edit-retailPrice" name="retailPrice" type="number" value={editingItemData.retailPrice} onChange={handleChange} className="col-span-3" /></div>
-            <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-resellerPrice" className="text-right">Harga Reseller</Label><Input id="edit-resellerPrice" name="resellerPrice" type="number" value={editingItemData.resellerPrice} onChange={handleChange} className="col-span-3" /></div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-entryDate" className="text-right">Tgl. Masuk</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant={"outline"} className={cn("col-span-3 justify-start text-left font-normal", !editingItemData.entryDate && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {editingItemData.entryDate ? format(new Date(editingItemData.entryDate), "PPP") : <span>Pilih tanggal</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={new Date(editingItemData.entryDate)} onSelect={(date) => setEditingItemData(prev => ({ ...prev!, entryDate: (date || new Date()).toISOString() }))} initialFocus />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-supplier" className="text-right">Supplier</Label>
-              <Select value={editingItemData.supplierId || ''} onValueChange={(value) => setEditingItemData(prev => ({ ...prev!, supplierId: value }))}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Pilih Supplier (Opsional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers.map(supplier => (<SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>))}
-                </SelectContent>
-              </Select>
-            </div>
+            <DialogFooter>
+              <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Batal</Button>
+              <Button type="submit">Simpan Perubahan</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isAddCategoryDialogOpen} onOpenChange={setIsAddCategoryDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Tambah Kategori Baru</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Label htmlFor="new-category-name">Nama Kategori</Label>
+            <Input id="new-category-name" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="Contoh: Aksesoris" />
           </div>
           <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Batal</Button>
-            <Button type="submit">Simpan Perubahan</Button>
+            <Button variant="secondary" onClick={() => setIsAddCategoryDialogOpen(false)}>Batal</Button>
+            <Button onClick={handleAddNewCategory}>Simpan</Button>
           </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
