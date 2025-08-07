@@ -10,14 +10,20 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/hooks/use-stock";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || "");
   const [categoryFilter, setCategoryFilter] = useState("all");
+
+  useEffect(() => {
+    // Sync search term with URL query parameter
+    setSearchTerm(searchParams.get('q') || "");
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -44,6 +50,7 @@ const ProductsPage = () => {
           supplierId: p.supplier_id,
           entryDate: p.entry_date,
           imageUrl: p.image_url,
+          description: p.description,
         }));
         setProducts(formattedData);
       }
@@ -95,7 +102,7 @@ const ProductsPage = () => {
           <div className="relative flex-grow">
             <Input
               type="text"
-              placeholder="Cari produk..."
+              placeholder="Cari produk di halaman ini..."
               className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

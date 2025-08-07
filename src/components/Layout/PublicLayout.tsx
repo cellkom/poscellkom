@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard, Code, Image as ImageIcon, ClipboardList, Facebook, Youtube, Music } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,14 +17,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSettings } from "@/contexts/SettingsContext";
 import { supabase } from "@/integrations/supabase/client";
+import { GlobalSearchInput } from "@/components/GlobalSearchInput";
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {
-  const isMobile = useIsMobile();
   const { session, profile, signOut } = useAuth();
   const { cartCount } = useCart();
   const { articles, loading: newsLoading } = useNews();
   const [latestArticles, setLatestArticles] = useState<NewsArticle[]>([]);
   const { settings } = useSettings();
+  const location = useLocation();
 
   useEffect(() => {
     const trackVisit = async () => {
@@ -48,6 +48,15 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
     }
   }, [articles]);
 
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location]);
+
   const navLinks = [
     { name: "Layanan Servis", href: "/#services", icon: Wrench },
     { name: "Produk", href: "/products", icon: ShoppingCart },
@@ -63,27 +72,23 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-          <Link to={logoLink} className="flex items-center gap-2">
-            <img src={settings.logoUrl || '/logo.png'} alt="App Logo" className="h-10 w-auto" />
-            <div>
+        {/* Main Header Bar */}
+        <div className="container mx-auto flex h-20 items-center gap-4 px-4 md:px-6">
+          <Link to={logoLink} className="flex items-center gap-2 flex-shrink-0">
+            <img src={settings.logoUrl || '/logo.png'} alt="App Logo" className="h-12 w-auto" />
+            <div className="hidden lg:block">
               <h1 className="text-lg md:text-xl font-bold font-poppins">
                 <span className="text-primary">{settings.appName ? settings.appName.split('.')[0] : 'Cellkom'}</span>
                 <span className="font-semibold text-muted-foreground">{settings.appName && settings.appName.includes('.') ? `.${settings.appName.split('.')[1]}`: '.Store'}</span>
               </h1>
-              <p className="hidden md:block text-xs text-muted-foreground -mt-1">{settings.appDescription || 'Pusat Service HP dan Komputer'}</p>
             </div>
           </Link>
-          
-          <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
-            {navLinks.map(link => (
-              <Link key={link.name} to={link.href} className="text-muted-foreground transition-colors hover:text-primary">
-                {link.name}
-              </Link>
-            ))}
-          </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex-grow max-w-2xl mx-auto hidden md:flex">
+            <GlobalSearchInput />
+          </div>
+
+          <div className="flex items-center gap-1 ml-auto">
             <ThemeToggle />
             
             <Sheet>
@@ -106,8 +111,8 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
             {session && profile ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-9 w-9">
                       <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name || ''} />
                       <AvatarFallback>{profile.full_name?.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
@@ -145,36 +150,51 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="ghost" size="icon" asChild>
-                <Link to="/member-login" aria-label="Halaman Login">
-                  <UserCircle className="h-6 w-6" />
-                  <span className="sr-only">Buka halaman login</span>
-                </Link>
+              <Button asChild className="hidden md:flex">
+                <Link to="/member-login">Masuk / Daftar</Link>
               </Button>
             )}
 
-            {isMobile && (
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-6 w-6" />
-                    <span className="sr-only">Buka menu navigasi</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right">
-                  <nav className="grid gap-6 text-lg font-medium mt-8">
-                    {navLinks.map(link => (
-                      <Link key={link.name} to={link.href} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
-                        <link.icon className="h-6 w-6" />
-                        {link.name}
-                      </Link>
-                    ))}
-                  </nav>
-                </SheetContent>
-              </Sheet>
-            )}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Buka menu navigasi</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right">
+                <div className="p-4 border-b">
+                  <GlobalSearchInput />
+                </div>
+                <nav className="grid gap-4 text-base font-medium mt-4 p-4">
+                  {navLinks.map(link => (
+                    <Link key={link.name} to={link.href} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
+                      <link.icon className="h-5 w-5" />
+                      {link.name}
+                    </Link>
+                  ))}
+                </nav>
+                {!session && (
+                  <div className="p-4 mt-4 border-t">
+                    <Button asChild className="w-full">
+                      <Link to="/member-login">Masuk / Daftar</Link>
+                    </Button>
+                  </div>
+                )}
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
+        {/* Navigation Bar */}
+        <nav className="hidden md:flex h-10 items-center justify-center border-t bg-background">
+          <div className="container mx-auto flex items-center justify-center gap-8 text-sm font-medium px-4 md:px-6">
+            {navLinks.map(link => (
+              <Link key={link.name} to={link.href} className="text-muted-foreground transition-colors hover:text-primary">
+                {link.name}
+              </Link>
+            ))}
+          </div>
+        </nav>
       </header>
 
       <main className="flex-grow">{children}</main>
