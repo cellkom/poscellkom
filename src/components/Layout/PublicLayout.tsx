@@ -1,7 +1,7 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard, Code, Image as ImageIcon, ClipboardList, Facebook, Youtube, Music, Search, HelpCircle } from "lucide-react";
+import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard, Code, Image as ImageIcon, ClipboardList, Facebook, Youtube, Music } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ReactNode, useEffect, useState } from "react";
@@ -18,26 +18,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSettings } from "@/contexts/SettingsContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {
+  const isMobile = useIsMobile();
   const { session, profile, signOut } = useAuth();
   const { cartCount } = useCart();
   const { articles, loading: newsLoading } = useNews();
   const [latestArticles, setLatestArticles] = useState<NewsArticle[]>([]);
   const { settings } = useSettings();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      navigate(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
-    } else {
-      navigate('/products');
-    }
-  };
 
   useEffect(() => {
     const trackVisit = async () => {
@@ -60,130 +48,134 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
     }
   }, [articles]);
 
-  useEffect(() => {
-    if (location.hash) {
-      const element = document.getElementById(location.hash.substring(1));
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  }, [location]);
+  const navLinks = [
+    { name: "Layanan Servis", href: "/#services", icon: Wrench },
+    { name: "Produk", href: "/products", icon: ShoppingCart },
+    { name: "Jasa Aplikasi", href: "/#it-services", icon: Code },
+    { name: "Berita", href: "/news", icon: Newspaper },
+    { name: "Tentang Kami", href: "/#about", icon: Info },
+    { name: "Kontak", href: "/#contact", icon: Phone },
+  ];
 
   const profileLink = profile?.role === 'Member' ? '/member-profile' : '/profile';
   const logoLink = (profile?.role === 'Admin' || profile?.role === 'Kasir') ? '/dashboard' : '/';
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="sticky top-0 z-50 w-full bg-primary text-primary-foreground print:hidden">
-        {/* Top Bar */}
-        <div className="border-b border-white/20">
-          <div className="container mx-auto flex h-8 items-center justify-between px-4 md:px-6 text-xs">
-            <div className="flex items-center gap-4">
-              {settings.socialFacebook && <a href={settings.socialFacebook} target="_blank" rel="noopener noreferrer" className="hover:opacity-80"><Facebook className="h-4 w-4" /></a>}
-              {settings.socialInstagram && <a href={settings.socialInstagram} target="_blank" rel="noopener noreferrer" className="hover:opacity-80"><Instagram className="h-4 w-4" /></a>}
-              {settings.socialYoutube && <a href={settings.socialYoutube} target="_blank" rel="noopener noreferrer" className="hover:opacity-80"><Youtube className="h-4 w-4" /></a>}
-              {settings.socialTiktok && <a href={settings.socialTiktok} target="_blank" rel="noopener noreferrer" className="hover:opacity-80"><Music className="h-4 w-4" /></a>}
-            </div>
-            <div className="flex items-center gap-4">
-              <Link to="/tracking" className="flex items-center gap-1 hover:underline"><HelpCircle className="h-4 w-4" /> Bantuan</Link>
-              <ThemeToggle />
-              {session && profile ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2 text-xs text-white hover:text-white hover:bg-transparent p-0 h-auto">
-                      <Avatar className="h-5 w-5">
-                        <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name || ''} />
-                        <AvatarFallback>{profile.full_name?.charAt(0).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <span className="hidden sm:inline">{profile.full_name}</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>{session.user.email}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild><Link to={profileLink} className="cursor-pointer">Profil Saya</Link></DropdownMenuItem>
-                    {profile?.role === 'Member' && <DropdownMenuItem asChild><Link to="/my-orders" className="cursor-pointer">Daftar Pesanan</Link></DropdownMenuItem>}
-                    {(profile.role === 'Admin' || profile.role === 'Kasir') && <DropdownMenuItem asChild><Link to="/dashboard" className="cursor-pointer">Dashboard</Link></DropdownMenuItem>}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={signOut} className="cursor-pointer">Logout</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <>
-                  <Link to="/member-login" className="font-semibold hover:underline">Daftar</Link>
-                  <div className="border-l h-3 border-white/50"></div>
-                  <Link to="/member-login" className="font-semibold hover:underline">Log In</Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Main Header */}
-        <div className="container mx-auto flex h-20 items-center justify-between gap-4 md:gap-8 px-4 md:px-6">
-          <Link to={logoLink} className="flex items-center gap-3 text-white flex-shrink-0">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
+          <Link to={logoLink} className="flex items-center gap-2">
             <img src={settings.logoUrl || '/logo.png'} alt="App Logo" className="h-10 w-auto" />
-            <span className="text-2xl font-bold font-poppins hidden sm:inline">
-              {settings.appName || 'Cellkom.Store'}
-            </span>
-          </Link>
-
-          <div className="flex-grow max-w-3xl hidden md:block">
-            <form onSubmit={handleSearch} className="relative bg-white rounded-sm p-0.5">
-              <Input
-                type="text"
-                placeholder="Cari casing, baterai, LCD..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-10 border-none focus-visible:ring-0 text-black pr-16"
-              />
-              <Button type="submit" size="icon" className="absolute right-1 top-1 h-9 w-14 bg-primary hover:bg-red-700 rounded-sm">
-                <Search className="h-5 w-5 text-white" />
-              </Button>
-            </form>
-            <div className="flex items-center gap-3 text-xs text-white/80 mt-1">
-              <Link to="/products?search=lcd" className="hover:text-white">LCD</Link>
-              <Link to="/products?search=baterai" className="hover:text-white">Baterai</Link>
-              <Link to="/products?search=charger" className="hover:text-white">Charger</Link>
-              <Link to="/products?search=servis" className="hover:text-white">Servis</Link>
+            <div>
+              <h1 className="text-lg md:text-xl font-bold font-poppins">
+                <span className="text-primary">{settings.appName ? settings.appName.split('.')[0] : 'Cellkom'}</span>
+                <span className="font-semibold text-muted-foreground">{settings.appName && settings.appName.includes('.') ? `.${settings.appName.split('.')[1]}`: '.Store'}</span>
+              </h1>
+              <p className="hidden md:block text-xs text-muted-foreground -mt-1">{settings.appDescription || 'Pusat Service HP dan Komputer'}</p>
             </div>
-          </div>
+          </Link>
+          
+          <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
+            {navLinks.map(link => (
+              <Link key={link.name} to={link.href} className="text-muted-foreground transition-colors hover:text-primary">
+                {link.name}
+              </Link>
+            ))}
+          </nav>
 
-          <div className="flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" className="relative text-white hover:bg-primary/80 hover:text-white p-2">
-                  <ShoppingCart className="h-7 w-7" />
+                <Button variant="ghost" size="icon" className="relative">
+                  <ShoppingCart className="h-6 w-6" />
                   {cartCount > 0 && (
-                    <Badge variant="destructive" className="absolute top-0 right-0 h-5 w-5 justify-center rounded-full p-0 text-xs">
+                    <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center rounded-full p-0 text-xs">
                       {cartCount}
                     </Badge>
                   )}
+                  <span className="sr-only">Keranjang Belanja</span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-full sm:max-w-sm p-0">
                 <CartSidebar />
               </SheetContent>
             </Sheet>
+
+            {session && profile ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={profile.avatar_url || ''} alt={profile.full_name || ''} />
+                      <AvatarFallback>{profile.full_name?.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>{session.user.email}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to={profileLink} className="flex items-center gap-2 cursor-pointer">
+                      <UserCircle className="h-4 w-4" />
+                      <span>Profil Saya</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  {profile?.role === 'Member' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/my-orders" className="flex items-center gap-2 cursor-pointer">
+                        <ClipboardList className="h-4 w-4" />
+                        <span>Daftar Pesanan</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {(profile.role === 'Admin' || profile.role === 'Kasir') && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
+                        <LayoutDashboard className="h-4 w-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut} className="cursor-pointer">
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/member-login" aria-label="Halaman Login">
+                  <UserCircle className="h-6 w-6" />
+                  <span className="sr-only">Buka halaman login</span>
+                </Link>
+              </Button>
+            )}
+
+            {isMobile && (
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Buka menu navigasi</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right">
+                  <nav className="grid gap-6 text-lg font-medium mt-8">
+                    {navLinks.map(link => (
+                      <Link key={link.name} to={link.href} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
+                        <link.icon className="h-6 w-6" />
+                        {link.name}
+                      </Link>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            )}
           </div>
         </div>
       </header>
-
-      {/* Mobile Search Bar */}
-      <div className="md:hidden bg-primary p-2 print:hidden">
-        <form onSubmit={handleSearch} className="relative bg-white rounded-sm">
-          <Input
-            type="text"
-            placeholder="Cari produk..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-10 border-none focus-visible:ring-0 text-black pr-14"
-          />
-          <Button type="submit" size="icon" className="absolute right-0 top-0 h-10 w-12 bg-primary hover:bg-red-700 rounded-l-none rounded-r-sm">
-            <Search className="h-5 w-5 text-white" />
-          </Button>
-        </form>
-      </div>
 
       <main className="flex-grow">{children}</main>
 
