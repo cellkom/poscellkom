@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import PublicLayout from "@/components/Layout/PublicLayout";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,7 +13,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useAdvertisements } from "@/hooks/use-advertisements";
 
 const ProductsPage = () => {
-  const { products, loading, categories } = useStock();
+  const { products, loading } = useStock(); // Removed 'categories' from destructuring
   const { addToCart } = useCart();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -22,6 +22,17 @@ const ProductsPage = () => {
 
   const { advertisements, loading: adsLoading } = useAdvertisements('products_page_banner');
   const bannerAd = advertisements[0];
+
+  // Categories are correctly derived here
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set<string>();
+    products.forEach(product => {
+      if (product.category) {
+        uniqueCategories.add(product.category);
+      }
+    });
+    return Array.from(uniqueCategories).sort();
+  }, [products]);
 
   const filteredAndSortedProducts = products
     .filter(product =>
