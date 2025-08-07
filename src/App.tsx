@@ -14,6 +14,7 @@ import DashboardLayout from './components/Layout/DashboardLayout';
 // Public Pages
 import PublicPage from './pages/PublicPage';
 import ProductsPage from './pages/ProductsPage';
+import ProductDetailPage from './pages/ProductDetailPage'; // Import the new page
 import NewsPage from './pages/NewsPage';
 import NewsDetailPage from './pages/NewsDetailPage';
 import MemberProfilePage from './pages/MemberProfilePage';
@@ -122,6 +123,7 @@ function App() {
                   {/* Public & Auth Routes */}
                   <Route path="/" element={<PublicPage />} />
                   <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/products/:id" element={<ProductDetailPage />} /> {/* Add new route */}
                   <Route path="/news" element={<NewsPage />} />
                   <Route path="/news/:slug" element={<NewsDetailPage />} />
                   <Route path="/login" element={<LoginPage />} />

@@ -34,6 +34,11 @@ const PublicPage = () => {
     }
   }, [location]);
 
+  const handleAddToCart = (e: React.MouseEvent, product: any) => {
+    e.preventDefault(); // Prevent navigation when clicking the button
+    addToCart(product);
+  };
+
   const services = [
     {
       icon: Smartphone,
@@ -184,30 +189,32 @@ const PublicPage = () => {
                 ))
               ) : (
                 displayedProducts.map((product) => (
-                  <Card key={product.id} className="overflow-hidden group transition-shadow hover:shadow-lg flex flex-col">
-                    <CardHeader className="p-0">
-                      <div className="bg-muted aspect-square flex items-center justify-center overflow-hidden">
-                        {product.imageUrl ? (
-                          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
-                        ) : (
-                          <ImageIcon className="h-20 w-20 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 flex-grow flex flex-col">
-                      <h3 className="font-semibold text-lg truncate" title={product.name}>{product.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">{product.category}</p>
-                      <p className="font-bold text-primary text-xl mt-auto">{formatCurrency(product.retailPrice)}</p>
-                      <Button
-                        className="mt-4 w-full"
-                        onClick={() => addToCart(product)} // Use addToCart directly
-                        disabled={product.stock <= 0}
-                      >
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        {product.stock > 0 ? "Tambah ke Keranjang" : "Stok Habis"}
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <Link to={`/products/${product.id}`} key={product.id} className="group">
+                    <Card className="overflow-hidden transition-shadow hover:shadow-lg flex flex-col h-full">
+                      <CardHeader className="p-0">
+                        <div className="bg-muted aspect-square flex items-center justify-center overflow-hidden">
+                          {product.imageUrl ? (
+                            <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                          ) : (
+                            <ImageIcon className="h-20 w-20 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-4 flex-grow flex flex-col">
+                        <h3 className="font-semibold text-lg truncate" title={product.name}>{product.name}</h3>
+                        <p className="text-sm text-muted-foreground mb-2">{product.category}</p>
+                        <p className="font-bold text-primary text-xl mt-auto">{formatCurrency(product.retailPrice)}</p>
+                        <Button
+                          className="mt-4 w-full"
+                          onClick={(e) => handleAddToCart(e, product)}
+                          disabled={product.stock <= 0}
+                        >
+                          <ShoppingCart className="mr-2 h-4 w-4" />
+                          {product.stock > 0 ? "Tambah ke Keranjang" : "Stok Habis"}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 ))
               )}
             </div>
