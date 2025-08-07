@@ -4,10 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Calendar } from "@/components/ui/calendar";
-import { PlusCircle, RefreshCw, Calendar as CalendarIcon } from "lucide-react";
+import { PlusCircle, RefreshCw, Calendar as CalendarIcon, ChevronsUpDown, Check } from "lucide-react";
 import Barcode from "@/components/Barcode";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -20,15 +20,18 @@ interface AddItemDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   suppliers: Supplier[];
+  categories: string[];
 }
 
 const initialState = { name: '', category: '', description: '', stock: 0, buyPrice: 0, retailPrice: 0, resellerPrice: 0, barcode: '', entryDate: new Date(), supplierId: '' };
 
-export const AddItemDialog = ({ open, onOpenChange, onSuccess, suppliers }: AddItemDialogProps) => {
+export const AddItemDialog = ({ open, onOpenChange, onSuccess, suppliers, categories }: AddItemDialogProps) => {
   const { addProduct } = useStock();
   const [newItem, setNewItem] = useState(initialState);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isCategoryComboboxOpen, setIsCategoryComboboxOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
 
   const handleGenerateBarcode = () => {
     const generated = Math.floor(1000000000000 + Math.random() * 9000000000000).toString();
@@ -100,7 +103,40 @@ export const AddItemDialog = ({ open, onOpenChange, onSuccess, suppliers }: AddI
             </div>
             <div className="grid grid-cols-4 items-center gap-4 -mt-2"><div className="col-start-2 col-span-3"><Barcode value={newItem.barcode} /></div></div>
             <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="name" className="text-right">Nama</Label><Input id="name" name="name" placeholder="Nama Barang" className="col-span-3" value={newItem.name} onChange={handleNewItemChange} /></div>
-            <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="category" className="text-right">Kategori</Label><Select name="category" onValueChange={(value) => setNewItem(prev => ({ ...prev, category: value }))} value={newItem.category}><SelectTrigger className="col-span-3"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger><SelectContent><SelectItem value="Sparepart HP">Sparepart HP</SelectItem><SelectItem value="Sparepart Komputer">Sparepart Komputer</SelectItem><SelectItem value="Aksesoris">Aksesoris</SelectItem></SelectContent></Select></div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category" className="text-right">Kategori</Label>
+              <Popover open={isCategoryComboboxOpen} onOpenChange={setIsCategoryComboboxOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" aria-expanded={isCategoryComboboxOpen} className="col-span-3 justify-between">
+                    {newItem.category || "Pilih Kategori..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[250px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Cari atau buat baru..." onValueChange={setCategorySearch} />
+                    <CommandList>
+                      <CommandEmpty>
+                        {categorySearch && (
+                          <CommandItem onSelect={() => { setNewItem(prev => ({ ...prev, category: categorySearch })); setIsCategoryComboboxOpen(false); }}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Tambah kategori: "{categorySearch}"
+                          </CommandItem>
+                        )}
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {categories.map((category) => (
+                          <CommandItem key={category} value={category} onSelect={(currentValue) => { setNewItem(prev => ({ ...prev, category: currentValue })); setIsCategoryComboboxOpen(false); }}>
+                            <Check className={cn("mr-2 h-4 w-4", newItem.category === category ? "opacity-100" : "opacity-0")} />
+                            {category}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="description" className="text-right pt-2">Deskripsi</Label>
               <Textarea id="description" name="description" placeholder="Deskripsi singkat produk" className="col-span-3" value={newItem.description} onChange={handleNewItemChange} />

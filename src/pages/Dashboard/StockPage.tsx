@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useStock, Product } from "@/hooks/use-stock";
 import { useSuppliers } from "@/hooks/use-suppliers";
@@ -17,6 +17,16 @@ const StockPage = () => {
   const [isEditItemDialogOpen, setIsEditItemDialogOpen] = useState(false);
   const [isAddStockDialogOpen, setIsAddStockDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Product | null>(null);
+
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set<string>();
+    products.forEach(product => {
+      if (product.category) {
+        uniqueCategories.add(product.category);
+      }
+    });
+    return Array.from(uniqueCategories).sort();
+  }, [products]);
 
   const filteredStock = products.filter(item => {
     const term = searchTerm.toLowerCase();
@@ -65,6 +75,7 @@ const StockPage = () => {
         onOpenChange={setIsAddItemDialogOpen}
         onSuccess={() => setIsAddItemDialogOpen(false)}
         suppliers={suppliers}
+        categories={categories}
       />
 
       <EditItemDialog
@@ -73,6 +84,7 @@ const StockPage = () => {
         onSuccess={() => setIsEditItemDialogOpen(false)}
         item={editingItem}
         suppliers={suppliers}
+        categories={categories}
       />
 
       <AddStockDialog
