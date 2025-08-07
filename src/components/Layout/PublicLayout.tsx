@@ -48,14 +48,19 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
     }
   }, [articles]);
 
-  useEffect(() => {
-    if (location.hash) {
-      const element = document.getElementById(location.hash.substring(1));
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+  const handleNavClick = (e: React.MouseEvent, href: string) => {
+    if (href.startsWith('/#')) {
+      const id = href.substring(2);
+      if (location.pathname === '/') {
+        e.preventDefault();
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+          window.history.pushState(null, '', href);
+        }
       }
     }
-  }, [location]);
+  };
 
   const navLinks = [
     { name: "Layanan Servis", href: "/#services", icon: Wrench },
@@ -170,7 +175,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
                 </div>
                 <nav className="grid gap-4 text-base font-medium mt-4 p-4">
                   {navLinks.map(link => (
-                    <Link key={link.name} to={link.href} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
+                    <Link key={link.name} to={link.href} onClick={(e) => handleNavClick(e, link.href)} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
                       <link.icon className="h-5 w-5" />
                       {link.name}
                     </Link>
@@ -191,7 +196,7 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
         <nav className="hidden md:flex h-10 items-center justify-center border-t bg-primary">
           <div className="container mx-auto flex items-center justify-center gap-8 text-sm font-medium px-4 md:px-6">
             {navLinks.map(link => (
-              <Link key={link.name} to={link.href} className="text-primary-foreground/90 transition-colors hover:text-primary-foreground">
+              <Link key={link.name} to={link.href} onClick={(e) => handleNavClick(e, link.href)} className="text-primary-foreground/90 transition-colors hover:text-primary-foreground">
                 {link.name}
               </Link>
             ))}

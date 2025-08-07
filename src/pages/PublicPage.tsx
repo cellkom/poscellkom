@@ -39,6 +39,16 @@ const PublicPage = () => {
     addToCart(product);
   };
 
+  const handleSmoothScroll = (e: React.MouseEvent, hash: string) => {
+    e.preventDefault();
+    const id = hash.substring(1);
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+      window.history.pushState(null, '', hash);
+    }
+  };
+
   const services = [
     {
       icon: Smartphone,
@@ -89,7 +99,7 @@ const PublicPage = () => {
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button size="lg" asChild>
-                <a href="#services">Layanan Servis Kami <Wrench className="ml-2 h-5 w-5" /></a>
+                <a href="#services" onClick={(e) => handleSmoothScroll(e, '#services')}>Layanan Servis Kami <Wrench className="ml-2 h-5 w-5" /></a>
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <Link to="/tracking">Info Servis <Search className="ml-2 h-5 w-5" /></Link>
