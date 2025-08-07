@@ -8,6 +8,7 @@ export interface Product {
   createdAt: string;
   name: string;
   category: string;
+  description: string | null; // Added description
   stock: number;
   buyPrice: number;
   retailPrice: number;
@@ -24,6 +25,7 @@ interface DbProduct {
   created_at: string;
   name: string;
   category: string;
+  description: string | null; // Added description
   stock: number;
   buy_price: number;
   retail_price: number;
@@ -40,6 +42,7 @@ const fromDbProduct = (dbProduct: DbProduct): Product => ({
   createdAt: dbProduct.created_at,
   name: dbProduct.name,
   category: dbProduct.category,
+  description: dbProduct.description, // Added description
   stock: dbProduct.stock,
   buyPrice: dbProduct.buy_price,
   retailPrice: dbProduct.retail_price,
@@ -55,6 +58,7 @@ const toDbProduct = (product: Partial<Omit<Product, 'id' | 'createdAt'>>) => {
   const dbProduct: Partial<Omit<DbProduct, 'id' | 'created_at'>> = {};
   if (product.name !== undefined) dbProduct.name = product.name;
   if (product.category !== undefined) dbProduct.category = product.category;
+  if (product.description !== undefined) dbProduct.description = product.description; // Added description
   if (product.stock !== undefined) dbProduct.stock = product.stock;
   if (product.buyPrice !== undefined) dbProduct.buy_price = product.buyPrice;
   if (product.retailPrice !== undefined) dbProduct.retail_price = product.retailPrice;

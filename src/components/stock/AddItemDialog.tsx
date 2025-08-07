@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -21,7 +22,7 @@ interface AddItemDialogProps {
   suppliers: Supplier[];
 }
 
-const initialState = { name: '', category: '', stock: 0, buyPrice: 0, retailPrice: 0, resellerPrice: 0, barcode: '', entryDate: new Date(), supplierId: '' };
+const initialState = { name: '', category: '', description: '', stock: 0, buyPrice: 0, retailPrice: 0, resellerPrice: 0, barcode: '', entryDate: new Date(), supplierId: '' };
 
 export const AddItemDialog = ({ open, onOpenChange, onSuccess, suppliers }: AddItemDialogProps) => {
   const { addProduct } = useStock();
@@ -44,7 +45,7 @@ export const AddItemDialog = ({ open, onOpenChange, onSuccess, suppliers }: AddI
     }
   }, [open]);
 
-  const handleNewItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNewItemChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     const isNumeric = ['stock', 'buyPrice', 'retailPrice', 'resellerPrice'].includes(name);
     setNewItem(prev => ({ ...prev, [name]: isNumeric ? Number(value) : value }));
@@ -100,6 +101,10 @@ export const AddItemDialog = ({ open, onOpenChange, onSuccess, suppliers }: AddI
             <div className="grid grid-cols-4 items-center gap-4 -mt-2"><div className="col-start-2 col-span-3"><Barcode value={newItem.barcode} /></div></div>
             <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="name" className="text-right">Nama</Label><Input id="name" name="name" placeholder="Nama Barang" className="col-span-3" value={newItem.name} onChange={handleNewItemChange} /></div>
             <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="category" className="text-right">Kategori</Label><Select name="category" onValueChange={(value) => setNewItem(prev => ({ ...prev, category: value }))} value={newItem.category}><SelectTrigger className="col-span-3"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger><SelectContent><SelectItem value="Sparepart HP">Sparepart HP</SelectItem><SelectItem value="Sparepart Komputer">Sparepart Komputer</SelectItem><SelectItem value="Aksesoris">Aksesoris</SelectItem></SelectContent></Select></div>
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="description" className="text-right pt-2">Deskripsi</Label>
+              <Textarea id="description" name="description" placeholder="Deskripsi singkat produk" className="col-span-3" value={newItem.description} onChange={handleNewItemChange} />
+            </div>
             <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="stock" className="text-right">Stok Awal</Label><Input id="stock" name="stock" type="number" placeholder="0" className="col-span-3" value={newItem.stock} onChange={handleNewItemChange} /></div>
             <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="buyPrice" className="text-right">Harga Beli</Label><Input id="buyPrice" name="buyPrice" type="number" placeholder="Rp 0" className="col-span-3" value={newItem.buyPrice} onChange={handleNewItemChange} /></div>
             <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="retailPrice" className="text-right">Harga Ecer</Label><Input id="retailPrice" name="retailPrice" type="number" placeholder="Rp 0" className="col-span-3" value={newItem.retailPrice} onChange={handleNewItemChange} /></div>

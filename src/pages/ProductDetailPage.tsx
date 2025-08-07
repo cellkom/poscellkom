@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import PublicLayout from '@/components/Layout/PublicLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/hooks/use-stock';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -34,6 +34,7 @@ const ProductDetailPage = () => {
   const { addToCart } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Review form state
@@ -49,7 +50,7 @@ const ProductDetailPage = () => {
       const productPromise = supabase.from('products').select('*').eq('id', productId).single();
       const reviewsPromise = supabase
         .from('product_reviews')
-        .select(`*, user_profiles (full_name, avatar_url)`)
+        .select(`*, user_profiles!inner(full_name, avatar_url)`)
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
 
@@ -60,11 +61,31 @@ const ProductDetailPage = () => {
         console.error(productError);
       } else {
         const p = productData;
-        setProduct({
-          id: p.id, createdAt: p.created_at, name: p.name, category: p.category, stock: p.stock,
+        const currentProduct = {
+          id: p.id, createdAt: p.created_at, name: p.name, category: p.category, description: p.description, stock: p.stock,
           buyPrice: p.buy_price, retailPrice: p.retail_price, resellerPrice: p.reseller_price,
           barcode: p.barcode, supplierId: p.supplier_id, entryDate: p.entry_date, imageUrl: p.image_url,
-        });
+        };
+        setProduct(currentProduct);
+
+        // Fetch related products
+        if (currentProduct.category) {
+          const { data: relatedData } = await supabase
+            .from('products')
+            .select('*')
+            .eq('category', currentProduct.category)
+            .neq('id', currentProduct.id)
+            .limit(4);
+          
+          if (relatedData) {
+            const formattedRelated: Product[] = relatedData.map((p: any) => ({
+              id: p.id, createdAt: p.created_at, name: p.name, category: p.category, description: p.description, stock: p.stock,
+              buyPrice: p.buy_price, retailPrice: p.retail_price, resellerPrice: p.reseller_price,
+              barcode: p.barcode, supplierId: p.supplier_id, entryDate: p.entry_date, imageUrl: p.image_url,
+            }));
+            setRelatedProducts(formattedRelated);
+          }
+        }
       }
 
       if (reviewsError) {
@@ -117,7 +138,6 @@ const ProductDetailPage = () => {
       }
     } else {
       showSuccess('Ulasan Anda berhasil dikirim!');
-      // Manually add the new review to the top of the list for immediate feedback
       const newReview: Review = {
         id: crypto.randomUUID(),
         rating: myRating,
@@ -177,6 +197,7 @@ const ProductDetailPage = () => {
           <div className="flex flex-col">
             <p className="text-sm text-muted-foreground">{product.category}</p>
             <h1 className="text-3xl md:text-4xl font-bold mt-1">{product.name}</h1>
+            <p className="text-muted-foreground mt-4">{product.description}</p>
             <div className="flex items-center gap-2 mt-3">
               <StarRating rating={averageRating} readOnly />
               <span className="text-sm text-muted-foreground">({totalReviews} ulasan)</span>
@@ -248,6 +269,36 @@ const ProductDetailPage = () => {
             </Card>
           </div>
         </div>
+
+        {relatedProducts.length > 0 && (
+          <>
+            <Separator className="my-12" />
+            <div>
+              <h2 className="text-2xl font-bold mb-6">Produk Terkait</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                {relatedProducts.map((relatedProduct) => (
+                  <Link to={`/products/${relatedProduct.id}`} key={relatedProduct.id} className="group">
+                    <Card className="overflow-hidden transition-shadow hover:shadow-lg flex flex-col h-full">
+                      <CardHeader className="p-0">
+                        <div className="bg-muted aspect-square flex items-center justify-center overflow-hidden">
+                          {relatedProduct.imageUrl ? (
+                            <img src={relatedProduct.imageUrl} alt={relatedProduct.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                          ) : (
+                            <ImageIcon className="h-20 w-20 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-4 flex-grow flex flex-col">
+                        <h3 className="font-semibold text-lg truncate" title={relatedProduct.name}>{relatedProduct.name}</h3>
+                        <p className="font-bold text-primary text-xl mt-auto">{formatCurrency(relatedProduct.retailPrice)}</p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </PublicLayout>
   );

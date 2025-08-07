@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -37,7 +38,7 @@ export const EditItemDialog = ({ open, onOpenChange, onSuccess, item, suppliers 
     setImageFile(null);
   }, [item]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (!editingItemData) return;
     const { name, value } = e.target;
     const isNumeric = ['stock', 'buyPrice', 'retailPrice', 'resellerPrice'].includes(name);
@@ -85,6 +86,10 @@ export const EditItemDialog = ({ open, onOpenChange, onSuccess, item, suppliers 
             <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-barcode" className="text-right">Barcode</Label><Input id="edit-barcode" name="barcode" value={editingItemData.barcode} onChange={handleChange} className="col-span-3 font-mono" /></div>
             <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-name" className="text-right">Nama</Label><Input id="edit-name" name="name" value={editingItemData.name} onChange={handleChange} className="col-span-3" /></div>
             <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-category" className="text-right">Kategori</Label><Select name="category" onValueChange={(value) => setEditingItemData({ ...editingItemData, category: value })} value={editingItemData.category}><SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Sparepart HP">Sparepart HP</SelectItem><SelectItem value="Sparepart Komputer">Sparepart Komputer</SelectItem><SelectItem value="Aksesoris">Aksesoris</SelectItem></SelectContent></Select></div>
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="edit-description" className="text-right pt-2">Deskripsi</Label>
+              <Textarea id="edit-description" name="description" value={editingItemData.description || ''} onChange={handleChange} className="col-span-3" />
+            </div>
             <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-stock" className="text-right">Stok</Label><Input id="edit-stock" name="stock" type="number" value={editingItemData.stock} onChange={handleChange} className="col-span-3" /></div>
             <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-buyPrice" className="text-right">Harga Beli</Label><Input id="edit-buyPrice" name="buyPrice" type="number" value={editingItemData.buyPrice} onChange={handleChange} className="col-span-3" /></div>
             <div className="grid grid-cols-4 items-center gap-4"><Label htmlFor="edit-retailPrice" className="text-right">Harga Ecer</Label><Input id="edit-retailPrice" name="retailPrice" type="number" value={editingItemData.retailPrice} onChange={handleChange} className="col-span-3" /></div>
