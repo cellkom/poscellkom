@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Product, ProductReview } from "@/types";
 import PublicLayout from "@/components/Layout/PublicLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Star, MessageSquare, UserCircle, Send } from "lucide-react";
+import { ShoppingCart, Star, MessageSquare, UserCircle, Send, Image as ImageIcon } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useStock } from "@/hooks/use-stock";
 
 const ProductDetailPage = () => {
   const { id: productId } = useParams();
@@ -25,10 +26,11 @@ const ProductDetailPage = () => {
   const [newReview, setNewReview] = useState("");
   const [rating, setRating] = useState(0);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const { products: allProducts } = useStock();
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+  }, [productId]);
 
   const fetchProductAndReviews = async () => {
     if (!productId) return;
@@ -90,10 +92,21 @@ const ProductDetailPage = () => {
     fetchProductAndReviews();
   }, [productId]);
 
-  const handleAddToCart = () => {
-    if (product) {
-      addToCart(product);
-    }
+  const recommendedProducts = useMemo(() => {
+    if (!product || allProducts.length === 0) return [];
+    
+    const relatedByCategory = allProducts.filter(p => p.category === product.category && p.id !== product.id);
+    const otherProducts = allProducts.filter(p => p.category !== product.category && p.id !== product.id);
+    
+    // Shuffle other products for variety
+    otherProducts.sort(() => 0.5 - Math.random());
+
+    return [...relatedByCategory, ...otherProducts].slice(0, 4);
+  }, [product, allProducts]);
+
+  const handleAddToCart = (e: React.MouseEvent, productToAdd: Product) => {
+    e.preventDefault();
+    addToCart(productToAdd);
   };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
@@ -194,7 +207,7 @@ const ProductDetailPage = () => {
               <p className={`font-semibold ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
                 Stok: {product.stock > 0 ? `${product.stock} tersedia` : 'Habis'}
               </p>
-              <Button size="lg" className="w-full mt-2" onClick={handleAddToCart} disabled={product.stock <= 0}>
+              <Button size="lg" className="w-full mt-2" onClick={(e) => handleAddToCart(e, product)} disabled={product.stock <= 0}>
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 {product.stock > 0 ? "Tambah ke Keranjang" : "Stok Habis"}
               </Button>
@@ -284,6 +297,43 @@ const ProductDetailPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Recommended Products Section */}
+        {recommendedProducts.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold mb-6">Produk Lainnya</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+              {recommendedProducts.map((recProduct) => (
+                <Link to={`/products/${recProduct.id}`} key={recProduct.id} className="group">
+                  <Card className="overflow-hidden transition-shadow hover:shadow-lg flex flex-col h-full">
+                    <CardHeader className="p-0">
+                      <div className="bg-muted aspect-square flex items-center justify-center overflow-hidden">
+                        {recProduct.imageUrl ? (
+                          <img src={recProduct.imageUrl} alt={recProduct.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                        ) : (
+                          <ImageIcon className="h-20 w-20 text-muted-foreground/20 group-hover:scale-110 transition-transform" />
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 flex-grow flex flex-col">
+                      <h3 className="font-semibold text-lg truncate" title={recProduct.name}>{recProduct.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">{recProduct.category}</p>
+                      <p className="font-bold text-primary text-xl mt-auto">{formatCurrency(recProduct.retailPrice)}</p>
+                      <Button
+                        className="mt-4 w-full"
+                        onClick={(e) => handleAddToCart(e, recProduct)}
+                        disabled={recProduct.stock <= 0}
+                      >
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        {recProduct.stock > 0 ? "Tambah" : "Stok Habis"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </PublicLayout>
   );
