@@ -11,7 +11,7 @@ const HeadManager: React.FC = () => {
 
   return (
     <Helmet>
-      <title>{appName} - {appDescription}</title>
+      <title>{appName}</title>
       <link rel="icon" type="image/png" href={logoUrl} />
       <meta name="description" content={appDescription} />
       {/* You can add more meta tags here if needed */}
