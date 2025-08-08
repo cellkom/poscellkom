@@ -78,21 +78,24 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
         {/* Main Header Bar */}
-        <div className="container mx-auto flex h-20 items-center gap-4 px-4 md:px-6">
-          <Link to={logoLink} className="flex items-center gap-2 flex-shrink-0">
+        <div className="container mx-auto flex h-20 items-center justify-between gap-4 px-4 md:px-6">
+          <Link to={logoLink} className="flex items-center gap-3">
             <img src={settings.logoUrl || '/logo.png'} alt="App Logo" className="h-12 w-auto" />
+            <div className="hidden md:block">
+              <h1 className="text-lg font-bold text-primary font-poppins">{settings.appName || 'Cellkom.Store'}</h1>
+              <p className="text-xs text-muted-foreground -mt-1">{settings.appDescription || 'Pusat Service HP dan Komputer'}</p>
+            </div>
           </Link>
 
-          <div className="flex-grow max-w-2xl mx-auto">
-            <div className="md:hidden text-center"> {/* Mobile: Business Name */}
-              <h1 className="text-lg font-bold font-poppins">
-                <span className="text-primary">{settings.appName ? settings.appName.split('.')[0] : 'Cellkom'}</span>
-                <span className="font-semibold text-muted-foreground">{settings.appName && settings.appName.includes('.') ? `.${settings.appName.split('.')[1]}`: '.Store'}</span>
-              </h1>
-            </div>
-            <div className="hidden md:block"> {/* Desktop: Search Input */}
-              <GlobalSearchInput />
-            </div>
+          <div className="hidden md:block flex-grow max-w-2xl mx-auto">
+            <GlobalSearchInput />
+          </div>
+
+          <div className="md:hidden flex-grow text-center">
+            <h1 className="text-lg font-bold font-poppins">
+              <span className="text-primary">{settings.appName ? settings.appName.split('.')[0] : 'Cellkom'}</span>
+              <span className="font-semibold text-muted-foreground">{settings.appName && settings.appName.includes('.') ? `.${settings.appName.split('.')[1]}`: '.Store'}</span>
+            </h1>
           </div>
 
           <div className="flex items-center gap-1">

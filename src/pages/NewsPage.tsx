@@ -11,6 +11,10 @@ import { id } from 'date-fns/locale';
 const NewsPage = () => {
   const { articles, loading } = useNews();
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <PublicLayout>
       <div className="container mx-auto px-4 md:px-6 py-12">
