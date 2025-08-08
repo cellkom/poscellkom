@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useAdvertisements, Advertisement } from "@/hooks/use-advertisements";
 import { Loader2, Upload, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const SettingsPage = () => {
   const { settings, loading, updateSettings, uploadLogo, uploadAuthorImage } = useSettings();
@@ -34,16 +35,15 @@ const SettingsPage = () => {
   const [authorImageFile, setAuthorImageFile] = useState<File | null>(null);
   const [authorImagePreview, setAuthorImagePreview] = useState<string | null>(null);
   
-  // Separate loading states for each action
   const [isTextSubmitting, setIsTextSubmitting] = useState(false);
   const [isLogoSubmitting, setIsLogoSubmitting] = useState(false);
   const [isAuthorSubmitting, setIsAuthorSubmitting] = useState(false);
   const [isAdSubmitting, setIsAdSubmitting] = useState(false);
 
-  // State for new ad
   const [adFile, setAdFile] = useState<File | null>(null);
   const [adAltText, setAdAltText] = useState('');
   const [adLinkUrl, setAdLinkUrl] = useState('');
+  const [adPlacement, setAdPlacement] = useState('homepage_carousel');
   const [adPreview, setAdPreview] = useState<string | null>(null);
 
   useEffect(() => {
@@ -128,15 +128,29 @@ const SettingsPage = () => {
     e.preventDefault();
     if (!adFile) return;
     setIsAdSubmitting(true);
-    const success = await addAdvertisement(adFile, adAltText, adLinkUrl);
+    const adData = {
+      alt_text: adAltText,
+      link_url: adLinkUrl,
+      placement: adPlacement,
+      is_active: true,
+      sort_order: 0,
+      image_url: '', // This will be set by the hook
+    };
+    const success = await addAdvertisement(adData, adFile);
     if (success) {
       setAdFile(null);
       setAdAltText('');
       setAdLinkUrl('');
       setAdPreview(null);
+      setAdPlacement('homepage_carousel');
     }
     setIsAdSubmitting(false);
   };
+
+  const adsByPlacement = advertisements.reduce((acc, ad) => {
+    (acc[ad.placement] = acc[ad.placement] || []).push(ad);
+    return acc;
+  }, {} as Record<string, Advertisement[]>);
 
   if (loading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -151,30 +165,47 @@ const SettingsPage = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Manajemen Iklan Slider</CardTitle>
-          <CardDescription>Unggah dan kelola gambar yang akan ditampilkan di slider halaman utama.</CardDescription>
+          <CardTitle>Manajemen Iklan</CardTitle>
+          <CardDescription>Unggah dan kelola gambar yang akan ditampilkan di berbagai halaman.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <h4 className="font-semibold">Iklan Saat Ini:</h4>
           {adsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {advertisements.map(ad => (
-                <div key={ad.id} className="relative group">
-                  <img src={ad.image_url} alt={ad.alt_text || 'Iklan'} className="w-full aspect-video object-cover rounded-md" />
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => deleteAdvertisement(ad)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+            Object.entries(adsByPlacement).map(([placement, ads]) => (
+              <div key={placement} className="mt-4">
+                <h5 className="font-semibold capitalize text-muted-foreground mb-2">{placement.replace(/_/g, ' ')}</h5>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {ads.map(ad => (
+                    <div key={ad.id} className="relative group">
+                      <img src={ad.image_url} alt={ad.alt_text || 'Iklan'} className="w-full aspect-video object-cover rounded-md" />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => deleteAdvertisement(ad)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))
           )}
           <form onSubmit={handleAdSubmit} className="border-t pt-4 mt-4 space-y-4">
             <h4 className="font-semibold">Tambah Iklan Baru:</h4>
+            <div className="space-y-2">
+              <Label htmlFor="adPlacement">Penempatan Iklan</Label>
+              <Select value={adPlacement} onValueChange={setAdPlacement}>
+                <SelectTrigger id="adPlacement">
+                  <SelectValue placeholder="Pilih penempatan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="homepage_carousel">Carousel Halaman Utama</SelectItem>
+                  <SelectItem value="products_page_banner">Banner Halaman Produk</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="adFile">File Gambar Iklan</Label>
               <Input id="adFile" type="file" accept="image/*" onChange={handleAdFileChange} required />
