@@ -1,16 +1,17 @@
 export interface Product {
   id: string;
+  createdAt: string;
   name: string;
   category: string;
-  description: string;
+  description: string | null;
   stock: number;
   buyPrice: number;
   retailPrice: number;
   resellerPrice: number;
   barcode: string;
-  imageUrl: string;
+  imageUrl: string | null;
   entryDate: string;
-  supplierId: string;
+  supplierId: string | null;
 }
 
 export interface ProductReview {

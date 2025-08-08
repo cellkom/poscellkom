@@ -46,13 +46,29 @@ const ProductDetailPage = () => {
       setLoading(false);
       return;
     }
-    setProduct(productData);
+    
+    const formattedProduct: Product = {
+      id: productData.id,
+      createdAt: productData.created_at,
+      name: productData.name,
+      category: productData.category,
+      description: productData.description,
+      stock: productData.stock,
+      buyPrice: productData.buy_price,
+      retailPrice: productData.retail_price,
+      resellerPrice: productData.reseller_price,
+      barcode: productData.barcode,
+      supplierId: productData.supplier_id,
+      entryDate: productData.entry_date,
+      imageUrl: productData.image_url,
+    };
+    setProduct(formattedProduct);
 
     const { data: reviewsData, error: reviewsError } = await supabase
       .from("product_reviews")
       .select(`
         *,
-        user_profiles (
+        user_profiles!user_id (
           full_name,
           avatar_url
         )
