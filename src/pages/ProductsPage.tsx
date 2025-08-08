@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShoppingCart, Search, Image as ImageIcon } from "lucide-react";
 import { useStock } from "@/hooks/use-stock";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useAdvertisements } from "@/hooks/use-advertisements";
@@ -15,8 +15,11 @@ import { useAdvertisements } from "@/hooks/use-advertisements";
 const ProductsPage = () => {
   const { products, loading } = useStock();
   const { addToCart } = useCart();
+  const [searchParams] = useSearchParams();
+  const categoryFromUrl = searchParams.get('category');
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl || "all");
   const [sortBy, setSortBy] = useState("name-asc");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -26,6 +29,10 @@ const ProductsPage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    setSelectedCategory(categoryFromUrl || "all");
+  }, [categoryFromUrl]);
 
   const categories = useMemo(() => {
     const uniqueCategories = new Set<string>();

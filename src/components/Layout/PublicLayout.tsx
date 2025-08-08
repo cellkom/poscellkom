@@ -1,9 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard, Code, Image as ImageIcon, ClipboardList, Facebook, Youtube, Music } from "lucide-react";
+import { UserCircle, Instagram, Menu, ShoppingCart, Wrench, Info, Phone, Newspaper, LayoutDashboard, Code, Image as ImageIcon, ClipboardList, Facebook, Youtube, Music, ChevronDown } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSettings } from "@/contexts/SettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { GlobalSearchInput } from "@/components/GlobalSearchInput";
+import { useStock } from "@/hooks/use-stock";
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {
   const { session, profile, signOut } = useAuth();
@@ -26,6 +27,17 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
   const [latestArticles, setLatestArticles] = useState<NewsArticle[]>([]);
   const { settings } = useSettings();
   const location = useLocation();
+  const { products } = useStock();
+
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set<string>();
+    products.forEach(product => {
+      if (product.category) {
+        uniqueCategories.add(product.category);
+      }
+    });
+    return Array.from(uniqueCategories).sort();
+  }, [products]);
 
   useEffect(() => {
     const trackVisit = async () => {
@@ -198,11 +210,34 @@ const PublicLayout = ({ children }: { children: ReactNode }) => {
         {/* Navigation Bar */}
         <nav className="hidden md:flex h-10 items-center justify-center border-t bg-primary">
           <div className="container mx-auto flex items-center justify-center gap-8 text-sm font-medium px-4 md:px-6">
-            {navLinks.map(link => (
-              <Link key={link.name} to={link.href} onClick={(e) => handleNavClick(e, link.href)} className="text-primary-foreground/90 transition-colors hover:text-primary-foreground">
-                {link.name}
-              </Link>
-            ))}
+            {navLinks.map(link => {
+              if (link.name === "Produk") {
+                return (
+                  <DropdownMenu key={link.name}>
+                    <DropdownMenuTrigger className="flex items-center gap-1 cursor-pointer text-primary-foreground/90 transition-colors hover:text-primary-foreground outline-none">
+                      {link.name}
+                      <ChevronDown className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem asChild>
+                        <Link to="/products">Semua Produk</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {categories.map(category => (
+                        <DropdownMenuItem key={category} asChild>
+                          <Link to={`/products?category=${encodeURIComponent(category)}`}>{category}</Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              }
+              return (
+                <Link key={link.name} to={link.href} onClick={(e) => handleNavClick(e, link.href)} className="text-primary-foreground/90 transition-colors hover:text-primary-foreground">
+                  {link.name}
+                </Link>
+              );
+            })}
           </div>
         </nav>
       </header>
