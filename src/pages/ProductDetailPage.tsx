@@ -68,21 +68,41 @@ const ProductDetailPage = () => {
 
     const { data: reviewsData, error: reviewsError } = await supabase
       .from("product_reviews")
-      .select(`
-        *,
-        user_profiles!user_id (
-          full_name,
-          avatar_url
-        )
-      `)
+      .select(`*`)
       .eq("product_id", productId)
       .order("created_at", { ascending: false });
 
     if (reviewsError) {
       toast.error("Gagal memuat ulasan produk.");
       console.error(reviewsError);
+      setLoading(false);
+      return;
+    }
+
+    if (reviewsData && reviewsData.length > 0) {
+      const userIds = reviewsData.map(review => review.user_id);
+      
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("user_profiles")
+        .select('id, full_name, avatar_url')
+        .in('id', userIds);
+
+      if (profilesError) {
+        toast.error("Gagal memuat data penulis ulasan.");
+        console.error(profilesError);
+        setReviews(reviewsData.map(r => ({ ...r, user_profiles: null })) as ProductReview[]);
+      } else {
+        const reviewsWithProfiles = reviewsData.map(review => {
+          const profile = profilesData.find(p => p.id === review.user_id);
+          return {
+            ...review,
+            user_profiles: profile ? { full_name: profile.full_name, avatar_url: profile.avatar_url } : null
+          };
+        });
+        setReviews(reviewsWithProfiles as ProductReview[]);
+      }
     } else {
-      setReviews(reviewsData as ProductReview[]);
+      setReviews([]);
     }
 
     setLoading(false);
@@ -98,7 +118,6 @@ const ProductDetailPage = () => {
     const relatedByCategory = allProducts.filter(p => p.category === product.category && p.id !== product.id);
     const otherProducts = allProducts.filter(p => p.category !== product.category && p.id !== product.id);
     
-    // Shuffle other products for variety
     otherProducts.sort(() => 0.5 - Math.random());
 
     return [...relatedByCategory, ...otherProducts].slice(0, 4);
