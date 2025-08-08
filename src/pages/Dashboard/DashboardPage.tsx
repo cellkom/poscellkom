@@ -9,6 +9,7 @@ import { useServiceEntries } from "@/hooks/use-service-entries";
 import { useInstallments } from "@/hooks/use-installments";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfToday, endOfToday } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
@@ -42,6 +43,7 @@ interface ActivityItem {
 }
 
 const DashboardPage = () => {
+  const { user } = useAuth();
   const { serviceEntries, loading: servicesLoading } = useServiceEntries();
   const { installments, loading: installmentsLoading } = useInstallments();
   
@@ -50,6 +52,10 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchDashboardData = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const todayStart = startOfToday().toISOString();
     const todayEnd = endOfToday().toISOString();
@@ -109,10 +115,12 @@ const DashboardPage = () => {
 
     setActivities(combinedActivities);
     setLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchDashboardData();
+
+    if (!user) return;
 
     const channel = supabase
       .channel('dashboard-realtime')
@@ -125,7 +133,7 @@ const DashboardPage = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchDashboardData]);
+  }, [fetchDashboardData, user]);
 
   const servicesInProgress = useMemo(() => {
     return serviceEntries.filter(e => e.status === 'Pending' || e.status === 'Proses').length;

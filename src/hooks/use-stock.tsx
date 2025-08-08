@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Interface ini digunakan di seluruh aplikasi (camelCase)
 export interface Product {
@@ -95,26 +96,27 @@ const uploadProductImage = async (imageFile: File): Promise<string | null> => {
 
 
 export const useStock = () => {
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) {
+      showError(`Gagal memuat data produk: ${error.message}`);
+      console.error(error);
+    } else {
+      setProducts((data || []).map(fromDbProduct));
+    }
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (error) {
-        showError(`Gagal memuat data produk: ${error.message}`);
-        console.error(error);
-      } else {
-        setProducts((data || []).map(fromDbProduct));
-      }
-      setLoading(false);
-    };
-
     fetchProducts();
 
     const channel = supabase
@@ -122,24 +124,14 @@ export const useStock = () => {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'products' },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setProducts(prev => [...prev, fromDbProduct(payload.new as DbProduct)].sort((a, b) => a.name.localeCompare(b.name)));
-          }
-          if (payload.eventType === 'UPDATE') {
-            setProducts(prev => prev.map(p => p.id === payload.new.id ? fromDbProduct(payload.new as DbProduct) : p));
-          }
-          if (payload.eventType === 'DELETE') {
-            setProducts(prev => prev.filter(p => p.id !== (payload.old as DbProduct).id));
-          }
-        }
+        () => fetchProducts()
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchProducts]);
 
   const addProduct = async (newProductData: Omit<Product, 'id' | 'createdAt' | 'imageUrl'>, imageFile: File | null) => {
     let imageUrl: string | null = null;
@@ -161,9 +153,7 @@ export const useStock = () => {
       return null;
     }
     showSuccess("Produk baru berhasil ditambahkan!");
-    const newProduct = fromDbProduct(data);
-    setProducts(prev => [...prev, newProduct].sort((a, b) => a.name.localeCompare(b.name)));
-    return newProduct;
+    return fromDbProduct(data);
   };
 
   const updateProduct = async (id: string, updatedFields: Partial<Omit<Product, 'id' | 'createdAt'>>, imageFile: File | null) => {
@@ -197,9 +187,7 @@ export const useStock = () => {
       return null;
     }
     showSuccess("Data produk berhasil diperbarui!");
-    const updatedProduct = fromDbProduct(data);
-    setProducts(prev => prev.map(p => p.id === id ? updatedProduct : p));
-    return updatedProduct;
+    return fromDbProduct(data);
   };
 
   const deleteProduct = async (id: string) => {
@@ -218,15 +206,18 @@ export const useStock = () => {
       return false;
     }
     showSuccess("Produk berhasil dihapus!");
-    setProducts(prev => prev.filter(p => p.id !== id));
     return true;
   };
 
   const updateStockQuantity = async (productId: string, quantityChange: number, entryDate?: string, supplierId?: string | null) => {
     const productToUpdate = products.find(p => p.id === productId);
     if (!productToUpdate) {
-      showError("Produk tidak ditemukan.");
-      return null;
+      const { data: freshProduct, error: fetchError } = await supabase.from('products').select('stock').eq('id', productId).single();
+      if (fetchError || !freshProduct) {
+        showError("Produk tidak ditemukan.");
+        return null;
+      }
+      productToUpdate.stock = freshProduct.stock;
     }
 
     const newStock = productToUpdate.stock + quantityChange;
@@ -263,9 +254,7 @@ export const useStock = () => {
       return null;
     }
     showSuccess("Stok berhasil diperbarui!");
-    const updatedProduct = fromDbProduct(data);
-    setProducts(prev => prev.map(p => p.id === productId ? updatedProduct : p));
-    return updatedProduct;
+    return fromDbProduct(data);
   };
 
   return {

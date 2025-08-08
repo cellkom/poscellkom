@@ -46,17 +46,7 @@ export const useCustomers = () => {
                 .on(
                     'postgres_changes',
                     { event: '*', schema: 'public', table: 'customers' },
-                    (payload) => {
-                        if (payload.eventType === 'INSERT') {
-                            setCustomers(prev => [...prev, payload.new as Customer].sort((a, b) => a.name.localeCompare(b.name)));
-                        }
-                        if (payload.eventType === 'UPDATE') {
-                            setCustomers(prev => prev.map(c => c.id === payload.new.id ? payload.new as Customer : c));
-                        }
-                        if (payload.eventType === 'DELETE') {
-                            setCustomers(prev => prev.filter(c => c.id !== (payload.old as { id: string }).id));
-                        }
-                    }
+                    () => fetchCustomers()
                 )
                 .subscribe();
 
@@ -79,7 +69,6 @@ export const useCustomers = () => {
             return null;
         }
         showSuccess("Pelanggan baru berhasil ditambahkan!");
-        setCustomers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
         return data;
     };
 
@@ -96,7 +85,6 @@ export const useCustomers = () => {
             return null;
         }
         showSuccess("Data pelanggan berhasil diperbarui!");
-        setCustomers(prev => prev.map(c => c.id === id ? data : c));
         return data;
     };
 
@@ -115,7 +103,6 @@ export const useCustomers = () => {
             return false;
         }
         showSuccess("Pelanggan berhasil dihapus!");
-        setCustomers(prev => prev.filter(c => c.id !== id));
         return true;
     };
 
