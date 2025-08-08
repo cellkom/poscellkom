@@ -35,19 +35,19 @@ export const useAdvertisements = (placement?: string) => {
   }, [fetchAdvertisements]);
 
   const uploadImage = async (file: File): Promise<string | null> => {
-    const fileName = `${uuidv4()}-${file.name}`;
+    const fileName = `advertisements/${uuidv4()}-${file.name}`;
     const { data, error } = await supabase.storage
-      .from('advertisements')
+      .from('product-images')
       .upload(fileName, file);
 
     if (error) {
-      toast.error('Gagal mengunggah gambar.');
+      toast.error(`Gagal mengunggah gambar: ${error.message}`);
       console.error(error);
       return null;
     }
 
     const { data: { publicUrl } } = supabase.storage
-      .from('advertisements')
+      .from('product-images')
       .getPublicUrl(data.path);
 
     return publicUrl;
@@ -102,11 +102,29 @@ export const useAdvertisements = (placement?: string) => {
     return data;
   };
 
-  const deleteAdvertisement = async (id: string) => {
+  const deleteAdvertisement = async (ad: Advertisement) => {
+    if (ad.image_url) {
+      try {
+        const url = new URL(ad.image_url);
+        const imagePath = url.pathname.split('/product-images/')[1];
+        if (imagePath) {
+          const { error: storageError } = await supabase.storage
+            .from('product-images')
+            .remove([imagePath]);
+          if (storageError) {
+            console.error("Gagal menghapus gambar dari storage:", storageError);
+            toast.error("Gagal menghapus file gambar, tapi iklan akan tetap dihapus dari database.");
+          }
+        }
+      } catch (e) {
+        console.error("URL gambar tidak valid, tidak dapat menghapus dari storage:", ad.image_url);
+      }
+    }
+
     const { error } = await supabase
       .from('advertisements')
       .delete()
-      .eq('id', id);
+      .eq('id', ad.id);
 
     if (error) {
       toast.error('Gagal menghapus iklan.');
